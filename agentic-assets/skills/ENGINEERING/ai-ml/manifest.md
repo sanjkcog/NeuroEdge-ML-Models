@@ -41,6 +41,8 @@ skills:
     - {path: skills/SOFTWARE/pytorch/pytorch-patterns.md,
        reason: "REFERENCE: PyTorch training-loop / reproducibility idioms reused by model-codegen;
                 broadly consumed as a SOFTWARE skill, not re-owned under this discipline"}
+    - {path: skills/ENGINEERING/_mechanism/ml-artifact-destination.md,
+       reason: "REFERENCE: cross-pack rule for where ai-ml/ai-genai commands write artifacts (ADR-0021)"}
 commands:
   - {name: dataset-scout, path: commands/ENGINEERING/ai-ml/dataset-scout.md}
   - {name: auto-label,    path: commands/ENGINEERING/ai-ml/auto-label.md}

@@ -42,15 +42,15 @@ health check: hooks, skills, agents, memory PASS
 
 Install these once per workstation.
 
-| Tool              | Minimum | Why                             |
-| ----------------- | ------: | ------------------------------- |
-| Python            |    3.11 | Setup scripts and health checks |
-| Node.js           |  20 LTS | Claude hooks                    |
-| Git               |    2.40 | Clone, submodules, commits      |
-| GitHub CLI `gh` |    2.40 | PR workflow through `/prp-pr` |
-| Claude Code       |  latest | Agent/command runtime           |
-| ffmpeg + ffprobe  |     any | Marketing video render only (`/marketing-video`). Or set `FFMPEG_BIN` to their folder |
-| MQTT broker (e.g. Mosquitto) | any | Simulator and ingress MQTT transport only. Can run on another machine |
+| Tool                         | Minimum | Why                                                                                       |
+| ---------------------------- | ------: | ----------------------------------------------------------------------------------------- |
+| Python                       |    3.11 | Setup scripts and health checks                                                           |
+| Node.js                      |  20 LTS | Claude hooks                                                                              |
+| Git                          |    2.40 | Clone, submodules, commits                                                                |
+| GitHub CLI`gh`             |    2.40 | PR workflow through`/prp-pr`                                                            |
+| Claude Code                  |  latest | Agent/command runtime                                                                     |
+| ffmpeg + ffprobe             |     any | Marketing video render only (`/marketing-video`). Or set `FFMPEG_BIN` to their folder |
+| MQTT broker (e.g. Mosquitto) |     any | Simulator and ingress MQTT transport only. Can run on another machine                     |
 
 This table lists only software pip cannot install. **Python packages are not on it:** every package
 AgentForge needs installs from one file after setup, `agentic-assets/requirements-agentforge.txt`
@@ -137,11 +137,11 @@ conventions. Update and Clean also take `--yes`; Setup has no `--yes`, prompts f
 path if `--project` is omitted, and takes an optional `--remote <url>` for the Assets repo. **Each comes two ways — a canonical Python script and a matching
 PowerShell wrapper** — so you can run the lifecycle however your shell prefers:
 
-| Operation | Python (any OS) | PowerShell (**pwsh 7+ required**) | Use when | Safe to re-run? |
-|---|---|---|---|---|
-| **Setup** | `setup_agentforge_claude_project.py` | `setup_agentforge_claude_project.ps1` | **First install** into a project (env checks + patch + install + plugin scaffold + scope). | Yes — idempotent; owned files are seeded once. |
-| **Update** | `update_agentforge_claude_project.py` | `update_agentforge_claude_project.ps1` | An **existing install** needs the latest AgentForge — apply only the diff and drop assets removed upstream. | Yes — copies only changes, prunes only orphans. |
-| **Clean** | `clean_agentforge_claude_project.py` | `clean_agentforge_claude_project.ps1` | **Retiring** AgentForge, or resetting a broken install before a fresh setup. | Yes — a second run finds nothing left to remove. |
+| Operation        | Python (any OS)                         | PowerShell (**pwsh 7+ required**)  | Use when                                                                                                          | Safe to re-run?                                   |
+| ---------------- | --------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| **Setup**  | `setup_agentforge_claude_project.py`  | `setup_agentforge_claude_project.ps1`  | **First install** into a project (env checks + patch + install + plugin scaffold + scope).                  | Yes — idempotent; owned files are seeded once.   |
+| **Update** | `update_agentforge_claude_project.py` | `update_agentforge_claude_project.ps1` | An**existing install** needs the latest AgentForge — apply only the diff and drop assets removed upstream. | Yes — copies only changes, prunes only orphans.  |
+| **Clean**  | `clean_agentforge_claude_project.py`  | `clean_agentforge_claude_project.ps1`  | **Retiring** AgentForge, or resetting a broken install before a fresh setup.                                | Yes — a second run finds nothing left to remove. |
 
 **Which to use.** The **`.py` scripts are canonical** and do all the real work; they run on any OS
 (`python -X utf8 <script>.py ...`, works from bash *or* PowerShell). The **`.ps1` wrappers** are a
@@ -186,12 +186,12 @@ python -X utf8 agentic-assets/setup_agentforge_claude_project.py --project . --d
 `setup_agentforge_claude_project.py` checks prerequisites (Python 3.11+, git), optionally sets the
 Assets git remote, then runs `setup_neuroedge_agentic_tools.py --project <path>`, which does four steps:
 
-| Step | Name | Action |
-|---|---|---|
-| 1 / 4 | Patch | Inject skill references into Assets command/agent files |
-| 2 / 4 | Install | Copy commands, agents, hooks, skills, orchestrator, simulator, health checker, and `CLAUDE.md` into the project, and write the install manifest |
-| 3 / 4 | Plugin | Scaffold the neutral `Project_Specific_Context` custom-plugin template into `agentforge_custom_plugin/` (seeded once; left alone if already present) |
-| 4 / 4 | Scope | If the project has a `src/` with packages, generate a nested `CLAUDE.md` per package so Claude loads only the active subfolder's context. If no packages are found, the tree is treated as monolithic — use `/scope-context --monolith` in Claude Code for the guided segment-scoping workflow. |
+| Step  | Name    | Action                                                                                                                                                                                                                                                                                                |
+| ----- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 / 4 | Patch   | Inject skill references into Assets command/agent files                                                                                                                                                                                                                                               |
+| 2 / 4 | Install | Copy commands, agents, hooks, skills, orchestrator, simulator, health checker, and`CLAUDE.md` into the project, and write the install manifest                                                                                                                                                      |
+| 3 / 4 | Plugin  | Scaffold the neutral`Project_Specific_Context` custom-plugin template into `agentforge_custom_plugin/` (seeded once; left alone if already present)                                                                                                                                               |
+| 4 / 4 | Scope   | If the project has a`src/` with packages, generate a nested `CLAUDE.md` per package so Claude loads only the active subfolder's context. If no packages are found, the tree is treated as monolithic — use `/scope-context --monolith` in Claude Code for the guided segment-scoping workflow. |
 
 After those, setup copies `settings.local.json.example` to `.claude/settings.local.json` (only if absent)
 and runs `health_check/cli.py --verbose` in the target. With `--dry-run`, those last two are skipped.
@@ -214,12 +214,12 @@ installer rewrites it on every update, so reference it and don't edit it.
 The installer **never edits your own dependency files**. After the Install step it prints, under
 **Dependencies**, the one change that fits your project:
 
-| Your project has | Do this once |
-|---|---|
-| `pyproject.toml`, managed with uv | `uv add --group agentforge -r agentic-assets/requirements-agentforge.txt` |
-| `requirements-dev.txt` | add `-r agentic-assets/requirements-agentforge.txt` to it, then `pip install -r requirements-dev.txt` |
-| only `requirements.txt` | add the same line to `requirements.txt`, then `pip install -r requirements.txt` |
-| neither | `pip install -r agentic-assets/requirements-agentforge.txt` |
+| Your project has                    | Do this once                                                                                             |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `pyproject.toml`, managed with uv | `uv add --group agentforge -r agentic-assets/requirements-agentforge.txt`                              |
+| `requirements-dev.txt`            | add`-r agentic-assets/requirements-agentforge.txt` to it, then `pip install -r requirements-dev.txt` |
+| only`requirements.txt`            | add the same line to`requirements.txt`, then `pip install -r requirements.txt`                       |
+| neither                             | `pip install -r agentic-assets/requirements-agentforge.txt`                                            |
 
 #### With pip
 
@@ -298,6 +298,142 @@ The Scope step is idempotent (it rewrites only content between `SCOPE:AUTO` mark
 
 When the AgentForge team ships improvements (new agents, skills, commands, fixes), pull them into an already-installed project with `update_agentforge_claude_project.py`. It copies only what changed, removes assets that were deleted or renamed upstream, verifies the result, and reports the version delta — without a full re-setup and without leaving stale files behind.
 
+#### Before you update: check and protect your project
+
+> 🔴 **Update overwrites every file at an AgentForge-managed path with the Assets version, even if your project
+> changed it.** It has no skip list. A fix you made in `.claude/agents/…`, or a module you replaced under
+> `src/…`, is lost unless you protect it. Do these checks before every update.
+
+**1. Start from a clean tree, and back up what git can't restore.**
+
+```bash
+cd <target-project>
+git status --short     # must print nothing: commit or stash first
+git check-ignore -v .claude/commands/x.md .claude/agents/x.md scripts/hooks/x.js health_check/cli.py agentic-assets/skills/x.md
+```
+
+Every path the second command prints is git-ignored in your project, so git can't undo an update there. Copy
+those folders somewhere outside the project before you update.
+
+**2. Run the dry run and read it.** In its output, look for:
+
+| Output line | What it means for you |
+|---|---|
+| `No prior install manifest found` | Nothing is pruned this time, so assets renamed upstream leave stale copies behind (check 6) |
+| `N asset(s) were removed/renamed upstream and will be deleted` | These files will be deleted. Make sure you don't rely on any of them |
+| `N hook group(s) merged, M already present` | Hooks are matched by `id`. If `M` is lower than you expect, see check 4 |
+| `.env.example … not in it` | Your env files are never written. Add the named variables yourself ([§ 5](#5-configure-local-secrets)) |
+
+**3. Find your own edits to AgentForge-managed files.** There are two kinds:
+
+- **Files you replaced with your own implementation.** For example, the NeuroEdge Studio renders marketing video
+  through its portal, with its own `src/neuroedge_marketing/`, `marketing-video` command, marketing agents and
+  video skills.
+- **Fixes made in your project that never reached the Assets repo.**
+
+This check compares each managed file in your project with every past version of its source in the Assets repo.
+A file that matches no version is one your project changed. Run it from your AgentForge clone:
+
+```bash
+TARGET="C:/path/to/target-project" python -X utf8 - <<'EOF'
+import os, re, subprocess, sys
+from pathlib import Path
+sys.path.insert(0, ".")
+import install
+target = Path(os.environ["TARGET"]).resolve()
+stamp = re.compile(rb"<!-- neuroedge-assets-patched[^\n]*?-->")
+norm = lambda b: stamp.sub(b"", b.replace(b"\r\n", b"\n")).strip()
+for pair in install._coverage_pairs(target):
+    if not pair.content_checked or not pair.dst.is_file():
+        continue
+    mine = norm(pair.dst.read_bytes())
+    if mine == norm(pair.src.read_bytes()):
+        continue
+    rel = pair.src.resolve().relative_to(Path(".").resolve()).as_posix()
+    shas = subprocess.run(["git", "log", "--all", "--format=%H", "--follow", "--", rel],
+                          capture_output=True, text=True).stdout.split()
+    if not any(norm(subprocess.run(["git", "show", f"{s}:{rel}"], capture_output=True).stdout) == mine
+               for s in shas):
+        print("YOUR EDIT:", pair.dst.relative_to(target).as_posix())
+EOF
+```
+
+Each `YOUR EDIT:` line is a file the update would overwrite. For each, either protect it (see
+[Protecting files during an update](#protecting-files-during-an-update)) or move the change into the Assets repo
+so every project gets it. A file that was renamed in the Assets repo can be listed even if you never changed it,
+so look at each one before deciding.
+
+**4. Check that your hook groups have ids.** Update merges AgentForge's hooks by `id`. A group without one gets
+added again, and that hook then runs twice. From your project root:
+
+```bash
+python -X utf8 -c "import json; g=[x for v in json.load(open('.claude/settings.json', encoding='utf-8')).get('hooks', {}).values() for x in v]; print(len(g), 'hook groups;', sum('id' not in x for x in g), 'without an id')"
+```
+
+If any group has no id, copy the `id` of the matching group (same event and command) from the Assets repo's
+`hook-config.json` into your `.claude/settings.json` before you update.
+
+**5. Check that your packaging won't pick up AgentForge's packages.** The installer adds
+`src/neuroedge_marketing/` and `src/neuroedge_productdoc/`. If your `pyproject.toml` discovers packages under
+`src/` automatically, exclude them:
+
+```toml
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["neuroedge_marketing*", "neuroedge_productdoc*"]
+```
+
+**6. If there was no manifest, list stale files after the update.** A project installed before manifests existed
+gets no pruning on its first update. This lists files in AgentForge folders that the current release doesn't
+ship. Run it from your AgentForge clone, delete the stale AgentForge copies (for example
+`.claude/commands/gan-build.md`, which moved to `ENGINEERING/ai-genai/`), and keep files that are yours:
+
+```bash
+TARGET="C:/path/to/target-project" python -X utf8 - <<'EOF'
+import os, sys
+from pathlib import Path
+sys.path.insert(0, ".")
+import install
+target = Path(os.environ["TARGET"]).resolve()
+shipped = {pair.dst.resolve() for pair in install._coverage_pairs(target)}
+for area in (".claude/agents", ".claude/commands", "scripts/hooks", "health_check"):
+    for f in sorted((target / area).rglob("*")):
+        if f.is_file() and "__pycache__" not in f.parts and f.resolve() not in shipped:
+            print("NOT SHIPPED:", f.relative_to(target).as_posix())
+EOF
+```
+
+#### Protecting files during an update
+
+Update can't skip files, so protect them by restoring your versions from git right after it runs. Record the list
+of protected paths in your project, for example in `CLAUDE.md` or `docs/context/`, because you repeat this on
+every update.
+
+```bash
+cd <target-project>
+PROTECT="src/neuroedge_marketing .claude/commands/marketing-video.md agentic-assets/skills/SUPPORTING-TOOLS/video"   # your paths
+
+# run the update, then:
+git restore -- $PROTECT          # put your versions back
+git clean -n -- $PROTECT         # list the files the update ADDED inside those paths
+git clean -f -- $PROTECT         # remove them
+git status --short -- $PROTECT   # must print nothing
+```
+
+- **Run `git clean` only from the clean tree of check 1.** It removes every untracked file under those paths, and
+  the `-n` line shows exactly what will go.
+- **A git-ignored protected path can't be restored this way.** Copy it back from your check-1 backup.
+- **A file the update adds outside your protected paths stays.** If you don't want it, delete it by hand.
+- **`install.py --verify` now reports your protected files as `DRIFT` or `MISSING`.** That's expected: they are the
+  files you kept.
+
+Then run the tests that cover the areas you protected, run `python health_check/cli.py --verbose`, review
+`git diff`, commit, and restart Claude Code. The update never writes `.env`, `.env.example` or your dependency
+files, so add new variables and packages yourself: see [§ 5](#5-configure-local-secrets) and
+[Python dependencies](#python-dependencies).
+
+#### Running the update
+
 ```bash
 # In your AgentForge clone, get the latest first
 git pull
@@ -315,11 +451,11 @@ python -X utf8 update_agentforge_claude_project.py --project "C:/path/to/target-
 ./update_agentforge_claude_project.ps1 -Project "C:/path/to/target-project"           # apply
 ```
 
-| Option | Effect |
-|---|---|
-| `--project <path>` | Required. The target project to update. |
-| `--dry-run` | Preview: lists changed files and orphaned assets, writes nothing. |
-| `--yes` | Skip the confirmation prompt before deleting orphaned assets (CI / non-interactive). |
+| Option               | Effect                                                                               |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| `--project <path>` | Required. The target project to update.                                              |
+| `--dry-run`        | Preview: lists changed files and orphaned assets, writes nothing.                    |
+| `--yes`            | Skip the confirmation prompt before deleting orphaned assets (CI / non-interactive). |
 
 **What it does, in four steps:** (1) **copy the diff** — only changed files are rewritten; (2) **prune orphans** — assets recorded in the previous install but no longer shipped are deleted; (3) **verify** — every installed asset is compared to source (0 findings = clean); (4) **report** — old → new version and counts.
 
@@ -327,7 +463,7 @@ python -X utf8 update_agentforge_claude_project.py --project "C:/path/to/target-
 
 Update refuses to run on a project with no AgentForge install (no manifest, no `.claude/agents/`, no `agentic-assets/`) and tells you to run setup first.
 
-**Never overwritten or pruned.** `CLAUDE.md`, `.claude/settings.local.json`, `.env.example`, the `docs/context/` memory bank, `docs/decisions/`, and `agentforge_custom_plugin/` are project-owned. Update never overwrites or deletes them. It does make **additive-only** changes on every run, because it calls the same installer: missing AgentForge rules are appended to `.gitignore`, hook groups whose `id` is not already in `.claude/settings.json` are merged in, and any missing bootstrap file (for example `docs/decisions/TECH-DEBT.md` on an older target) is created. Orphan pruning is driven by an install manifest (`agentic-assets/INSTALLED_MANIFEST.json`) that records only content-owned assets, so your own agents, commands, and `src/` are never in scope.
+**Never overwritten or pruned.** `CLAUDE.md`, `.claude/settings.local.json`, `.env.example`, the `docs/context/` memory bank, `docs/decisions/`, and `agentforge_custom_plugin/` are project-owned. Update never overwrites or deletes them. It does make **additive-only** changes on every run, because it calls the same installer: missing AgentForge rules are appended to `.gitignore`, hook groups whose `id` is not already in `.claude/settings.json` are merged in, and any missing bootstrap file (for example `docs/decisions/TECH-DEBT.md` on an older target) is created. Orphan pruning is driven by an install manifest (`agentic-assets/INSTALLED_MANIFEST.json`) that records only content-owned assets, so your own agents, commands, and `src/` are never in scope. A file of yours at the **same path** as an AgentForge asset is different: it counts as AgentForge's, and update overwrites it (see [Before you update](#before-you-update-check-and-protect-your-project)).
 
 **Declining the prune.** Without `--yes`, update asks you to type `yes` before deleting orphans. If you decline, or stdin is not available (CI, piped input), the asset changes still land, the orphans stay on disk, and they **stay recorded in the manifest**, so the next update reports them again. To finish a refresh in one go, use `--yes`:
 
@@ -359,11 +495,11 @@ python -X utf8 clean_agentforge_claude_project.py --project "C:/path/to/target-p
 ./clean_agentforge_claude_project.ps1 -Project "C:/path/to/target-project"           # remove
 ```
 
-| Option | Effect |
-|---|---|
-| `--project <path>` | Required. The target project to clean. |
-| `--dry-run` | Preview: lists every file that would be deleted, writes nothing. |
-| `--yes` | Skip the typed-`yes` confirmation (CI / non-interactive). |
+| Option               | Effect                                                           |
+| -------------------- | ---------------------------------------------------------------- |
+| `--project <path>` | Required. The target project to clean.                           |
+| `--dry-run`        | Preview: lists every file that would be deleted, writes nothing. |
+| `--yes`            | Skip the typed-`yes` confirmation (CI / non-interactive).      |
 
 **Preserved.** `CLAUDE.md`, `AGENTS.md`, the `docs/context/` memory bank, `docs/decisions/`, `.claude/settings.local.json`, and `.gitignore` are kept. So is `.claude/settings.json`: only the AgentForge hook groups are removed, and the AgentForge rules in `.gitignore` are left in place.
 
@@ -394,6 +530,7 @@ Fill in only the keys your enabled tools need, and add others the same way.
 
 AgentForge's variables form one block, from `# >>> AgentForge >>>` to `# <<< AgentForge <<<`. The block
 covers:
+
 - the external-tool integration: `GITHUB_TOKEN`, `AGENTFORGE_GITHUB_REPO`, `JIRA_*`, `CONFLUENCE_*`, `ZEPHYR_*`, `TESTRAIL_*`;
 - marketing video: `PEXELS_API_KEY`, `PIXABAY_API_KEY`, `OPENAI_API_KEY`, `ELEVENLABS_*`, `ANTHROPIC_API_KEY`,
   `NEUROEDGE_VISION_MODEL`, `FFMPEG_BIN`, `DEMO_FONT_FILE`;
@@ -541,35 +678,35 @@ Do not start refactoring legacy code until `/legacy-audit` records baseline comm
 
 ## 8. What the Installer Adds
 
-| Asset                   | Installed location                                      |
-| ----------------------- | ------------------------------------------------------- |
-| Commands                | `.claude/commands/`                                   |
-| Agents                  | `.claude/agents/`                                     |
-| Hook scripts            | `scripts/hooks/`                                      |
-| Hook config             | `.claude/settings.json`                               |
-| Runtime skills          | `agentic-assets/skills/`                              |
-| Plugin/MCP catalog      | `agentic-assets/plugins/`                             |
-| Runtime docs            | `agentic-assets/docs/guides/` (`.md` guides only)     |
-| Memory-bank pointer     | `agentic-assets/docs/context/README.md` (seeded once; points at your root `docs/context/`) |
-| Assets README + notice  | `agentic-assets/README.md`, `agentic-assets/NOTICE.md` |
-| Install manifest        | `agentic-assets/INSTALLED_MANIFEST.json` (rewritten each install; git-ignored) |
-| Version stamp           | `agentic-assets/RELEASE_VERSION.json` (rewritten each install; git-ignored) |
-| Scope generator         | `agentic-assets/scripts/scope/`                       |
-| Health checker          | `health_check/`                                       |
-| SDLC orchestrator       | `agentforge/src/` (invoked by `/agentforge`, `/test-run`, `/test-plan`) |
-| Data-source simulator   | `agentforge_simulator/` (from source `simulator/`)    |
-| Shared Python utilities | `src/neuroedge_marketing/`, `src/neuroedge_productdoc/` |
-| Attribution notice      | `NOTICE.md` (always overwritten — upstream is source of truth) |
-| Python dependency entry point | `agentic-assets/requirements-agentforge.txt` (rewritten each install; reference it, don't edit it) |
-| Credential template     | `.env.example` (seeded once, never overwritten)       |
-| Current AgentForge env block | `agentic-assets/agentforge.env.example` (rewritten each install; copy from it) |
-| Project instructions    | `CLAUDE.md`                                           |
-| Universal agent pointer | `AGENTS.md`                                           |
-| Nested module context   | `src/<package>/CLAUDE.md` (modular projects, Scope step) |
-| Memory bank             | `docs/context/`, `docs/decisions/`, `docs/audit/` |
-| Local secret template   | `.claude/settings.local.json`                         |
-| Git ignore rules        | 9 lines appended to `.gitignore` under `# AgentForge local state and secrets` (only lines not already present) |
-| Custom-plugin template  | `agentforge_custom_plugin/Project_Specific_Context/` (setup's Plugin step, not `install.py`) |
+| Asset                         | Installed location                                                                                                |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Commands                      | `.claude/commands/`                                                                                             |
+| Agents                        | `.claude/agents/`                                                                                               |
+| Hook scripts                  | `scripts/hooks/`                                                                                                |
+| Hook config                   | `.claude/settings.json`                                                                                         |
+| Runtime skills                | `agentic-assets/skills/`                                                                                        |
+| Plugin/MCP catalog            | `agentic-assets/plugins/`                                                                                       |
+| Runtime docs                  | `agentic-assets/docs/guides/` (`.md` guides only)                                                             |
+| Memory-bank pointer           | `agentic-assets/docs/context/README.md` (seeded once; points at your root `docs/context/`)                    |
+| Assets README + notice        | `agentic-assets/README.md`, `agentic-assets/NOTICE.md`                                                        |
+| Install manifest              | `agentic-assets/INSTALLED_MANIFEST.json` (rewritten each install; git-ignored)                                  |
+| Version stamp                 | `agentic-assets/RELEASE_VERSION.json` (rewritten each install; git-ignored)                                     |
+| Scope generator               | `agentic-assets/scripts/scope/`                                                                                 |
+| Health checker                | `health_check/`                                                                                                 |
+| SDLC orchestrator             | `agentforge/src/` (invoked by `/agentforge`, `/test-run`, `/test-plan`)                                   |
+| Data-source simulator         | `agentforge_simulator/` (from source `simulator/`)                                                            |
+| Shared Python utilities       | `src/neuroedge_marketing/`, `src/neuroedge_productdoc/`                                                       |
+| Attribution notice            | `NOTICE.md` (always overwritten — upstream is source of truth)                                                 |
+| Python dependency entry point | `agentic-assets/requirements-agentforge.txt` (rewritten each install; reference it, don't edit it)              |
+| Credential template           | `.env.example` (seeded once, never overwritten)                                                                 |
+| Current AgentForge env block  | `agentic-assets/agentforge.env.example` (rewritten each install; copy from it)                                  |
+| Project instructions          | `CLAUDE.md`                                                                                                     |
+| Universal agent pointer       | `AGENTS.md`                                                                                                     |
+| Nested module context         | `src/<package>/CLAUDE.md` (modular projects, Scope step)                                                        |
+| Memory bank                   | `docs/context/`, `docs/decisions/`, `docs/audit/`                                                           |
+| Local secret template         | `.claude/settings.local.json`                                                                                   |
+| Git ignore rules              | 9 lines appended to`.gitignore` under `# AgentForge local state and secrets` (only lines not already present) |
+| Custom-plugin template        | `agentforge_custom_plugin/Project_Specific_Context/` (setup's Plugin step, not `install.py`)                  |
 
 **Capability packs (ADR-0018).** Some disciplines are stored in the Assets repo as `packs/<name>/` (today:
 `packs/embedded/`). They install to the same places as everything else, so the target layout does not
@@ -601,26 +738,26 @@ C++/Rust/Go builds need per-project SDK layouts and can take minutes, so the ins
 
 Reviewer and build-error-resolver agents ship with every install. Routing to them is described in the "Hooks, MCP, And Maintenance" section of the project `CLAUDE.md` template. Add a line there for each language your project uses. Hooks are optional latency-reducers, not gatekeepers.
 
-| Language | Reviewer agent | Build-error resolver agent |
-|---|---|---|
-| C++ / CUDA | `cpp-reviewer` | `cpp-build-resolver` |
-| Rust | `rust-reviewer` | `rust-build-resolver` |
-| Go | `go-reviewer` | `go-build-resolver` |
-| Java / Spring Boot | `java-reviewer` | `java-build-resolver` |
-| Kotlin / Android | `kotlin-reviewer` | `kotlin-build-resolver` |
-| C# / .NET | `csharp-reviewer` | `csharp-build-resolver` |
-| Dart / Flutter | `flutter-reviewer` | `dart-build-resolver` |
+| Language                                   | Reviewer agent          | Build-error resolver agent  |
+| ------------------------------------------ | ----------------------- | --------------------------- |
+| C++ / CUDA                                 | `cpp-reviewer`        | `cpp-build-resolver`      |
+| Rust                                       | `rust-reviewer`       | `rust-build-resolver`     |
+| Go                                         | `go-reviewer`         | `go-build-resolver`       |
+| Java / Spring Boot                         | `java-reviewer`       | `java-build-resolver`     |
+| Kotlin / Android                           | `kotlin-reviewer`     | `kotlin-build-resolver`   |
+| C# / .NET                                  | `csharp-reviewer`     | `csharp-build-resolver`   |
+| Dart / Flutter                             | `flutter-reviewer`    | `dart-build-resolver`     |
 | Embedded C / firmware (`packs/embedded`) | `embedded-c-reviewer` | `embedded-build-resolver` |
-| PyTorch runtime | — | `pytorch-build-resolver` |
+| PyTorch runtime                            | —                      | `pytorch-build-resolver`  |
 
 ### Which JSON to edit — and why it matters
 
 Add language hooks to **`.claude/settings.json`** (the committed team file). Do **not** add them to `.claude/settings.local.json`.
 
-| File | Scope | Purpose |
-|---|---|---|
-| `.claude/settings.json` | Committed — shared by every teammate | Team rules and hooks. Language coverage is a project contract, so it belongs here |
-| `.claude/settings.local.json` | Local only — never committed (in `.gitignore`) | Personal secrets (`API_KEY`s) and per-machine env vars. Never put hook definitions here |
+| File                            | Scope                                            | Purpose                                                                                   |
+| ------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `.claude/settings.json`       | Committed — shared by every teammate            | Team rules and hooks. Language coverage is a project contract, so it belongs here         |
+| `.claude/settings.local.json` | Local only — never committed (in`.gitignore`) | Personal secrets (`API_KEY`s) and per-machine env vars. Never put hook definitions here |
 
 If a C++ hook lived in `settings.local.json`, teammates would get no enforcement and the hook would vanish on a fresh clone.
 
@@ -635,15 +772,15 @@ Each hook entry needs:
 
 Add only what your project actually uses. Fast checks belong in `PostToolUse`. Slow full builds should stay out of hooks — use the build-resolver agent on demand instead.
 
-| Language | Fast `PostToolUse` check | Slower `Stop` check (opt-in) | Prerequisites in repo |
-|---|---|---|---|
-| C++ | `clang-format --dry-run --Werror` on edited `.cpp/.h/.hpp/.cu` | `clang-tidy` on edited file only | `.clang-format` + `compile_commands.json` (add `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON` in top-level `CMakeLists.txt`) |
-| Rust | `cargo fmt --check` on edited `.rs` | `cargo clippy -- -D warnings` | `rustfmt.toml` (optional), `clippy.toml` (optional) |
-| Go | `gofmt -l` + `go vet` on edited `.go` | `golangci-lint run` on changed package | `.golangci.yml` (optional) |
-| Java | `google-java-format --dry-run` or `spotless:check` on `.java` | `mvn -q -DskipTests compile` (or Gradle equivalent) | Formatter plugin in `pom.xml` / `build.gradle` |
-| Kotlin | `ktlint` on edited `.kt` | `gradle compileKotlin` | `.editorconfig` |
-| C# | `dotnet format --verify-no-changes` on `.cs` | `dotnet build --no-restore` | `.editorconfig` |
-| Dart / Flutter | `dart format --set-exit-if-changed` + `dart analyze` on `.dart` | `flutter test` | `analysis_options.yaml` |
+| Language       | Fast`PostToolUse` check                                             | Slower`Stop` check (opt-in)                         | Prerequisites in repo                                                                                                      |
+| -------------- | --------------------------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| C++            | `clang-format --dry-run --Werror` on edited `.cpp/.h/.hpp/.cu`    | `clang-tidy` on edited file only                    | `.clang-format` + `compile_commands.json` (add `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON` in top-level `CMakeLists.txt`) |
+| Rust           | `cargo fmt --check` on edited `.rs`                               | `cargo clippy -- -D warnings`                       | `rustfmt.toml` (optional), `clippy.toml` (optional)                                                                    |
+| Go             | `gofmt -l` + `go vet` on edited `.go`                           | `golangci-lint run` on changed package              | `.golangci.yml` (optional)                                                                                               |
+| Java           | `google-java-format --dry-run` or `spotless:check` on `.java`   | `mvn -q -DskipTests compile` (or Gradle equivalent) | Formatter plugin in`pom.xml` / `build.gradle`                                                                          |
+| Kotlin         | `ktlint` on edited `.kt`                                          | `gradle compileKotlin`                              | `.editorconfig`                                                                                                          |
+| C#             | `dotnet format --verify-no-changes` on `.cs`                      | `dotnet build --no-restore`                         | `.editorconfig`                                                                                                          |
+| Dart / Flutter | `dart format --set-exit-if-changed` + `dart analyze` on `.dart` | `flutter test`                                      | `analysis_options.yaml`                                                                                                  |
 
 ### Example — add a C++ format hook
 
@@ -699,22 +836,22 @@ For the end-to-end SDLC workflow, use [how_to_build_your_project.md](how_to_buil
 
 ## 11. Troubleshooting
 
-| Symptom                            | Likely cause                                     | Fix                                                             |
-| ---------------------------------- | ------------------------------------------------ | --------------------------------------------------------------- |
-| `claude` not found               | Claude Code not installed or shell not restarted | `npm install -g @anthropic-ai/claude-code`, restart shell     |
-| Health check `skills` line warns `.claude/commands/ not found` | Setup did not run or wrong target path (commands are counted under `skills`) | Re-run setup from AgentForge root                               |
-| Health check says skills missing   | Runtime assets not copied                        | Re-run setup; confirm `agentic-assets/skills/`                |
-| Health check says hooks missing    | `.claude/settings.json` stale                  | Re-run setup and restart Claude Code                            |
-| Claude does not see new commands   | Claude Code was already open                     | Restart Claude Code in the target repo                          |
-| Legacy work starts without audit   | Routing not explicit enough                      | Run `/legacy-audit . --memory-bank --subfolder-claude --plan` |
-| Too many MCP tools in context      | MCP config overloaded                            | Keep only task-relevant servers enabled                         |
-| `Plugin : Project_Specific_Context not scaffolded` with `[WinError 3]` | Windows 260-character path limit — the template's deepest file adds ~110 characters to the target path | Use a shorter target path, then re-run setup (the plugin step is seed-once and only runs if the plugin is absent) |
-| `--verify` reports `DRIFT …src/neuroedge_marketing/CLAUDE.md` on an older target | An earlier Scope step wrote its `SCOPE:AUTO` block into that AgentForge-managed file; current setup skips managed packages (see § 4.1) | Run update once to restore the source copy. Delete a leftover `src/neuroedge_productdoc/CLAUDE.md` by hand |
-| Update keeps listing the same orphans | The prune was declined, or stdin was unavailable | Re-run update with `--yes` |
-| `installed version X is newer than incoming Y` | `install.py` refuses downgrades | Update your Assets clone, or pass `--force` to downgrade on purpose |
-| `ModuleNotFoundError` from an AgentForge command | Python dependencies not installed in the environment that runs it | Do what the installer printed under **Dependencies** (see [Python dependencies](#python-dependencies)) |
-| Health check `tools` warns `ffmpeg not found` (or `gh`, `node`) | That software is not installed or not on `PATH` | Install it yourself. Only the feature named in the warning needs it; for ffmpeg you can set `FFMPEG_BIN` instead |
-| Install prints `AgentForge variable(s) not in it` | Your own `.env.example` predates those variables | Copy the named lines from `agentic-assets/agentforge.env.example` (see [§ 5](#5-configure-local-secrets)) |
+| Symptom                                                                               | Likely cause                                                                                                                             | Fix                                                                                                               |
+| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `claude` not found                                                                  | Claude Code not installed or shell not restarted                                                                                         | `npm install -g @anthropic-ai/claude-code`, restart shell                                                       |
+| Health check`skills` line warns `.claude/commands/ not found`                     | Setup did not run or wrong target path (commands are counted under`skills`)                                                            | Re-run setup from AgentForge root                                                                                 |
+| Health check says skills missing                                                      | Runtime assets not copied                                                                                                                | Re-run setup; confirm`agentic-assets/skills/`                                                                   |
+| Health check says hooks missing                                                       | `.claude/settings.json` stale                                                                                                          | Re-run setup and restart Claude Code                                                                              |
+| Claude does not see new commands                                                      | Claude Code was already open                                                                                                             | Restart Claude Code in the target repo                                                                            |
+| Legacy work starts without audit                                                      | Routing not explicit enough                                                                                                              | Run`/legacy-audit . --memory-bank --subfolder-claude --plan`                                                    |
+| Too many MCP tools in context                                                         | MCP config overloaded                                                                                                                    | Keep only task-relevant servers enabled                                                                           |
+| `Plugin : Project_Specific_Context not scaffolded` with `[WinError 3]`            | Windows 260-character path limit — the template's deepest file adds ~110 characters to the target path                                  | Use a shorter target path, then re-run setup (the plugin step is seed-once and only runs if the plugin is absent) |
+| `--verify` reports `DRIFT …src/neuroedge_marketing/CLAUDE.md` on an older target | An earlier Scope step wrote its`SCOPE:AUTO` block into that AgentForge-managed file; current setup skips managed packages (see § 4.1) | Run update once to restore the source copy. Delete a leftover`src/neuroedge_productdoc/CLAUDE.md` by hand       |
+| Update keeps listing the same orphans                                                 | The prune was declined, or stdin was unavailable                                                                                         | Re-run update with`--yes`                                                                                       |
+| `installed version X is newer than incoming Y`                                      | `install.py` refuses downgrades                                                                                                        | Update your Assets clone, or pass`--force` to downgrade on purpose                                              |
+| `ModuleNotFoundError` from an AgentForge command                                    | Python dependencies not installed in the environment that runs it                                                                        | Do what the installer printed under**Dependencies** (see [Python dependencies](#python-dependencies))        |
+| Health check`tools` warns `ffmpeg not found` (or `gh`, `node`)                | That software is not installed or not on`PATH`                                                                                         | Install it yourself. Only the feature named in the warning needs it; for ffmpeg you can set`FFMPEG_BIN` instead |
+| Install prints`AgentForge variable(s) not in it`                                    | Your own`.env.example` predates those variables                                                                                        | Copy the named lines from`agentic-assets/agentforge.env.example` (see [§ 5](#5-configure-local-secrets))        |
 
 ---
 

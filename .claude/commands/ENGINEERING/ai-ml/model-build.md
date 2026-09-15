@@ -3,18 +3,21 @@
 ## NeuroEdge Assets
 
 > At the start of your response output exactly:
-> `[ NeuroEdge Assets ]  /model-build · Skills: model-codegen, model-architectures, time-series-ml`
+> `[ NeuroEdge Assets ]  /model-build · Skills: model-codegen, model-architectures, time-series-ml, ml-artifact-destination`
 >
 > Then read these skill files before executing:
 > - `agentic-assets/skills/ENGINEERING/ai-ml/model-codegen.md`
 > - `agentic-assets/skills/ENGINEERING/ai-ml/model-architectures.md`
 > - `agentic-assets/skills/ENGINEERING/ai-ml/time-series-ml.md`
-<!-- neuroedge-assets-patched source-version=426fa40 -->
+> - `agentic-assets/skills/ENGINEERING/_mechanism/ml-artifact-destination.md`
+<!-- neuroedge-assets-patched source-version=8acd6bf -->
 
 ## Arguments
 
 `$ARGUMENTS` — the `model-select` spec (or objective + dataset + framework). Optional
 `--pytorch` / `--tf` to force the framework.
+
+`--dest <folder>` — where this command writes its artifacts. If omitted, the command proposes `<ML_ROOT>/<intent>-<modality>` and asks before writing (`agentic-assets/skills/ENGINEERING/_mechanism/ml-artifact-destination.md`).
 
 ## What this does
 
@@ -26,12 +29,16 @@ does NOT run training** and assumes no local GPU. Spawns `ml-modeler` (applies `
 
 ## Procedure
 
-1. Spawn **`ml-modeler`** to generate the handoff package into `<objective-slug>/`:
+0. **Resolve the destination** — apply `ml-artifact-destination`: use `--dest`, or propose `<ML_ROOT>/<intent>-<modality>` and **ask the user to confirm before writing anything**. Call the confirmed absolute path `<dest>` and pass it to every spawned agent.
+1. Spawn **`ml-modeler`** to generate the handoff package into `<dest>/<architecture>/` — one subfolder per
+   architecture, e.g. `1DCNN/`. Take the architecture from `<dest>/model-select.md` when it exists;
+   **otherwise** take it from `$ARGUMENTS` or ask the user, and record the choice in `<dest>/model-select.md`
+   as you go (never require a `/model-select` run that did not happen):
    ```
    model.py|model_tf.py · train.py|train_tf.py · eval.py · config.yaml ·
    requirements.txt/environment.yml · data/README.md · RUN_ON_GPU.md
    ```
-   honoring the framework choice and reusing `skills/SOFTWARE/pytorch/pytorch-patterns.md` idioms.
+   honoring the framework choice and reusing `agentic-assets/skills/SOFTWARE/pytorch/pytorch-patterns.md` idioms.
 2. **Verify the invariants** (device-agnostic · seed-reproducible · **leakage-safe** · checkpoint+export
    to the target format · config-driven, no hardcoded hyperparameters/seed · **task-correct metrics**,
    ranking metrics for recommenders).

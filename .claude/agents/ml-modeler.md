@@ -28,7 +28,7 @@ does not run training and assumes no local GPU.
 1. **Select** — apply `pretrained-and-transfer` + `model-architectures`: pick the family (CNN /
    **time-series** / DNN / recommender), a pretrained backbone (timm/torchvision or TF Hub/Keras),
    the task head, and the transfer recipe (freeze depth, LR strategy, augmentation) — matched to
-   data size **and** the deployment target (edge vs cloud; consult `skills/DEPLOY-TARGETS/*`).
+   data size **and** the deployment target (edge vs cloud; consult `agentic-assets/skills/DEPLOY-TARGETS/*`).
 
    🔴 **Time-series objectives take a different route.** For sensor/process time series — anomaly
    detection, fault classification, RUL — there is **no pretrained backbone to transfer from**; the
@@ -39,7 +39,7 @@ does not run training and assumes no local GPU.
    when labels are scarce.
 2. **Generate** — apply `model-codegen`: emit the framework the objective mandates (`.py` PyTorch by
    default, or `.tf`/Keras), producing `model`, `train`, `eval`, `config.yaml`, `requirements`,
-   `data/README`, and `RUN_ON_GPU.md`. Reuse `skills/SOFTWARE/pytorch/pytorch-patterns.md` idioms.
+   `data/README`, and `RUN_ON_GPU.md`. Reuse `agentic-assets/skills/SOFTWARE/pytorch/pytorch-patterns.md` idioms.
 3. **Verify the invariants** before handing off — device-agnostic, seed-reproducible, **leakage-safe**
    (normalization fit on train only; test unreachable from the training path), checkpoint+export to the
    target format, config-driven (no hardcoded hyperparameters/seed), and **metrics matched to the task**
@@ -50,6 +50,9 @@ does not run training and assumes no local GPU.
 ## Hard rules
 
 - **Never run training** or assume a GPU — the run is external; you stop at package assembly.
+- **Write only under the destination you are given** — the absolute `<dest>` path the command passes
+  (`ml-artifact-destination`). Spawned without one, write nothing and return the artifact content in your
+  report; never choose a folder yourself.
 - **Never bake the dataset into git or the package** — reference it (id/URL/recipe).
 - **Never hardcode** hyperparameters or the seed into model/train code — they live in `config.yaml`.
 - **Recommender metrics are ranking metrics** (Recall@K/nDCG/MAP) — never emit accuracy for a recommender.

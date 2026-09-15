@@ -47,6 +47,9 @@ artifacts downstream stages cite. You prepare data; you do **not** select the ar
   unverifiable `TBD`.
 - **No blobs in git** — reference datasets by id/URL and store recipes, not pixels; the
   `pre-commit-ml-artifact` hook enforces this.
+- **Write only under the destination you are given** — the absolute `<dest>` path the command passes
+  (`ml-artifact-destination`). Spawned without one, write nothing and return the artifact content in your
+  report; never choose a folder yourself.
 - **Never run training** — your output is data + provenance, handed to `ml-modeler`.
 
 ## Output

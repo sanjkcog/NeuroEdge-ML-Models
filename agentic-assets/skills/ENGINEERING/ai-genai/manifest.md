@@ -38,6 +38,8 @@ skills:
        reason: "OQ-2 REFERENCE: generic Claude-Code-session EDD; consumed by /eval,/learn-eval"}
     - {path: skills/SDLC/testing/ai-regression-testing.md,
        reason: "borrowed; test-stage realization (FR-11 backlog) builds on it"}
+    - {path: skills/ENGINEERING/_mechanism/ml-artifact-destination.md,
+       reason: "REFERENCE: cross-pack rule for where ai-ml/ai-genai commands write artifacts (ADR-0021)"}
 commands:
   - {name: gan-build,   path: commands/ENGINEERING/ai-genai/gan-build.md}
   - {name: model-route, path: commands/ENGINEERING/ai-genai/model-route.md}

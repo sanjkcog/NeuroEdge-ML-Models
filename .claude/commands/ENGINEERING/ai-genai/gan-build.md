@@ -3,27 +3,31 @@
 ## NeuroEdge Assets
 
 > At the start of your response output exactly:
-> `[ NeuroEdge Assets ]  /gan-build · Skills: autonomous-loops, continuous-agent-loop`
+> `[ NeuroEdge Assets ]  /gan-build · Skills: autonomous-loops, continuous-agent-loop, ml-artifact-destination`
 >
 > Then read these skill files before executing:
 > - `agentic-assets/skills/ENGINEERING/ai-genai/autonomous-loops.md`
 > - `agentic-assets/skills/ENGINEERING/ai-genai/continuous-agent-loop.md`
-<!-- neuroedge-assets-patched source-version=426fa40 -->
+> - `agentic-assets/skills/ENGINEERING/_mechanism/ml-artifact-destination.md`
+<!-- neuroedge-assets-patched source-version=8acd6bf -->
 
 ## GAN-Style Harness Build
 
 This command orchestrates a three-agent build loop inspired by Anthropic's March 2026 harness design paper.
 
 ### Phase 0: Setup
-1. Create `gan-harness/` directory in project root
-2. Create subdirectories: `gan-harness/feedback/`, `gan-harness/screenshots/`
+0. **Resolve the destination** — apply `ml-artifact-destination` (`agentic-assets/skills/ENGINEERING/_mechanism/ml-artifact-destination.md`): use `--dest <folder>`,
+   or propose `<ML_ROOT>/<intent>-genai` and **ask the user to confirm before writing anything**.
+   `<harness>` below means `<dest>/gan-harness` (absolute); pass it to every agent you launch.
+1. Create `<harness>/` directory
+2. Create subdirectories: `<harness>/feedback/`, `<harness>/screenshots/`
 3. Initialize git if not already initialized
 4. Log start time and configuration
 
 ### Phase 1: Planning (Planner Agent)
 Unless `--skip-planner` is set:
 1. Launch the `gan-planner` agent via Task tool with the user's brief
-2. Wait for it to produce `gan-harness/spec.md` and `gan-harness/eval-rubric.md`
+2. Wait for it to produce `<harness>/spec.md` and `<harness>/eval-rubric.md`
 3. Display the spec summary to the user
 4. Proceed to Phase 2
 
@@ -94,11 +98,11 @@ while iteration <= max_iterations:
 - [Any issues from final evaluation]
 
 ### Files Created
-- gan-harness/spec.md
-- gan-harness/eval-rubric.md
-- gan-harness/feedback/feedback-001.md through feedback-NNN.md
-- gan-harness/generator-state.md
-- gan-harness/build-report.md
+- <harness>/spec.md
+- <harness>/eval-rubric.md
+- <harness>/feedback/feedback-001.md through feedback-NNN.md
+- <harness>/generator-state.md
+- <harness>/build-report.md
 ```
 
-Write the full report to `gan-harness/build-report.md`.
+Write the full report to `<harness>/build-report.md`.

@@ -3,12 +3,13 @@
 ## NeuroEdge Assets
 
 > At the start of your response output exactly:
-> `[ NeuroEdge Assets ]  /synth-data · Skills: synthetic-data, time-series-ml`
+> `[ NeuroEdge Assets ]  /synth-data · Skills: synthetic-data, time-series-ml, ml-artifact-destination`
 >
 > Then read these skill files before executing:
 > - `agentic-assets/skills/ENGINEERING/ai-ml/synthetic-data.md`
 > - `agentic-assets/skills/ENGINEERING/ai-ml/time-series-ml.md`
-<!-- neuroedge-assets-patched source-version=426fa40 -->
+> - `agentic-assets/skills/ENGINEERING/_mechanism/ml-artifact-destination.md`
+<!-- neuroedge-assets-patched source-version=8acd6bf -->
 
 ## Arguments
 
@@ -16,6 +17,8 @@
 `"seeded spindle-drift cycles, 8 channels at 10 Hz"`). Optional `--render` (3D pipeline) /
 `--augment` (diffusion) / `--signal` (parametric time series) to force a family; chosen from
 context otherwise.
+
+`--dest <folder>` — where this command writes its artifacts. If omitted, the command proposes `<ML_ROOT>/<intent>-<modality>` and asks before writing (`agentic-assets/skills/ENGINEERING/_mechanism/ml-artifact-destination.md`).
 
 ## What this does
 
@@ -25,6 +28,7 @@ skill. Rendered data comes with perfect free labels — exactly where manual lab
 
 ## Procedure
 
+0. **Resolve the destination** — apply `ml-artifact-destination`: use `--dest`, or propose `<ML_ROOT>/<intent>-<modality>` and **ask the user to confirm before writing anything**. Call the confirmed absolute path `<dest>` and pass it to every spawned agent.
 1. Pick the family:
    - **3D render** (geometry-correct, free segmentation/depth labels): **NVIDIA Omniverse Replicator**,
      **BlenderProc**, or **Kubric** — needs 3D assets of the object.
@@ -42,7 +46,8 @@ skill. Rendered data comes with perfect free labels — exactly where manual lab
 3. **Mix real + synthetic** and keep a **real hold-out** for validation/test — never validate on
    synthetic only.
 4. Emit a reproducible **`synthetic-recipe`** (generator+version, assets, randomization ranges, counts,
-   real:synthetic mix). Store the recipe, not the pixels (blobs are hook-blocked).
+   real:synthetic mix) to `<dest>/data/synthetic-recipe.md`. Store the recipe, not the pixels — generated
+   samples go to a gitignored data dir (blobs are hook-blocked).
 
 ## Next step
 
