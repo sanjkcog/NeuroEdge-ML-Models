@@ -1,0 +1,14 @@
+# NeuroEdge simulator -- transport dependencies.
+#
+# Separable because these are the only simulator dependencies a *consumer* of
+# the same transports also needs. A host project whose ingress layer subscribes
+# to MQTT (or posts webhooks) shares this exact set with the simulator, so it
+# inherits these pins rather than re-declaring them:
+#
+#     -r agentforge_simulator/requirements-transports.txt
+#
+# added to the host's own requirements.txt. That keeps one declaration of each
+# shared pin, in the asset that owns it. See TD-012.
+
+paho-mqtt>=2.0    # mqtt transport
+requests>=2.31    # webhook + api transports

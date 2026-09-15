@@ -1,0 +1,11 @@
+
+# AgentForge local state and secrets
+.claude/settings.local.json
+.claude/.ts-edited-files
+.claude/.source-edited-files
+.claude/.ml-edited-files
+.env
+.env.*
+!.env.example
+agentic-assets/RELEASE_VERSION.json
+agentic-assets/INSTALLED_MANIFEST.json

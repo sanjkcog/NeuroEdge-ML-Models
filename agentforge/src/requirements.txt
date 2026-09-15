@@ -1,0 +1,14 @@
+# AgentForge SDLC orchestrator + QA runners -- Python dependencies (ADR-0020).
+#
+# Ships to <project>/agentforge/src/requirements.txt. Reached from the single entry point
+# agentic-assets/requirements-agentforge.txt; install that file rather than this one.
+#
+# The orchestrator itself is standard-library Python. These are the packages specific
+# features reach for:
+
+# regulatory/specval.py validates specs with the real Draft 2020-12 validator when it is
+# importable, and otherwise falls back to a smaller hand-written check.
+jsonschema>=4.0
+
+# qa/testrail_adapter.py shells out to TestRail's own CLI (`trcli parse_junit`).
+trcli

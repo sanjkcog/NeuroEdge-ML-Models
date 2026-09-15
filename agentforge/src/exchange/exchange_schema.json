@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neuroedge.ai/agentforge/exchange.schema.json",
+  "title": "AgentForge exchange.json",
+  "description": "The neutral exchange record (ADR-0012) projected from run.json + gates.json for an external agentic app to monitor and, via a drive intent, request the run be driven. Composed read-only from RunState + GateState by exchange_record.build — never itself authoritative; run.json/gates.json remain the system of record. Also declares the single-source enum for an inbound drive intent's 'action' field, read by exchange.drive/adapter parsers so the enum can never fall out of step (SCHEMA_DRIVEN_VALIDATION).",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated",
+    "objective",
+    "current_stage",
+    "stages",
+    "gates",
+    "blocked_on",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "description": "Schema version this file was written against." },
+    "generated": { "type": "string", "description": "ISO-8601 timestamp this record was built." },
+    "objective": { "type": "string", "description": "The /agentforge run objective, carried through verbatim." },
+    "current_stage": {
+      "type": ["string", "null"],
+      "description": "The run's active stage id, or null when the run is complete or escalated — mirrors run_state.RunState.current_stage."
+    },
+    "stages": {
+      "type": "object",
+      "description": "Stage id -> status ('pending'|'in_progress'|'complete'|'failed'), mirrors run_state.StageState.status for every STAGE_SEQUENCE entry.",
+      "additionalProperties": { "type": "string" }
+    },
+    "gates": {
+      "type": "array",
+      "description": "One entry per gate currently in gates.json.",
+      "items": {
+        "type": "object",
+        "required": ["artifact", "stage", "type", "status"],
+        "properties": {
+          "artifact": { "type": "string", "description": "Artifact path (or synthetic key, e.g. 'pr:<branch>') this gate protects." },
+          "stage": { "type": "string" },
+          "type": { "enum": ["hard", "soft"] },
+          "status": { "enum": ["pending", "approved", "changes_requested", "rejected"] }
+        }
+      }
+    },
+    "blocked_on": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Artifacts whose gate is pending AND type=='hard' — exactly what drive.apply_intent's fence refuses to advance past."
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "All produced artifact paths across every stage, de-duplicated, in first-seen order."
+    }
+  },
+  "$defs": {
+    "driveIntent": {
+      "description": "One inbound drive intent an external agentic app submits (e.g. a GitHub Issue label/comment), parsed into exchange.adapter.DriveIntent. Not itself a top-level field of exchange.json — declared here as the single-source authority for the 'action' enum so a parser and the fence can never disagree about what a valid action is.",
+      "type": "object",
+      "required": ["action", "target", "identity", "raw_id"],
+      "properties": {
+        "action": { "enum": ["advance", "approve_gate", "comment", "request_run"] },
+        "target": { "type": "string", "description": "A stage id (for 'advance') or an artifact path (for gate-related actions)." },
+        "identity": { "type": "string", "description": "Who/what submitted the intent externally." },
+        "raw_id": { "type": "string", "description": "The originating external record id (e.g. a GitHub Issue number/URL), for traceability back to the source." }
+      }
+    }
+  }
+}

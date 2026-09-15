@@ -1,0 +1,68 @@
+{
+  "name": "Project_Specific_Context",
+  "version": "0.1.0",
+  "kind": "custom-domain-plugin",
+  "domain": "TODO",
+  "requires_subjects": [],
+  "regulatory": [],
+  "personas": [],
+  "integrations": [
+    {
+      "product": "Project_Specific_Context",
+      "vendor": "TODO",
+      "url": "TODO",
+      "scope": []
+    }
+  ],
+  "assets": {
+    "agents": [
+      "agents/project_specific_context-domain-expert.md"
+    ],
+    "commands": [
+      "commands/project_specific_context.md"
+    ],
+    "skills": [
+      "skills/project_specific_context-integration.md"
+    ],
+    "context": "context/DOMAIN.md"
+  },
+  "wiring": {
+    "auto_load": true,
+    "note": "Auto-discovered by discover_plugins.py: the base /agentforge SDLC reads stage_context per stage and feeds it to that stage's role agent. Fill the paths below. Set auto_load false to deactivate.",
+    "stage_context": {
+      "research": [
+        "context/DOMAIN.md"
+      ],
+      "requirements": [
+        "context/personas.md",
+        "context/regulatory.md",
+        "context/constraints.md",
+        "context/workflows"
+      ],
+      "architecture": [
+        "context/integrations",
+        "context/constraints.md"
+      ],
+      "epics": [
+        "context/glossary.md",
+        "context/workflows"
+      ],
+      "tasks": [
+        "context/glossary.md",
+        "context/workflows"
+      ],
+      "test-plan": [
+        "context/integrations",
+        "context/constraints.md"
+      ],
+      "test-automation": [
+        "context/integrations",
+        "context/constraints.md"
+      ],
+      "test-run": [
+        "context/integrations",
+        "context/constraints.md"
+      ]
+    }
+  }
+}

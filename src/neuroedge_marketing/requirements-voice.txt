@@ -1,0 +1,9 @@
+# neuroedge_marketing — OPTIONAL: Chatterbox, the local voice (MIT).
+#
+# No API key and no per-render cost, and it can speak in your own voice from a short recording
+# (render --voice-reference). Heavy: it pulls torch. On a GPU machine, install a CUDA build of
+# torch first; on CPU it runs, slowly. The first use downloads ~1-2 GB of model weights.
+#   pip install -r src/neuroedge_marketing/requirements-voice.txt
+chatterbox-tts
+torch
+torchaudio

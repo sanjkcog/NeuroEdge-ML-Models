@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/pre-write-hitl-gate.js"
+          }
+        ],
+        "description": "Block writes to approved-and-sealed gated artifacts and gh pr create while the S13 PR gate is unresolved (hard block, no override)",
+        "id": "pre:write-hitl-gate"
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx block-no-verify@1.1.2"
+          }
+        ],
+        "description": "Block --no-verify / --no-gpg-sign flags on git commands",
+        "id": "pre:bash:block-no-verify"
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/pre-commit-quality.js"
+          }
+        ],
+        "description": "Pre-commit: ruff on staged .py, console.log check on staged .ts/.js",
+        "id": "pre:bash:commit-quality"
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/pre-commit-ml-artifact.js"
+          }
+        ],
+        "description": "Block committing ML model/data blobs (.pt/.onnx/.h5/... or oversized binaries) into git (ADR-0014 ai-ml)",
+        "id": "pre:bash:ml-artifact"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/post-edit-py-lint.js"
+          }
+        ],
+        "description": "Run ruff on any .py file just edited \u2014 output prompts Claude to invoke python-reviewer",
+        "id": "post:edit:py-lint"
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/post-edit-ts-accumulate.js"
+          }
+        ],
+        "description": "Accumulate edited .ts/.tsx paths for batch typecheck at Stop",
+        "id": "post:edit:ts-accumulate"
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/post-edit-console-warn.js"
+          }
+        ],
+        "description": "Warn when console.log appears in an edited .ts/.tsx/.js file",
+        "id": "post:edit:console-warn"
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/post-edit-legacy-risk.js"
+          }
+        ],
+        "description": "Warn on high-risk legacy edits and require explicit legacy/specialist routing",
+        "id": "post:edit:legacy-risk"
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/post-edit-source-accumulate.js"
+          }
+        ],
+        "description": "Accumulate any edited source-code file (all languages) for a holistic code-review nudge at Stop",
+        "id": "post:edit:source-accumulate"
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/post-edit-native-accumulate.js"
+          }
+        ],
+        "description": "Accumulate edited C++/C# files for a language-reviewer nudge (cpp-reviewer / csharp-reviewer) at Stop",
+        "id": "post:edit:native-accumulate"
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/post-edit-ml-leakage.js"
+          }
+        ],
+        "description": "Scan an edited Python training script for data-leakage / no-seed smells \u2014 nudges ml-eval-reviewer (ADR-0014 ai-ml)",
+        "id": "post:edit:ml-leakage"
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/stop-hitl-gate.js",
+            "timeout": 10
+          }
+        ],
+        "description": "Exit 2 while any gates.json entry is pending, forcing the AskUserQuestion approval flow into the main session (D1)",
+        "id": "stop:hitl-gate"
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/stop-typecheck.js",
+            "timeout": 60
+          }
+        ],
+        "description": "Run tsc --noEmit on frontend once per response if any .ts/.tsx files were edited",
+        "id": "stop:typecheck"
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/stop-code-review-reminder.js",
+            "timeout": 10
+          }
+        ],
+        "description": "Force a holistic code-reviewer pass if any source file was edited this session",
+        "id": "stop:code-review-reminder"
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/stop-eval-gate-reminder.js",
+            "timeout": 10
+          }
+        ],
+        "description": "Require an ml-eval-reviewer pass if ML training code was edited this session (ADR-0014/ADR-0015)",
+        "id": "stop:eval-gate-reminder"
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/stop-native-review.js",
+            "timeout": 10
+          }
+        ],
+        "description": "Require cpp-reviewer / csharp-reviewer when C++/C# files were edited this session",
+        "id": "stop:native-review"
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/stop-memory-bank-reminder.js",
+            "timeout": 10
+          }
+        ],
+        "description": "Warn (never block) when source changed but ACTIVE.md/PROGRESS.md did not (TD-017)",
+        "id": "stop:memory-bank-reminder"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/session-start-memory-bank.js",
+            "timeout": 10
+          }
+        ],
+        "description": "Surface the memory bank (paths + staleness) at session start so Layer 0 loads by construction, not by instruction (TD-017)",
+        "id": "session:memory-bank"
+      }
+    ]
+  }
+}

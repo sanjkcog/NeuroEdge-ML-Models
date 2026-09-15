@@ -1,0 +1,29 @@
+# One hub's slice of the simulated world: the external systems THIS hub fronts.
+#
+# 🔴 An external system is simulated exactly once, in one place. It belongs in the sim of the hub
+# that fronts it; if no hub fronts it and one hub calls it, in that caller's sim; if several call
+# it, in `shared/`. Two hubs each holding their own copy of one system are free to disagree, which
+# is the fixture equivalent of a split brain -- so the loader refuses it.
+
+systems:
+  # - id: example_system
+  #   description: What this stands in for, in one line.
+  #
+  #   # Answers addressed by path -- a route table. Captures, feeds and templated responses.
+  #   routes: routes/example_system.routes.json
+  #
+  #   # Answers addressed by (role, caller, capability) -- who is asking changes the answer.
+  #   # This is what makes "find the branch with room" expressible.
+  #   fixtures: fixtures/example_system.json
+  #
+  #   # CSV tables seeded into this scenario's database, for capabilities that query one.
+  #   seed: seed/
+  #
+  #   # Canned model answers, keyed by (model_ref, prompt hash), so a rehearsal costs nothing
+  #   # and returns the same answer twice.
+  #   models: models/responses.json
+  #
+  #   # The tool-server face: a DIRECTORY holding a generated `servers.json` (what each server
+  #   # offers -- derived from discovery, never hand-written) beside an authored `responses.json`
+  #   # (what each tool answers). See mcp/README.md.
+  #   mcp: mcp/

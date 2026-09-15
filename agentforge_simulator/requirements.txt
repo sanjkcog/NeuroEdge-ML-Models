@@ -1,0 +1,20 @@
+# NeuroEdge simulator dependencies -- the full set.
+#
+# Running the simulator standalone is unchanged:
+#     pip install -r requirements.txt
+#
+# The set is split into two groups so a host project that only *consumes* the
+# simulator's transports can inherit just that half. Its ingress layer shares
+# `paho-mqtt` with the simulator but never decodes a spreadsheet or a video
+# frame, so it adds:
+#
+#     -r agentforge_simulator/requirements-transports.txt
+#
+# to its own requirements.txt and skips the input decoders (opencv-python alone
+# is ~60MB). One declaration of each shared pin, owned by the asset. See TD-012.
+#
+# This file composes the groups rather than restating their pins -- a
+# restatement would recreate exactly the duplication the split removes.
+
+-r requirements-inputs.txt
+-r requirements-transports.txt

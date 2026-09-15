@@ -1,0 +1,6 @@
+[
+  { "event": "boot", "device_id": "edge-02", "ts": "2026-07-25T09:00:00Z", "fw": "1.4.2" },
+  { "event": "inference", "device_id": "edge-02", "ts": "2026-07-25T09:00:03Z", "label": "person", "score": 0.94 },
+  { "event": "inference", "device_id": "edge-02", "ts": "2026-07-25T09:00:05Z", "label": "forklift", "score": 0.81 },
+  { "event": "alert", "device_id": "edge-02", "ts": "2026-07-25T09:00:06Z", "rule": "proximity", "severity": "high" }
+]

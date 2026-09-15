@@ -1,0 +1,19 @@
+# NeuroEdge simulator -- input-decoding dependencies.
+#
+# Producer-only: these are what the simulator needs to *read* source data and
+# turn it into events. A host that merely consumes the simulator's transports
+# never decodes a spreadsheet or a video frame, so it should not inherit this
+# group -- opencv-python alone is a very large wheel to install for an MQTT
+# subscriber that never touches a frame. See TD-012.
+
+# timeseries inputs (csv / xls / xlsx)
+pandas>=2.0
+openpyxl>=3.1     # .xlsx reader used by pandas
+xlrd>=2.0         # legacy .xls reader used by pandas
+
+# media inputs (images / video) and frame decoding
+opencv-python>=4.8
+
+# scenario mode (`simulator.py --scenario`): scenario.yaml / sim.yaml bundle manifests.
+# Producer-side like the decoders above -- a host consuming the transports never loads a bundle.
+PyYAML>=6.0

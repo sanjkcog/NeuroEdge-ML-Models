@@ -1,0 +1,41 @@
+# The scenario index. One file describes one runnable simulated world, completely.
+#
+# It references files and never embeds content: fixtures, routes, seeds and canned model
+# responses live beside it, per hub, so a person can edit one answer without reading a manifest.
+#
+# This is the generic base. A host copies it next to a use case and fills it in; nothing in this
+# file names a product, a framework or an agent, and nothing should be added here that does.
+
+scenario: rename-me
+seed: 42
+clock:
+  # 1 real second = `compression` scenario seconds. Raise it to make a long timeline runnable.
+  compression: 1
+
+# Optional: the world's starting records, and the events that arrive during a run.
+# entities: timeline/entities.csv
+# timeline: timeline/events.csv
+
+hubs:
+  # One entry per hub. Each gets its OWN simulator process, so a call from one hub to another
+  # crosses a process boundary exactly as it will in production.
+  #
+  # example_hub:
+  #   # Declared, not assigned: the workflow this exists to serve is a person typing an address
+  #   # into a config and later typing the real one back, and an address that changes every run
+  #   # cannot be typed. `port: 0` asks the OS to assign one, for CI and parallel runs; either
+  #   # way the resolved map is written to run/ports.<scope>.json (ports.<hub>.json with --hub,
+  #   # ports.all.json without).
+  #   port: 9101
+  #   sim: hubs/example_hub/sim.yaml
+  #   # The endpoint overlay: the ONE mechanism that points a capability at this simulator.
+  #   # To go real, replace the value with the production address. Nothing else changes.
+  #   env:
+  #     EXAMPLE_SYSTEM_URL: http://127.0.0.1:9101
+
+# Systems that more than one hub legitimately calls, simulated once, in their own process.
+# shared:
+#   port: 9100
+#   sim: shared/sim.yaml
+#   env:
+#     SHARED_REGISTRY_URL: http://127.0.0.1:9100

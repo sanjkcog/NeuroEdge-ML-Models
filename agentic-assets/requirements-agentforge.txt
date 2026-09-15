@@ -1,0 +1,23 @@
+# NeuroEdge AgentForge -- every Python package AgentForge's shipped code needs (ADR-0020).
+#
+# Installed to <project>/agentic-assets/requirements-agentforge.txt and rewritten on every
+# AgentForge update. Do not edit it; reference it from your own dependency file instead:
+#
+#   requirements.txt / requirements-dev.txt:   -r agentic-assets/requirements-agentforge.txt
+#   pyproject.toml with uv:                    uv add --group agentforge -r agentic-assets/requirements-agentforge.txt
+#   neither:                                   pip install -r agentic-assets/requirements-agentforge.txt
+#
+# Paths are relative to THIS file's installed location (pip and uv resolve -r that way), so they
+# name the target layout: the simulator is agentforge_simulator/ there, not simulator/.
+#
+# Software pip cannot install -- ffmpeg, Node.js, git, gh, an MQTT broker -- is listed in
+# agentic-assets/docs/guides/how_to_install_agentforge.md; `python health_check/cli.py --only tools`
+# reports which are missing.
+#
+# If this set conflicts with your own pins, reference the lines below individually instead and
+# leave out requirements-voice.txt: it pulls torch, the largest and most pin-sensitive package here.
+
+-r ../agentforge/src/requirements.txt
+-r ../src/neuroedge_marketing/requirements.txt
+-r ../src/neuroedge_marketing/requirements-voice.txt
+-r ../agentforge_simulator/requirements.txt

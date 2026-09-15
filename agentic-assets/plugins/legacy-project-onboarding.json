@@ -1,0 +1,50 @@
+{
+  "name": "legacy-project-onboarding",
+  "description": "Recommended MCP/plugin profile for applying AgentForge to brownfield or legacy codebases.",
+  "default_command": "/legacy-audit",
+  "primary_agent": "legacy-modernizer",
+  "primary_skill": "agentic-assets/skills/SDLC/development/legacy-modernization.md",
+  "recommended_mcp_servers": [
+    {
+      "id": "filesystem",
+      "why": "Read local legacy project files and subfolders that are not already in the assistant context."
+    },
+    {
+      "id": "github",
+      "why": "Inspect issues, pull requests, commit history, ownership, and release evidence."
+    },
+    {
+      "id": "memory",
+      "why": "Persist durable project facts across onboarding and modernization sessions."
+    },
+    {
+      "id": "context7",
+      "why": "Lookup current framework and library documentation while auditing old dependencies."
+    },
+    {
+      "id": "playwright",
+      "why": "Validate browser behavior and create regression evidence for UI-heavy legacy apps."
+    },
+    {
+      "id": "devfleet",
+      "why": "Optional for large legacy estates where independent agents should map subsystems in parallel."
+    }
+  ],
+  "memory_bank_outputs": [
+    "CLAUDE.md",
+    "AGENTS.md",
+    "docs/context/ACTIVE.md",
+    "docs/context/PROGRESS.md",
+    "docs/context/REPO_MAP.md",
+    "docs/context/OPEN_QUESTIONS.md",
+    "docs/decisions/ADR-0000-template.md",
+    "docs/audit/legacy-audit-<date>.md"
+  ],
+  "safety_gates": [
+    "Record baseline before changing behavior.",
+    "Add characterization tests for critical flows.",
+    "Use subfolder CLAUDE.md files where commands or conventions differ.",
+    "Create ADRs for modernization boundaries, migration strategy, or framework changes.",
+    "Run /quality-gate and relevant language reviewers before PR."
+  ]
+}

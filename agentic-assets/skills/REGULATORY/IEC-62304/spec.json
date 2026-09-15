@@ -1,0 +1,220 @@
+{
+  "id": "IEC-62304",
+  "edition": "2006+A1:2015",
+  "authority": "IEC",
+  "classification_axis": ["A", "B", "C"],
+  "required_sections": [
+    {
+      "id": "software-development-plan",
+      "title": "Software development plan",
+      "spec_ref": "5.1",
+      "required_for_classes": ["A", "B", "C"],
+      "field_constraints": {},
+      "cross_references": [],
+      "fillable": true
+    },
+    {
+      "id": "software-requirements",
+      "title": "Software requirements analysis",
+      "spec_ref": "5.2",
+      "required_for_classes": ["A", "B", "C"],
+      "field_constraints": {},
+      "cross_references": [],
+      "fillable": true
+    },
+    {
+      "id": "software-architecture",
+      "title": "Software architectural design",
+      "spec_ref": "5.3",
+      "required_for_classes": ["B", "C"],
+      "field_constraints": {},
+      "cross_references": [],
+      "fillable": true
+    },
+    {
+      "id": "detailed-design",
+      "title": "Software detailed design",
+      "spec_ref": "5.4",
+      "required_for_classes": ["C"],
+      "field_constraints": {},
+      "cross_references": [],
+      "fillable": true
+    },
+    {
+      "id": "unit-implementation-verification",
+      "title": "Software unit implementation and verification",
+      "spec_ref": "5.5",
+      "required_for_classes": ["A", "B", "C"],
+      "field_constraints": {},
+      "cross_references": [],
+      "fillable": true
+    },
+    {
+      "id": "software-integration-testing",
+      "title": "Software integration and integration testing",
+      "spec_ref": "5.6",
+      "required_for_classes": ["B", "C"],
+      "field_constraints": {},
+      "cross_references": [],
+      "fillable": true
+    },
+    {
+      "id": "software-system-testing",
+      "title": "Software system testing",
+      "spec_ref": "5.7",
+      "required_for_classes": ["A", "B", "C"],
+      "field_constraints": {},
+      "cross_references": [],
+      "fillable": true
+    },
+    {
+      "id": "software-release",
+      "title": "Software release",
+      "spec_ref": "5.8",
+      "required_for_classes": ["A", "B", "C"],
+      "field_constraints": {},
+      "cross_references": [],
+      "fillable": true
+    },
+    {
+      "id": "soup-identification",
+      "title": "SOUP (Software of Unknown Provenance) identification",
+      "spec_ref": "5.3.3/8.1.2",
+      "required_for_classes": ["A", "B", "C"],
+      "field_constraints": {},
+      "cross_references": ["ISO-14971:2019"],
+      "fillable": true
+    },
+    {
+      "id": "soup-anomaly-evaluation",
+      "title": "Evaluation of SOUP published anomaly lists",
+      "spec_ref": "7.1.3",
+      "required_for_classes": ["A", "B", "C"],
+      "field_constraints": {},
+      "cross_references": ["ISO-14971:2019"],
+      "fillable": false
+    },
+    {
+      "id": "risk-management-iso14971",
+      "title": "Software risk management (content owned by the ISO 14971 risk file)",
+      "spec_ref": "7",
+      "required_for_classes": ["A", "B", "C"],
+      "field_constraints": {},
+      "cross_references": ["ISO-14971:2019"],
+      "fillable": false
+    },
+    {
+      "id": "software-configuration-management",
+      "title": "Software configuration management",
+      "spec_ref": "8",
+      "required_for_classes": ["A", "B", "C"],
+      "field_constraints": {},
+      "cross_references": [],
+      "fillable": true
+    },
+    {
+      "id": "software-problem-resolution",
+      "title": "Software problem resolution",
+      "spec_ref": "9",
+      "required_for_classes": ["A", "B", "C"],
+      "field_constraints": {},
+      "cross_references": [],
+      "fillable": true
+    },
+    {
+      "id": "design-development-record-set",
+      "title": "Design and development record set (QMSR-harmonized)",
+      "spec_ref": "5",
+      "required_for_classes": ["A", "B", "C"],
+      "field_constraints": {},
+      "cross_references": ["21-CFR-820.30(j)", "ISO-13485:2016"],
+      "fillable": true
+    }
+  ],
+  "conformance_checklist": [
+    {
+      "rule": "development-plan-present",
+      "section": "software-development-plan",
+      "condition": "section is present",
+      "severity": "hard"
+    },
+    {
+      "rule": "requirements-present",
+      "section": "software-requirements",
+      "condition": "section is present",
+      "severity": "hard"
+    },
+    {
+      "rule": "architecture-present-for-b-and-c",
+      "section": "software-architecture",
+      "condition": "section is present when active_class in [B, C]",
+      "severity": "hard"
+    },
+    {
+      "rule": "detailed-design-present-for-c",
+      "section": "detailed-design",
+      "condition": "section is present when active_class == C",
+      "severity": "hard"
+    },
+    {
+      "rule": "unit-verification-present",
+      "section": "unit-implementation-verification",
+      "condition": "section is present",
+      "severity": "hard"
+    },
+    {
+      "rule": "integration-testing-present-for-b-and-c",
+      "section": "software-integration-testing",
+      "condition": "section is present when active_class in [B, C]",
+      "severity": "hard"
+    },
+    {
+      "rule": "system-testing-present",
+      "section": "software-system-testing",
+      "condition": "section is present",
+      "severity": "hard"
+    },
+    {
+      "rule": "release-present",
+      "section": "software-release",
+      "condition": "section is present",
+      "severity": "hard"
+    },
+    {
+      "rule": "soup-identified",
+      "section": "soup-identification",
+      "condition": "section is present",
+      "severity": "hard"
+    },
+    {
+      "rule": "soup-anomaly-evaluation-never-auto-filled",
+      "section": "soup-anomaly-evaluation",
+      "condition": "section is always a gap unless a human supplies it (fillable == false)",
+      "severity": "hard"
+    },
+    {
+      "rule": "risk-file-never-auto-filled",
+      "section": "risk-management-iso14971",
+      "condition": "section is always a gap unless a human supplies it (fillable == false)",
+      "severity": "hard"
+    },
+    {
+      "rule": "configuration-management-present",
+      "section": "software-configuration-management",
+      "condition": "section is present",
+      "severity": "hard"
+    },
+    {
+      "rule": "problem-resolution-present",
+      "section": "software-problem-resolution",
+      "condition": "section is present",
+      "severity": "hard"
+    },
+    {
+      "rule": "record-set-present",
+      "section": "design-development-record-set",
+      "condition": "section is present",
+      "severity": "hard"
+    }
+  ]
+}

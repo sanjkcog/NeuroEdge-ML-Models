@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neuroedge.ai/agentforge/run.schema.json",
+  "title": "AgentForge run.json",
+  "description": "Persisted state for one /agentforge run. Written atomically after every stage transition so a run resumes from this file alone, with no transcript (FR-02). Decided in ADR-0001.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "objective",
+    "current_stage",
+    "completed_stages",
+    "gate",
+    "stages"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Schema version this file was written against."
+    },
+    "objective": {
+      "type": "string",
+      "description": "The objective /agentforge was invoked with."
+    },
+    "created": {
+      "type": "string",
+      "description": "ISO-8601 creation timestamp."
+    },
+    "updated": {
+      "type": "string",
+      "description": "ISO-8601 timestamp of the last write."
+    },
+    "current_stage": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "GROUP 1 — active stage id, or null when the run is complete or escalated."
+    },
+    "sprint_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "EP-08 (ADR-0005) — pointer to the cross-run sprint-NN.json container this run is enrolled in, set at S5. Optional per ADR-0001's migration rule: a pre-EP-08 run.json with no such key still loads, defaulting to null."
+    },
+    "completed_stages": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "GROUP 2 — stage ids that finished, in completion order. The resume cursor."
+    },
+    "gate": {
+      "type": "object",
+      "description": "GROUP 4 — gate/approval state. Reserved for the EP-02 HITL gates; not built in Phase 1.",
+      "required": [
+        "pending",
+        "stage",
+        "reason"
+      ],
+      "properties": {
+        "pending": {
+          "type": "boolean"
+        },
+        "stage": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "escalation": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Set when a stage fails twice consecutively (Task 32); null otherwise.",
+      "properties": {
+        "stage": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "at": {
+          "type": "string"
+        }
+      }
+    },
+    "stages": {
+      "type": "object",
+      "description": "Per-stage state, keyed by stage id — see run_state.STAGE_SEQUENCE for the full, current ordered list (S0 onboarding through the enablement stage).",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "agent",
+          "status",
+          "artifacts",
+          "consecutive_failures",
+          "spawns",
+          "usage"
+        ],
+        "properties": {
+          "agent": {
+            "type": "string",
+            "description": "The agent (or, for command-only stages with no owning agent, a descriptive marker) that owns this stage — see run_state.STAGE_AGENTS for the current mapping."
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "in_progress",
+              "complete",
+              "failed"
+            ],
+            "description": "Lifecycle. Written in_progress BEFORE the agent spawns, complete only AFTER it succeeds — so an interrupted stage reads in_progress on resume (FR-02)."
+          },
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "GROUP 3 — paths this stage produced."
+          },
+          "consecutive_failures": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Consecutive failed spawns for this stage; reset to 0 on success."
+          },
+          "spawns": {
+            "type": "array",
+            "description": "One record per agent spawn attempt on this stage.",
+            "items": {
+              "type": "object",
+              "required": [
+                "spawned_by",
+                "at",
+                "result"
+              ],
+              "properties": {
+                "spawned_by": {
+                  "enum": [
+                    "orchestrator",
+                    "human",
+                    "external"
+                  ],
+                  "description": "Who initiated the spawn. The 'manual invocations = 0' metric counts non-orchestrator spawns (Task 34). 'external' (ADR-0012 EP-02, additive) is stamped by exchange/drive.py's apply_intent when an inbound Git-exchange drive intent advances a stage, so audit can tell an external driver apart from a human or the orchestrator; older run.json files with only 'orchestrator'/'human' still load unchanged."
+                },
+                "at": {
+                  "type": "string"
+                },
+                "result": {
+                  "enum": [
+                    "in_progress",
+                    "complete",
+                    "failed"
+                  ]
+                },
+                "identity": {
+                  "type": "string",
+                  "description": "WHO proposed this spawn (ADR-0012 US-02-02, additive, optional — never required so an older run.json with no identity field still loads unchanged). Independent of spawned_by (WHICH category proposed it): an inbound drive intent's DriveIntent.identity is stamped here verbatim by exchange/drive.py's apply_intent for audit attribution, but is never trusted as an approval credential or used to derive spawned_by. '' (default) means unknown/not recorded, e.g. every orchestrator/human spawn that predates this field."
+                }
+              }
+            }
+          },
+          "usage": {
+            "type": "object",
+            "description": "GROUP 5 — per-run usage, aggregated into sprint-NN.json's runs accumulator by the PM-lane refresh() and read by /budget-report at S16 sprint-close. Figures are CUMULATIVE across every pass over the stage; individual passes are preserved in usage_history.",
+            "required": [
+              "tokens_in",
+              "tokens_out",
+              "api_calls",
+              "cost_usd"
+            ],
+            "properties": {
+              "tokens_in": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "tokens_out": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "api_calls": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "cost_usd": {
+                "type": "number",
+                "minimum": 0
+              },
+              "source": {
+                "enum": [
+                  "measured",
+                  "estimated",
+                  "unrecorded",
+                  "unspecified"
+                ],
+                "description": "TD-018 provenance of the figures. AgentForge never observes tokens — the numbers are supplied by the caller — so the ledger records where each came from. 'measured': transcribed from a real reported usage figure. 'estimated': derived by a stated method (e.g. an orchestrator-owned stage, which has no spawn result to read). 'unrecorded': no figure available — NOT a zero, and excluded from rollup totals. 'unspecified': legacy/pre-TD-018 record, or figures supplied without declaring provenance."
+              }
+            }
+          },
+          "usage_history": {
+            "type": "array",
+            "description": "TD-018: one entry per superseded pass over this stage (a re-completion after reopen, or a retry after fail). Before this existed, re-completing a reopened stage OVERWROTE its usage and the prior pass's cost was lost — mirroring the spawn trail reopen_stage already preserves.",
+            "items": {
+              "$ref": "#/properties/stages/additionalProperties/properties/usage"
+            }
+          }
+        }
+      }
+    }
+  }
+}

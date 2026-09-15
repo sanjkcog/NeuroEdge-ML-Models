@@ -1,0 +1,14 @@
+# neuroedge_marketing — core dependencies: footage fetch, captions, assembly.
+#
+# Reached from agentic-assets/requirements-agentforge.txt, the single entry point that also pulls in
+# requirements-voice.txt (ADR-0020). Install that file into YOUR project's environment; AgentForge
+# reports dependencies and never edits yours.
+#
+# ffmpeg and ffprobe must also be on PATH (or FFMPEG_BIN set). They are binaries, not pip packages:
+# https://ffmpeg.org
+pydantic>=2.0
+requests>=2.31
+# faster-whisper: only for `render --captions transcribe` (captions default to the approved script text)
+faster-whisper>=1.0
+# PyYAML: only for `render --say-as` given a .yaml/.yml file (JSON needs nothing)
+PyYAML>=6.0

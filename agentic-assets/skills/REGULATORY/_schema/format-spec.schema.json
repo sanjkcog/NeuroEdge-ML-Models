@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://neuroedge.dev/schemas/regulatory/format-spec.schema.json",
+  "title": "Regulatory format-spec (ADR-0009, FR-02)",
+  "description": "Meta-schema for a class-parameterized regulatory format spec (e.g. skills/REGULATORY/IEC-62304/spec.json). A regime instance declares its required sections and a conformance checklist; class-gating is a data-driven filter (required_for_classes), never a per-class schema fork. `fillable` on every section and `section` on every checklist entry are structural invariants (C-3): omitting either fails validation so a permissive default can never be assumed.",
+  "type": "object",
+  "required": [
+    "id",
+    "edition",
+    "authority",
+    "classification_axis",
+    "required_sections",
+    "conformance_checklist"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Regime identifier, e.g. 'IEC-62304'. Used verbatim as <spec> in the gap-line template."
+    },
+    "edition": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The pinned edition/date of the regulatory document, e.g. '2006+A1:2015'."
+    },
+    "authority": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Issuing authority/standards body, e.g. 'IEC'."
+    },
+    "classification_axis": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Ordered set of software safety classes this regime gates on, e.g. ['A','B','C']."
+    },
+    "required_sections": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/section" }
+    },
+    "conformance_checklist": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/checklist_entry" }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "section": {
+      "type": "object",
+      "required": [
+        "id",
+        "title",
+        "spec_ref",
+        "required_for_classes",
+        "field_constraints",
+        "cross_references",
+        "fillable"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Stable section identifier. MUST describe the regulatory requirement (e.g. 'design-development-record-set'), never a hardcoded customer-document token such as 'DHF'."
+        },
+        "title": { "type": "string", "minLength": 1 },
+        "spec_ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Bare section-number reference within the regime document, e.g. '5.3' (no leading section-symbol — the gap-line template supplies '§' itself)."
+        },
+        "required_for_classes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Subset of classification_axis for which this section is required. A class-gate filter reads this list; it is never expressed as a separate per-class schema."
+        },
+        "field_constraints": {
+          "type": "object",
+          "description": "Free-form structural constraints on the section's expected fields. Data, not enforced by this meta-schema beyond being an object."
+        },
+        "cross_references": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Other standards/sections this section cross-references, e.g. ['ISO-14971:2019']."
+        },
+        "fillable": {
+          "type": "boolean",
+          "description": "Structural invariant (C-3, RK-01/RK-02): false means the reformatter's single write path (_emit_section) may NEVER populate this slot with generated content, regardless of what appears in the source — always a gap line and a marked, empty slot. Required so a section can never omit it and fall back to a permissive default."
+        }
+      },
+      "additionalProperties": true
+    },
+    "checklist_entry": {
+      "type": "object",
+      "required": ["rule", "section", "condition", "severity"],
+      "properties": {
+        "rule": { "type": "string", "minLength": 1 },
+        "section": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The required_sections[].id this checklist rule evaluates. Required (C-3, AC-02.3): a checklist entry with no section is unenforceable and must be rejected."
+        },
+        "condition": { "type": "string", "minLength": 1 },
+        "severity": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    }
+  }
+}
