@@ -3,14 +3,15 @@
 ## NeuroEdge Assets
 
 > At the start of your response output exactly:
-> `[ NeuroEdge Assets ]  /model-build · Skills: model-codegen, model-architectures, time-series-ml, ml-artifact-destination`
+> `[ NeuroEdge Assets ]  /model-build · Skills: ml-model-package, model-codegen, model-architectures, time-series-ml, ml-artifact-destination`
 >
 > Then read these skill files before executing:
+> - `agentic-assets/skills/ENGINEERING/ai-ml/ml-model-package.md`
 > - `agentic-assets/skills/ENGINEERING/ai-ml/model-codegen.md`
 > - `agentic-assets/skills/ENGINEERING/ai-ml/model-architectures.md`
 > - `agentic-assets/skills/ENGINEERING/ai-ml/time-series-ml.md`
 > - `agentic-assets/skills/ENGINEERING/_mechanism/ml-artifact-destination.md`
-<!-- neuroedge-assets-patched source-version=8acd6bf -->
+<!-- neuroedge-assets-patched source-version=4cf4279 -->
 
 ## Arguments
 
@@ -29,7 +30,7 @@ does NOT run training** and assumes no local GPU. Spawns `ml-modeler` (applies `
 
 ## Procedure
 
-0. **Resolve the destination** — apply `ml-artifact-destination`: use `--dest`, or propose `<ML_ROOT>/<intent>-<modality>` and **ask the user to confirm before writing anything**. Call the confirmed absolute path `<dest>` and pass it to every spawned agent.
+0. **Resolve the destination** — apply `ml-artifact-destination`: use `--dest`, or propose `<ML_ROOT>/<intent>-<modality>` and **ask the user to confirm before writing anything**. Call the confirmed absolute path `<dest>` and pass it to every spawned agent. Inside an `/agentforge-ml` run `--dest` is always passed — **do not ask**; the orchestrator already confirmed it (ADR-0022 D-2).
 1. Spawn **`ml-modeler`** to generate the handoff package into `<dest>/<architecture>/` — one subfolder per
    architecture, e.g. `1DCNN/`. Take the architecture from `<dest>/model-select.md` when it exists;
    **otherwise** take it from `$ARGUMENTS` or ask the user, and record the choice in `<dest>/model-select.md`
@@ -39,14 +40,24 @@ does NOT run training** and assumes no local GPU. Spawns `ml-modeler` (applies `
    requirements.txt/environment.yml · data/README.md · RUN_ON_GPU.md
    ```
    honoring the framework choice and reusing `agentic-assets/skills/SOFTWARE/pytorch/pytorch-patterns.md` idioms.
+   `train.py` reads the split from `<dest>/data/splits/{train,val}.json` — **never `test.json`** — and ends by
+   writing the **model-package** (`ml-model-package`): `model.onnx` at the pinned opset with normalisation and,
+   for a scalar head, the `Sigmoid` folded in; `meta.json`; `model_artifact.json` with the `baseline` block;
+   `metrics.json` labelled `eval_split: self_reported_val`; optional `calibration/` from the train split.
+   `eval.py --package <pkg> --split <dest>/data/splits/test.json` produces the held-out `metrics.json`.
+   When the consuming platform publishes a scaffold (NeuroEdge: `GET /models/scaffold`), **read its context**
+   (use case id, classes, resolution, target device, KPIs) and write the package through its return helper
+   (`neuroedge_return`) rather than re-typing the contract; the training body is yours, the contract is theirs.
 2. **Verify the invariants** (device-agnostic · seed-reproducible · **leakage-safe** · checkpoint+export
    to the target format · config-driven, no hardcoded hyperparameters/seed · **task-correct metrics**,
-   ranking metrics for recommenders).
+   ranking metrics for recommenders · **package-complete**: every `ml-model-package` field present, threshold
+   chosen on validation, baseline emitted with `beats_baseline`, class order identical everywhere).
 3. Spawn **`ml-eval-reviewer`** on the generated code. A **leakage** or **wrong-metric** finding is a
    blocker — loop back to `ml-modeler` to fix before handoff.
-4. Present the package path + `RUN_ON_GPU.md` summary. **AgentForge stops here** — the user provisions
-   a cloud GPU, installs `requirements.txt`, fetches the dataset (id/URL or synthetic recipe), runs
-   `train.py`, and collects `checkpoint` + `metrics.json`.
+4. Present the package path + `RUN_ON_GPU.md` summary. **This command stops here** — the user runs `train.py`
+   on their GPU (laptop / VM) and collects `<arch>/runs/<run_id>/model-package/`. Inside `/agentforge-ml` the
+   orchestrator then waits at `train`, runs `eval.py` on the withheld test split at `eval`, and posts the package
+   to the platform at `return`.
 
 ## Boundary (explicit)
 

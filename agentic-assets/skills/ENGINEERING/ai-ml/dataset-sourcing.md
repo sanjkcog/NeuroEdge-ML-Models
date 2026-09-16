@@ -38,6 +38,13 @@ are not authoritative), **UCI** (#447 Hydraulic), **UCR/UEA archives** (benchmar
 builds: **Paderborn KAt (CC BY-NC)**, **MIMII / ToyADMOS2 / DCASE task-2 (CC BY-NC-SA)**. Full
 table and split rules: [`time-series-ml`](time-series-ml.md).
 
+**Keys (ADR-0022 D-12, closes ADR-0014 OQ-1).** Scouting reads public metadata and needs **no key**.
+Downloading (`/dataset-verify`) needs one only for some sources: Kaggle — `KAGGLE_USERNAME` +
+`KAGGLE_KEY`; Roboflow — `ROBOFLOW_API_KEY`; Hugging Face — `HF_TOKEN` for gated/private sets only;
+PHM Society — manual registration. KIT / NASA PCoE / data.gov / Bosch GitHub / UCI / TFDS — none. Record
+the requirement in the card's front matter as `keys_required`; an unset key stops the download with its
+name, and never falls back to a mirror whose licence is not the rights holder's.
+
 ## The four evaluation gates (a candidate must pass all)
 
 1. **Task fit** — label type matches the objective (bbox vs mask vs class vs value), domain matches

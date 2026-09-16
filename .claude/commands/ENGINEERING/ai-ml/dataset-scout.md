@@ -28,7 +28,7 @@ first step of the `ai-ml` pipeline (ADR-0014). Spawns the `ml-data-engineer` age
 
 ## Procedure
 
-0. **Resolve the destination** — apply `ml-artifact-destination`: use `--dest`, or propose `<ML_ROOT>/<intent>-<modality>` and **ask the user to confirm before writing anything**. Call the confirmed absolute path `<dest>` and pass it to every spawned agent.
+0. **Resolve the destination** — apply `ml-artifact-destination`: use `--dest`, or propose `<ML_ROOT>/<intent>-<modality>` and **ask the user to confirm before writing anything**. Call the confirmed absolute path `<dest>` and pass it to every spawned agent. Inside an `/agentforge-ml` run `--dest` is always passed — **do not ask**; the orchestrator already confirmed it (ADR-0022 D-2).
 1. Spawn **`ml-data-engineer`** with the objective and the task-family hint. Instruct it to:
    - Search **Hugging Face Datasets**, **Roboflow Universe**, **Kaggle**, and **TFDS** for candidates.
      For `--timeseries`, search the PdM sources instead — **NASA PCoE**, **PHM Society challenges**,
@@ -42,9 +42,15 @@ first step of the `ai-ml` pipeline (ADR-0014). Spawns the `ml-data-engineer` age
 2. Present the ranked report to the user. **License is blocking**: if the picked dataset's license is
    incompatible or unverifiable, say so and do not present it as usable (ADR-0014 OQ-2).
 3. Write the `dataset-card` to `<dest>/data/dataset-card.md` and add a stage-log row to `<dest>/README.md`
-   (reference datasets by id/URL — never download blobs into the repo). End by printing the path.
+   (reference datasets by id/URL — never download blobs into the repo). The card opens with a **YAML front
+   matter** that later stages parse — `id`, `url`, `license`, `license_verdict`, `modality`, `units` (the
+   physical-unit key: experiment / cutter / machine / recording), `required_channels` or `classes`,
+   `split_rule` (`grouped` | `chronological`), `expected_counts`, and `keys_required` (none | kaggle |
+   roboflow | hf-gated | manual). Prose below it is for humans. End by printing the path.
 
 ## Next step
 
-- Suitable dataset found → `/auto-label` (if labels are missing) then `/model-select`.
+- Suitable dataset found → `/dataset-verify` (download, measure, split per unit, withhold test, human gate),
+  then `/auto-label` if labels are missing, then `/model-select`.
 - No suitable dataset → `/synth-data`.
+- Inside `/agentforge-ml` the orchestrator sequences these; the licence verdict is its hard M1 gate.

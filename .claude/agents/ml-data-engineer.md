@@ -25,17 +25,25 @@ artifacts downstream stages cite. You prepare data; you do **not** select the ar
 
 ## Process
 
+0. **Destination** — you are given an absolute `<dest>`; every path below is under it.
 1. **Source first** — apply `dataset-sourcing`: search HF Datasets / Roboflow Universe / Kaggle /
    TFDS, evaluate each candidate against the four gates (task-fit, **license compatibility**,
    class-balance/size, label quality), and produce a ranked `dataset-card` with a single pick — or
    the finding "no suitable real dataset."
+1b. **Verify** (`/dataset-verify`, ADR-0022 M2) — download to the data dir (never git), write
+   `data/profile.json` from what arrived (claimed vs measured, side by side), split **per physical unit** or
+   chronologically with a gap, stratified so no split is single-class, write `data/splits/{train,val,test}.json`
+   + `split_hash`, **withhold test**, and build `data/portal_upload.zip` from train + val only. Present the human
+   gate; never approve it yourself.
 2. **Synthesize if needed** — if sourcing finds nothing suitable, or a class is rare/under-represented,
    apply `synthetic-data`: pick a render pipeline (Replicator/BlenderProc/Kubric) and/or diffusion
    augmentation, define domain randomization, and record a reproducible `synthetic-recipe`. Always keep
    a real hold-out for validation.
-3. **Label** — apply `data-labeling`: auto-label with Autodistill (Grounding DINO + SAM/Grounded-SAM-2)
-   into a human review queue, then correct; produce a `label-manifest` with per-class counts, split
-   integrity, and auto-vs-human provenance.
+3. **Label** — vision: apply `data-labeling` (Autodistill: Grounding DINO + SAM/Grounded-SAM-2 → Label Studio
+   review → FiftyOne QA → YOLO export with class names identical to the use case). Time series: apply a
+   **window rule** (`majority` | `any` | `unit`) by code over the fixed splits, or record `training_labels: none`
+   for normal-only detection. Either way produce `data/label-manifest.md` with per-split counts, `split_hash`,
+   and provenance.
 4. **Curate** — check class balance, de-duplicate, and verify **no train/val/test leakage** (no image
    or near-duplicate across splits). Use FiftyOne patterns.
 

@@ -97,9 +97,12 @@ reviewed by a human, or controlled seeding (synthetic anomalies carry free label
 ## Deployment shape
 
 Export ONNX with a **pinned opset** (repo-wide — mixed opsets across trainer/profiler/device is a
-recorded field failure); input `(1, n_features, window)`; persist `meta.json`
-(feature order, window, stride, mean/std, class names) beside the model — device parity depends
-on it. A model of this class runs on an MCU (~tens of KB); Jetson-class hardware is oversized but
+recorded field failure; for NeuroEdge it is **13**, the value the device runtime is proven against —
+Web ADR-0001 W-3); input `(1, n_features, window)`, channels-first, **static feature dimension**;
+fold train-split normalisation and a scalar head's `Sigmoid` **into the graph** so they cannot drift
+from the weights (W-4, ADR-0003 B-3); persist `meta.json` (feature order, window, stride, mean/std for
+provenance, head shape + range, decision threshold chosen on validation, class names) beside the
+model — device parity depends on it. The full folder contract is [`ml-model-package`](ml-model-package.md). A model of this class runs on an MCU (~tens of KB); Jetson-class hardware is oversized but
 fine when already owned.
 
 ## Do NOT

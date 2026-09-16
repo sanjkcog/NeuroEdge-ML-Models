@@ -104,6 +104,75 @@ STAGE_AGENTS: dict[str, str] = {
     "enablement": "none (/product-doc, /marketing-video --technical-walkthrough)",
 }
 
+# The ML pipeline (ADR-0022 D-3/D-4) — `/agentforge-ml`'s stage graph, reusing this
+# same state machine rather than a second module. M0 `destination` is the orchestrator
+# resolving/confirming the model folder (ADR-0021); M7 `train` and M9 `return` are
+# likewise orchestrator/external steps with no owning agent. Two agents cover the rest:
+# `ml-data-engineer` (scout/verify/label/synth) and `ml-modeler` (model-select through
+# model-card).
+ML_STAGE_SEQUENCE: tuple[str, ...] = (
+    "destination", "scout", "verify", "label", "synth",
+    "model-select", "model-build",
+    "train",
+    "eval",
+    "return",
+    "model-card",
+)
+ML_STAGE_AGENTS: dict[str, str] = {
+    "destination": "none (orchestrator — resolves the model folder, ADR-0021/0022)",
+    "scout": "ml-data-engineer",
+    "verify": "ml-data-engineer",
+    "label": "ml-data-engineer",
+    "synth": "ml-data-engineer",
+    "model-select": "ml-modeler",
+    "model-build": "ml-modeler",
+    "train": "none (external — laptop GPU / AWS VM / portal; dependency-wait)",
+    "eval": "none (orchestrator runs eval.py on the withheld test split)",
+    "return": "none (POST upload-return-package to the portal)",
+    "model-card": "ml-modeler",
+}
+
+# Registry of named stage sequences (ADR-0022 D-3): `run.json`'s "sequence" field
+# selects one entry. "sdlc" is /agentforge's own STAGE_SEQUENCE/STAGE_AGENTS above,
+# kept as module-level names so every existing importer (pm/refresh.py, tests) is
+# unaffected. "ml" is /agentforge-ml's. One file, one schema field, no second state
+# machine — every function below reads the sequence named by the state it is given,
+# via _seq()/_agents(), rather than reaching for the module-level SDLC pair directly.
+DEFAULT_SEQUENCE = "sdlc"
+SEQUENCES: dict[str, tuple[tuple[str, ...], dict[str, str]]] = {
+    "sdlc": (STAGE_SEQUENCE, STAGE_AGENTS),
+    "ml": (ML_STAGE_SEQUENCE, ML_STAGE_AGENTS),
+}
+
+
+def _seq(sequence: str) -> tuple[str, ...]:
+    """The ordered stage ids for `sequence`. Raises ValueError naming it, if unknown."""
+    try:
+        return SEQUENCES[sequence][0]
+    except KeyError:
+        raise ValueError(
+            f"unknown sequence {sequence!r}, expected one of {sorted(SEQUENCES)}"
+        ) from None
+
+
+def _agents(sequence: str) -> dict[str, str]:
+    """The stage -> agent mapping for `sequence`. Raises ValueError naming it, if unknown."""
+    try:
+        return SEQUENCES[sequence][1]
+    except KeyError:
+        raise ValueError(
+            f"unknown sequence {sequence!r}, expected one of {sorted(SEQUENCES)}"
+        ) from None
+
+
+# Every stage id across every registered sequence, for the CLI's `choices=` (D-3): a
+# subcommand accepts the union up front and validates against the loaded run's own
+# sequence at runtime (see main()'s per-command checks below), because argparse choices
+# are resolved before run.json is even read.
+ALL_STAGE_IDS: tuple[str, ...] = tuple(
+    dict.fromkeys(sid for seq, _ in SEQUENCES.values() for sid in seq)
+)
+
 # Escalate to the human after this many consecutive failed spawns on one stage.
 MAX_CONSECUTIVE_FAILURES = 2
 
@@ -338,16 +407,27 @@ def _validate(data: dict) -> None:
     if not isinstance(data.get("stages"), dict):
         raise InvalidRunState("INVALID run.json: field 'stages' must be an object")
 
-    # A run.json created under an OLDER, shorter STAGE_SEQUENCE (e.g. before
-    # roles.plan.md extended it from 3 to 6 stages) loads this far without incident,
-    # then crashes with a raw KeyError on the very next transition — enter_stage/
-    # complete_stage/fail_stage all subscript state.stages[stage] for every id in the
-    # CURRENT STAGE_SEQUENCE, and complete_stage's all-complete scan iterates it too.
-    # Reject it here instead, by name, matching this module's "never partially resume
-    # a corrupt file" contract — a stage-set mismatch is exactly that, even though the
-    # file is syntactically well-formed (code-review HIGH finding).
+    # "sequence" (ADR-0022 D-3) is optional and defaults to "sdlc" so a pre-existing
+    # run.json with no such key loads unchanged. An explicit value must still name a
+    # registered sequence — an unknown one is rejected by name, same as any other
+    # corrupt field, rather than surfacing as a KeyError inside _seq() below.
+    sequence = data.get("sequence", DEFAULT_SEQUENCE)
+    if sequence not in SEQUENCES:
+        raise InvalidRunState(
+            f"INVALID run.json: field 'sequence' has unknown value {sequence!r}, "
+            f"expected one of {sorted(SEQUENCES)}"
+        )
+
+    # A run.json created under an OLDER, shorter stage sequence for its own "sequence"
+    # (e.g. before roles.plan.md extended STAGE_SEQUENCE from 3 to 6 stages) loads this
+    # far without incident, then crashes with a raw KeyError on the very next
+    # transition — enter_stage/complete_stage/fail_stage all subscript state.stages[stage]
+    # for every id in the CURRENT sequence, and complete_stage's all-complete scan
+    # iterates it too. Reject it here instead, by name, matching this module's "never
+    # partially resume a corrupt file" contract — a stage-set mismatch is exactly that,
+    # even though the file is syntactically well-formed (code-review HIGH finding).
     loaded_stages = set(data["stages"])
-    current_stages = set(STAGE_SEQUENCE)
+    current_stages = set(_seq(sequence))
     if loaded_stages != current_stages:
         missing = current_stages - loaded_stages
         extra = loaded_stages - current_stages
@@ -357,9 +437,9 @@ def _validate(data: dict) -> None:
         if extra:
             detail.append(f"unexpected {sorted(extra)}")
         raise InvalidRunState(
-            "INVALID run.json: field 'stages' does not match the current "
-            f"STAGE_SEQUENCE ({', '.join(detail)}) — this run.json was likely created "
-            "under an older stage graph; start a new run rather than resuming this one"
+            f"INVALID run.json: field 'stages' does not match the current {sequence!r} "
+            f"sequence ({', '.join(detail)}) — this run.json was likely created under "
+            "an older stage graph; start a new run rather than resuming this one"
         )
 
     stage_schema = schema["properties"]["stages"]["additionalProperties"]
@@ -446,6 +526,11 @@ class RunState:
     schema_version: str = SCHEMA_VERSION
     created: str = ""
     updated: str = ""
+    # ADR-0022 D-3: which named stage sequence this run walks — "sdlc" (/agentforge,
+    # STAGE_SEQUENCE/STAGE_AGENTS) or "ml" (/agentforge-ml, ML_STAGE_SEQUENCE/
+    # ML_STAGE_AGENTS). Defaults to "sdlc" so a pre-existing run.json with no such key
+    # loads unchanged.
+    sequence: str = DEFAULT_SEQUENCE
 
     def enrol_sprint(self, sprint_id: str) -> None:
         """Set at S5 enrolment (D23) — the run.json-side pointer to its cross-run
@@ -453,15 +538,17 @@ class RunState:
         self.sprint_id = sprint_id
 
     @classmethod
-    def new(cls, objective: str) -> RunState:
+    def new(cls, objective: str, sequence: str = DEFAULT_SEQUENCE) -> RunState:
         now = _now_iso()
-        stages = {sid: StageState(agent=STAGE_AGENTS[sid]) for sid in STAGE_SEQUENCE}
+        seq, agents = _seq(sequence), _agents(sequence)
+        stages = {sid: StageState(agent=agents[sid]) for sid in seq}
         return cls(
             objective=objective,
             stages=stages,
-            current_stage=STAGE_SEQUENCE[0],
+            current_stage=seq[0],
             created=now,
             updated=now,
+            sequence=sequence,
         )
 
     def to_dict(self) -> dict:
@@ -475,6 +562,7 @@ class RunState:
             "completed_stages": list(self.completed_stages),
             "escalation": self.escalation,
             "sprint_id": self.sprint_id,
+            "sequence": self.sequence,
             "gate": self.gate,
             "stages": {
                 name: {
@@ -526,6 +614,7 @@ class RunState:
             schema_version=data.get("schema_version", SCHEMA_VERSION),
             created=data.get("created", ""),
             updated=data.get("updated", ""),
+            sequence=data.get("sequence", DEFAULT_SEQUENCE),
         )
 
     def save(self, path: str | Path) -> None:
@@ -570,7 +659,12 @@ class RunState:
 # ---------------------------------------------------------------------------
 
 def create_run(
-    path: str | Path, objective: str, *, overwrite: bool = False, start_stage: str | None = None
+    path: str | Path,
+    objective: str,
+    *,
+    overwrite: bool = False,
+    start_stage: str | None = None,
+    sequence: str = DEFAULT_SEQUENCE,
 ) -> RunState:
     """Create a fresh run.json. Refuses to clobber an existing one unless authorised.
 
@@ -578,24 +672,29 @@ def create_run(
     via AskUserQuestion (main session only, D1) and passes overwrite=True only if they
     accept. A decline leaves the existing file byte-identical.
 
+    `sequence` (ADR-0022 D-3) selects the named stage graph this run walks — "sdlc"
+    (default, /agentforge) or "ml" (/agentforge-ml).
+
     `start_stage` (EP-07, ADR-0006, `--stage` on /agentforge) lets a run join the
     pipeline past stage 0 — a user who already has neuroedge/docs/PRD.md by hand shouldn't have
-    the orchestrator redo S1/S2. Every STAGE_SEQUENCE entry before `start_stage` is
-    marked complete with a note that it was supplied outside this run, never fabricated
-    as if /agentforge produced it. Requires no change to run_sequence: its own
-    `if status == "complete": continue` (already in the loop) does the rest.
+    the orchestrator redo S1/S2. Every stage entry (in `sequence`) before `start_stage`
+    is marked complete with a note that it was supplied outside this run, never
+    fabricated as if /agentforge produced it. Requires no change to run_sequence: its
+    own `if status == "complete": continue` (already in the loop) does the rest.
     """
-    if start_stage is not None and start_stage not in STAGE_SEQUENCE:
+    seq = _seq(sequence)
+    if start_stage is not None and start_stage not in seq:
         raise ValueError(
-            f"unknown start_stage {start_stage!r}, expected one of {STAGE_SEQUENCE}"
+            f"unknown start_stage {start_stage!r} for sequence {sequence!r}, expected "
+            f"one of {seq}"
         )
     path = Path(path)
     if path.exists() and not overwrite:
         raise RunExists(f"run.json already exists at {path}; refusing to overwrite")
-    state = RunState.new(objective)
+    state = RunState.new(objective, sequence=sequence)
     if start_stage is not None:
-        idx = STAGE_SEQUENCE.index(start_stage)
-        for sid in STAGE_SEQUENCE[:idx]:
+        idx = seq.index(start_stage)
+        for sid in seq[:idx]:
             # enforce_verdict=False: this records provenance ("supplied outside this
             # run"), not a verdict. Demanding a PASS here would break --start-stage
             # for any stage after trace-matrix (review/ship/deploy/…), or force this
@@ -680,7 +779,7 @@ def complete_stage(
     # Null the cursor once every stage is done, so a finished run reads current_stage
     # == null however it was driven (CLI transitions or run_sequence). ADR-0001 defines
     # current_stage as null when the run is complete.
-    if all(state.stages[sid].status == "complete" for sid in STAGE_SEQUENCE):
+    if all(state.stages[sid].status == "complete" for sid in _seq(state.sequence)):
         state.current_stage = None
     return st
 
@@ -730,7 +829,7 @@ def reopen_stage(state: RunState, stage: str) -> StageState:
     #     where S12 went stale while S13+ carried on. Leaving the cursor at, say,
     #     "deploy" made `status` and `resume` report a stage the operator had just
     #     reopened work in front of (found in code review of this change).
-    outstanding = [s for s in STAGE_SEQUENCE if state.stages[s].status != "complete"]
+    outstanding = [s for s in _seq(state.sequence) if state.stages[s].status != "complete"]
     state.current_stage = outstanding[0] if outstanding else None
     return st
 
@@ -774,9 +873,10 @@ def plan_sequence(state: RunState) -> list[tuple[str, str]]:
     in order, with zero I/O and zero side effects (EP-07, ADR-0006, `--dry-run` on
     /agentforge). Mirrors run_sequence's own `if status == "complete": continue`
     filter exactly, so the preview can never drift from what a real run would do."""
+    agents = _agents(state.sequence)
     return [
-        (stage, STAGE_AGENTS[stage])
-        for stage in STAGE_SEQUENCE
+        (stage, agents[stage])
+        for stage in _seq(state.sequence)
         if state.stages[stage].status != "complete"
     ]
 
@@ -898,7 +998,7 @@ def run_sequence(
     an interrupted stage instead of skipping it (Task 28).
     """
     path = Path(path)
-    for stage in STAGE_SEQUENCE:
+    for stage in _seq(state.sequence):
         if state.stages[stage].status == "complete":
             continue
         if stage == "onboarding" and project_root is not None:
@@ -945,7 +1045,7 @@ def usage_rollup(state: RunState) -> dict:
     unrecorded: list[str] = []
     total_in = total_out = total_calls = 0
     total_cost = 0.0
-    for sid in STAGE_SEQUENCE:
+    for sid in _seq(state.sequence):
         u = state.stages[sid].usage
         stage_tokens = u.tokens_in + u.tokens_out
         stage_cost = round(u.cost_usd, 4)
@@ -1161,17 +1261,27 @@ def main(argv: list[str] | None = None) -> int:
     p_init.add_argument("--objective", required=True)
     p_init.add_argument("--force", action="store_true", help="Overwrite an existing run.json")
     p_init.add_argument(
-        "--start-stage", choices=STAGE_SEQUENCE, default=None,
+        "--sequence", choices=sorted(SEQUENCES), default=DEFAULT_SEQUENCE,
+        help="Named stage sequence this run walks (ADR-0022 D-3): 'sdlc' (/agentforge, "
+             "default) or 'ml' (/agentforge-ml)",
+    )
+    p_init.add_argument(
+        # The union of every sequence's stage ids (D-3): argparse resolves `choices`
+        # before run.json (and therefore the run's own sequence) is even read, so the
+        # full set is accepted here and --start-stage is re-validated against
+        # --sequence specifically below.
+        "--start-stage", choices=ALL_STAGE_IDS, default=None,
         help="Join the pipeline at this stage (EP-07, ADR-0006) — earlier stages are "
-             "marked complete as supplied outside this run, not produced by it",
+             "marked complete as supplied outside this run, not produced by it. Must "
+             "belong to --sequence.",
     )
 
     p_start = sub.add_parser("start", help="Mark a stage in_progress before spawning its agent")
-    p_start.add_argument("stage", choices=STAGE_SEQUENCE)
+    p_start.add_argument("stage", choices=ALL_STAGE_IDS)
     p_start.add_argument("--spawned-by", choices=["orchestrator", "human"], default="orchestrator")
 
     p_done = sub.add_parser("complete", help="Mark a stage complete with its artifacts")
-    p_done.add_argument("stage", choices=STAGE_SEQUENCE)
+    p_done.add_argument("stage", choices=ALL_STAGE_IDS)
     p_done.add_argument("--artifact", action="append", help="Artifact path (repeatable)")
     # Optional per-stage token telemetry. The numbers originate from the subagent's
     # spawn result and are supplied by the orchestrator; all default to 0 so callers
@@ -1189,7 +1299,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     p_fail = sub.add_parser("fail", help="Record a failed spawn; escalates after two in a row")
-    p_fail.add_argument("stage", choices=STAGE_SEQUENCE)
+    p_fail.add_argument("stage", choices=ALL_STAGE_IDS)
     # A failed attempt still cost tokens (TD-018 Problem 1) -- it just did not converge.
     p_fail.add_argument("--tokens-in", type=int, default=0, help="Input tokens the failed attempt consumed")
     p_fail.add_argument("--tokens-out", type=int, default=0, help="Output tokens the failed attempt produced")
@@ -1202,7 +1312,7 @@ def main(argv: list[str] | None = None) -> int:
         "reopen",
         help="Re-arm a completed stage so it runs again (TD-014); preserves its spawn history",
     )
-    p_reopen.add_argument("stage", choices=STAGE_SEQUENCE)
+    p_reopen.add_argument("stage", choices=ALL_STAGE_IDS)
 
     sub.add_parser("status", help="Print stage + gate status (reads run.json and gates.json)")
     p_usage = sub.add_parser("usage", help="Print per-stage token/cost breakdown with totals and top consumer")
@@ -1236,15 +1346,21 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "init":
         try:
-            create_run(path, args.objective, overwrite=args.force, start_stage=args.start_stage)
+            create_run(
+                path, args.objective, overwrite=args.force,
+                start_stage=args.start_stage, sequence=args.sequence,
+            )
         except RunExists as exc:
             print(exc)
             return 1
         except ValueError as exc:
             print(exc)
             return 1
-        started_at = args.start_stage or STAGE_SEQUENCE[0]
-        print(f"run.json created at {path} for: {args.objective} (starting at {started_at})")
+        started_at = args.start_stage or _seq(args.sequence)[0]
+        print(
+            f"run.json created at {path} for: {args.objective} "
+            f"(sequence: {args.sequence}, starting at {started_at})"
+        )
         return 0
 
     if args.cmd in ("status", "resume", "preview", "usage") and not path.exists():
@@ -1261,6 +1377,18 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     except InvalidRunState as exc:
         print(exc)
+        return 1
+
+    # `start`/`complete`/`fail`/`reopen` accept the UNION of every sequence's stage ids
+    # at the argparse level (ALL_STAGE_IDS, D-3) because choices are resolved before
+    # run.json is read. Re-check here against the sequence THIS run actually walks, so
+    # e.g. `complete model-select` against an sdlc run is refused by name rather than
+    # raising a bare KeyError deep inside complete_stage.
+    if args.cmd in ("start", "complete", "fail", "reopen") and args.stage not in state.stages:
+        print(
+            f"{args.stage!r} is not a stage of this run's {state.sequence!r} sequence "
+            f"(expected one of {_seq(state.sequence)})"
+        )
         return 1
 
     if args.cmd == "status":
@@ -1290,7 +1418,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "start":
         enter_stage(state, args.stage, spawned_by=args.spawned_by)
         state.save(path)
-        print(f"{args.stage}: in_progress (agent: {STAGE_AGENTS[args.stage]})")
+        print(f"{args.stage}: in_progress (agent: {_agents(state.sequence)[args.stage]})")
         return 0
 
     def _usage_from_args(a) -> Usage | None:

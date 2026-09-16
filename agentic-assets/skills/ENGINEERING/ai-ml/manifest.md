@@ -37,6 +37,7 @@ skills:
     - {path: skills/ENGINEERING/ai-ml/model-architectures.md}
     - {path: skills/ENGINEERING/ai-ml/model-codegen.md}
     - {path: skills/ENGINEERING/ai-ml/time-series-ml.md}
+    - {path: skills/ENGINEERING/ai-ml/ml-model-package.md}
   references:
     - {path: skills/SOFTWARE/pytorch/pytorch-patterns.md,
        reason: "REFERENCE: PyTorch training-loop / reproducibility idioms reused by model-codegen;
@@ -44,7 +45,9 @@ skills:
     - {path: skills/ENGINEERING/_mechanism/ml-artifact-destination.md,
        reason: "REFERENCE: cross-pack rule for where ai-ml/ai-genai commands write artifacts (ADR-0021)"}
 commands:
+  - {name: agentforge-ml, path: commands/ENGINEERING/ai-ml/agentforge-ml.md}   # orchestrator (ADR-0022)
   - {name: dataset-scout, path: commands/ENGINEERING/ai-ml/dataset-scout.md}
+  - {name: dataset-verify, path: commands/ENGINEERING/ai-ml/dataset-verify.md}
   - {name: auto-label,    path: commands/ENGINEERING/ai-ml/auto-label.md}
   - {name: synth-data,    path: commands/ENGINEERING/ai-ml/synth-data.md}
   - {name: model-select,  path: commands/ENGINEERING/ai-ml/model-select.md}
@@ -57,9 +60,9 @@ agents_extra:
               train.py/eval.py after handoff — minimal-diff code fixes, never methodology"}
 stage_realizations:
   data:
-    realization: source-label-synthesize-curate
+    realization: source-verify-label-synthesize-curate   # verify = acquire + profile + per-unit split + withheld test (ADR-0022 M2)
     owner: ml-data-engineer
-    builds_on: [dataset-sourcing, data-labeling, synthetic-data]
+    builds_on: [dataset-sourcing, data-labeling, synthetic-data, time-series-ml]
   build:
     realization: model-and-training-codegen      # emit .py/.tf model + training script; NOT a training run
     owner: ml-modeler
@@ -68,11 +71,12 @@ stage_realizations:
   train:
     realization: external-cloud-gpu              # out of scope by design — dependency-wait, not an action
     status: external
+    note: "/agentforge-ml suspends at this stage (waiting_external) and --resume looks for the model-package (ADR-0022 M7)"
   test:
     status: phase-2
     owner: ml-eval-reviewer
-    realization: "held-out eval gate ingesting metrics returned from the external training run"
-    builds_on: [model-codegen]
+    realization: "held-out eval gate: eval.py on the withheld test split, KPIs + beats_baseline (ADR-0022 M8)"
+    builds_on: [model-codegen, ml-model-package]
 artifacts:
   - {name: dataset-card,     status: backlog}
   - {name: label-manifest,   status: backlog}

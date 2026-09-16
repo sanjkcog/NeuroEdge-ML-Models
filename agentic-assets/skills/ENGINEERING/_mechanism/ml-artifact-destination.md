@@ -10,6 +10,14 @@ Model work lives in a **model-development project**, not in whichever repo the c
 run in. Every `ai-ml` / `ai-genai` command resolves **one destination folder per objective** before
 it writes anything, and writes only inside it.
 
+## Orchestrated mode — `/agentforge-ml` resolves once, everyone else receives (ADR-0022 D-2)
+
+Inside an `/agentforge-ml` run the **orchestrator** performs the resolution below exactly once, at its
+`destination` stage, and then passes the confirmed absolute path as `--dest` to every stage command and
+every spawned agent. **A command that receives `--dest` never asks** — the question was already answered.
+`run.json` and `gates.json` live in that folder. The rules below apply unchanged to a command run
+*standalone*.
+
 ## Resolve the destination (before any write)
 
 1. **`--dest <folder>` given** → that folder is the destination, used as-is. State it; do not ask.

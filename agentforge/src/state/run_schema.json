@@ -43,6 +43,14 @@
       ],
       "description": "EP-08 (ADR-0005) — pointer to the cross-run sprint-NN.json container this run is enrolled in, set at S5. Optional per ADR-0001's migration rule: a pre-EP-08 run.json with no such key still loads, defaulting to null."
     },
+    "sequence": {
+      "type": "string",
+      "enum": [
+        "sdlc",
+        "ml"
+      ],
+      "description": "ADR-0022 D-3 — the named stage sequence this run walks: 'sdlc' (/agentforge, run_state.STAGE_SEQUENCE/STAGE_AGENTS) or 'ml' (/agentforge-ml, run_state.ML_STAGE_SEQUENCE/ML_STAGE_AGENTS). Optional and defaults to 'sdlc' so a pre-ADR-0022 run.json with no such key still loads unchanged."
+    },
     "completed_stages": {
       "type": "array",
       "items": {

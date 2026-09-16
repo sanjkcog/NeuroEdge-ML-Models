@@ -28,7 +28,7 @@ skill. Rendered data comes with perfect free labels — exactly where manual lab
 
 ## Procedure
 
-0. **Resolve the destination** — apply `ml-artifact-destination`: use `--dest`, or propose `<ML_ROOT>/<intent>-<modality>` and **ask the user to confirm before writing anything**. Call the confirmed absolute path `<dest>` and pass it to every spawned agent.
+0. **Resolve the destination** — apply `ml-artifact-destination`: use `--dest`, or propose `<ML_ROOT>/<intent>-<modality>` and **ask the user to confirm before writing anything**. Call the confirmed absolute path `<dest>` and pass it to every spawned agent. Inside an `/agentforge-ml` run `--dest` is always passed — **do not ask**; the orchestrator already confirmed it (ADR-0022 D-2).
 1. Pick the family:
    - **3D render** (geometry-correct, free segmentation/depth labels): **NVIDIA Omniverse Replicator**,
      **BlenderProc**, or **Kubric** — needs 3D assets of the object.

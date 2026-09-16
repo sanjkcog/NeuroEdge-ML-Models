@@ -7,13 +7,14 @@ model: sonnet
 ## NeuroEdge Assets
 
 Begin your response with this line exactly:
-`[ NeuroEdge Assets ]  Role: ML Eval Reviewer · Agent: ml-eval-reviewer · Skills: model-codegen, model-architectures, time-series-ml`
+`[ NeuroEdge Assets ]  Role: ML Eval Reviewer · Agent: ml-eval-reviewer · Skills: ml-model-package, model-codegen, model-architectures, time-series-ml`
 
 Read these skill files and apply their guidance before starting:
+- `agentic-assets/skills/ENGINEERING/ai-ml/ml-model-package.md`
 - `agentic-assets/skills/ENGINEERING/ai-ml/model-codegen.md`
 - `agentic-assets/skills/ENGINEERING/ai-ml/model-architectures.md`
 - `agentic-assets/skills/ENGINEERING/ai-ml/time-series-ml.md`
-<!-- neuroedge-assets-patched source-version=426fa40 -->
+<!-- neuroedge-assets-patched source-version=4cf4279 -->
 
 ## Role
 
