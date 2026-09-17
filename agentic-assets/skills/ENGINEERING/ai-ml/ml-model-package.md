@@ -44,6 +44,7 @@ but it is never `model.onnx`. Raw framework weights (`.pt`, `.h5`) may ride alon
 | `head: {shape: "scalar" \| "multiclass", classes: [...], range, activation}` | A scalar anomaly head with `argmax` over a length-1 output always reports class 0. `scalar` ⇒ two class names and a threshold; `multiclass` ⇒ `len(classes) == output_length`. Exporters validate this against the real output length |
 | `output_schema` | What the output tensor *means*: `anomaly_score`, `class_logits`, `yolo_boxes_v8`, … Runtimes pick a post-processor by this key instead of assuming |
 | `decision_threshold` | Chosen on the **validation** split (never test) for the target recall at the fixed FPR, and shipped with the model. A threshold typed into a config by hand is not calibrated |
+| `at_fpr` | The false-alarm rate the threshold was calibrated at — the use case's `performance_targets.accuracy.at_fpr` (default `0.05`), captured at `/model-build`. `eval.py` reads it from here and reports the measured `fpr` in `metrics.json`; the platform compares the two as information, never as a gate (Web ADR-0007 T-6) |
 | `class_names` (ordered) | Must be identical — order included — to the dataset labels and the use case |
 | `opset`, `framework_versions` | Reproducibility and runtime compatibility |
 

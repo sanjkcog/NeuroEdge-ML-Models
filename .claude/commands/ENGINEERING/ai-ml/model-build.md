@@ -44,6 +44,11 @@ does NOT run training** and assumes no local GPU. Spawns `ml-modeler` (applies `
    writing the **model-package** (`ml-model-package`): `model.onnx` at the pinned opset with normalisation and,
    for a scalar head, the `Sigmoid` folded in; `meta.json`; `model_artifact.json` with the `baseline` block;
    `metrics.json` labelled `eval_split: self_reported_val`; optional `calibration/` from the train split.
+   **Operating point (Web ADR-0007 T-6):** `meta.json` carries `at_fpr` (the false-alarm rate the use case
+   agreed, `performance_targets.accuracy.at_fpr`; default `0.05`) and the `decision_threshold` calibrated on
+   the validation split at that rate. `eval.py` reads the operating point **from `meta.json`** — never from
+   the Web schema — and records the `fpr` it actually measured at in `metrics.json`. The platform compares
+   that `fpr` with the use case's `at_fpr` as **information** (a `not_comparable` row), never as a gate.
    `eval.py --package <pkg> --split <dest>/data/splits/test.json` produces the held-out `metrics.json`.
    When the consuming platform publishes a scaffold (NeuroEdge: `GET /models/scaffold`), **read its context**
    (use case id, classes, resolution, target device, KPIs) and write the package through its return helper
