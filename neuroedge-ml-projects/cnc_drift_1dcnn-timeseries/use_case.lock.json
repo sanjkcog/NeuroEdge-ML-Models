@@ -1,7 +1,7 @@
 {
   "schema": "use-case-lock/1",
   "use_case_id": "cnc-drift-on-powertrain-shop-for-car-prduction",
-  "use_case_sha256": "d6f7c4329cfde0bc83b2201dac26502ee965387e1a6a497f725f4385bd9ab2b3",
+  "use_case_sha256": "1db4afbe8113ba7398dd3a7a7ca78bdf87498f1164502fbea70a75c91fb51396",
   "modality": "timeseries",
   "class_names": [
     "normal",
@@ -14,7 +14,7 @@
   },
   "target": {
     "metric": "recall",
-    "min_value": 0.5,
+    "min_value": 0.9,
     "at_fpr": 0.01,
     "at_fpr_source": "business_requirement.kpi_link.at_fpr"
   },
@@ -46,5 +46,5 @@
     "layout": "[1,features,window]",
     "scaling": "in_graph"
   },
-  "lock_sha256": "3edb2d2021b001042c42cbfdf7c42461989bb25f0a07bf7c27c2baf655180648"
+  "lock_sha256": "b7a3765f48f6c07e73e553928f8ff40371d87286824e85d8dad48cb401d15f0d"
 }

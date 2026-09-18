@@ -164,10 +164,10 @@
     "status": "RESOLVED at M4 -- 0 missing in the 3 chosen channels on all 25 unit/segment entries; see _M4_measured_3ch"
   },
   "portal_upload_zip": {
-    "status": "REBUILT 2026-09-18 under lock 3edb2d20 (reduce declared)",
+    "status": "REBUILT 2026-09-18 under lock b7a3765f (recall gate 0.9); data unchanged, README lock line only",
     "path": "data/portal_upload.zip",
-    "bytes": 1338149,
-    "sha256": "68b9e166f2951e376c94dcef0000ac247cbbb57f9dcd8128955bc7cdf4a40db6",
+    "bytes": 1338153,
+    "sha256": "d96f878f33b40e8fbc86ba114a10cfca9436a9d058b89bf48119d3cb1e4f5190",
     "contents": "train + val only (test withheld). One CSV per experiment (IM-01R: one per time segment) + manifest.tsv + README.txt",
     "layout": "columns timestamp (= contract block start CYCLE), spindle_load (Nm), x_axis_error (um), vibration_rms (g), label",
     "class_names": [
@@ -176,7 +176,7 @@
     ],
     "class_names_source": "use case cnc-machine-performance-drift-leading-to-production-loss: drift_class \"tool_wear\"; \"normal\" = no drift",
     "portal_runner_warning": "NeuroEdge-Web ts_preprocessor.py concatenates all files into one stream (windows cross unit boundaries), z-scores over everything loaded, and splits windows by random shuffle -- window-level leakage that undoes the per-experiment split. Recommend runner: package (train.py reading data/splits/*.json) at M7.",
-    "lock_sha256": "3edb2d2021b001042c42cbfdf7c42461989bb25f0a07bf7c27c2baf655180648"
+    "lock_sha256": "b7a3765f48f6c07e73e553928f8ff40371d87286824e85d8dad48cb401d15f0d"
   },
   "_channel_contract_finding_M2": {
     "raised_by": "user, 2026-09-17",
@@ -1113,7 +1113,7 @@
   },
   "_contract_dataset_M4": {
     "built": "2026-09-18",
-    "lock_sha256": "3edb2d2021b001042c42cbfdf7c42461989bb25f0a07bf7c27c2baf655180648",
+    "lock_sha256": "b7a3765f48f6c07e73e553928f8ff40371d87286824e85d8dad48cb401d15f0d",
     "split_hash": "47871db08ccc16d34f4947407ec731a9988afdfb00ac890baf645df45f07baad",
     "sources": "data/contract_sources.json",
     "units": {

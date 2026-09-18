@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "objective": "cnc drift 1D CNN model with 3 sensors",
   "created": "2026-09-17T22:28:24.692128+00:00",
-  "updated": "2026-09-18T09:06:47.939336+00:00",
+  "updated": "2026-09-18T14:13:55.787331+00:00",
   "current_stage": "label",
   "completed_stages": [
     "destination",
@@ -21,7 +21,7 @@
   },
   "use_case_lock": {
     "path": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/use_case.lock.json",
-    "lock_sha256": "3edb2d2021b001042c42cbfdf7c42461989bb25f0a07bf7c27c2baf655180648",
+    "lock_sha256": "b7a3765f48f6c07e73e553928f8ff40371d87286824e85d8dad48cb401d15f0d",
     "use_case_id": "cnc-drift-on-powertrain-shop-for-car-prduction"
   },
   "stages": {
