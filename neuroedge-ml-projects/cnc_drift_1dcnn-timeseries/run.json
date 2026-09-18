@@ -2,8 +2,8 @@
   "schema_version": "1.0",
   "objective": "cnc drift 1D CNN model with 3 sensors",
   "created": "2026-09-17T22:28:24.692128+00:00",
-  "updated": "2026-09-18T06:37:38.867857+00:00",
-  "current_stage": "verify",
+  "updated": "2026-09-18T08:31:17.349473+00:00",
+  "current_stage": "label",
   "completed_stages": [
     "destination",
     "scout",
@@ -18,6 +18,11 @@
     "pending": false,
     "stage": null,
     "reason": null
+  },
+  "use_case_lock": {
+    "path": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/use_case.lock.json",
+    "lock_sha256": "8c2a044d0e335b803ac5c0e811161ae854bd1b8ebbc823730e3c3d25a861d030",
+    "use_case_id": "cnc-drift-on-powertrain-shop-for-car-prduction"
   },
   "stages": {
     "destination": {
@@ -263,6 +268,21 @@
           "identity": ""
         }
       ],
+      "usage": {
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "api_calls": 0,
+        "cost_usd": 0.0,
+        "source": "unrecorded"
+      },
+      "usage_history": []
+    },
+    "data-simulator": {
+      "agent": "none (orchestrator exports simulator data from the split data, ADR-0008)",
+      "status": "pending",
+      "artifacts": [],
+      "consecutive_failures": 0,
+      "spawns": [],
       "usage": {
         "tokens_in": 0,
         "tokens_out": 0,

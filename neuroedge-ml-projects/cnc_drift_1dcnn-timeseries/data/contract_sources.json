@@ -1,0 +1,13 @@
+{
+  "tick_hz": 500,
+  "note": "How each channel in use_case.lock.json is produced from the KIT data (NeuroEdge-Web ADR-0008 L-3). One contract timestep = 50 controller ticks = 100 ms. vibration_rms is the per-tick RMS from sensor_align, pooled exactly (weighted by n_samples).",
+  "inputs": {
+    "controller": {"template": "data/raw/Dataset/*/{unit}/processed_data/{unit}_hfdata.csv", "key": "CYCLE"},
+    "sensor": {"template": "data/interim/{unit}_sensor.parquet", "key": "tick"}
+  },
+  "channels": {
+    "spindle_load": {"input": "controller", "column": "TORQUE|6", "agg": "mean", "unit": "Nm"},
+    "x_axis_error": {"input": "controller", "column": "CTRL_DIFF|1", "agg": "mean", "scale": 1000, "unit": "um"},
+    "vibration_rms": {"input": "sensor", "column": "vibration_rms", "agg": "rms", "weight": "n_samples", "unit": "g"}
+  }
+}

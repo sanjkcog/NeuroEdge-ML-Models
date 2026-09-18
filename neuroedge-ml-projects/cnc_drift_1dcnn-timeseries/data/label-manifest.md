@@ -1,7 +1,7 @@
 # Label manifest — cnc_drift_1dcnn-timeseries
 
 - **Decided:** 2026-09-17, by sanjkcog, at M4 `verify`, before any model was built
-- **split_hash:** `bca8a336e7edcef703dbe5865c6f8518f6ec6757e9fb665dd0ba10b0c1b286c4` (method in each `splits/*.json`)
+- **split_hash:** `47871db08ccc16d34f4947407ec731a9988afdfb00ac890baf645df45f07baad` (method in each `splits/*.json`)
 - **Supersedes:** the M2-era splits (`split_hash 6e2049…`). Their single `anomaly` label mixed three
   different phenomena.
 
@@ -32,12 +32,12 @@ Nothing is deleted. These trials stay in `data/raw/` and can serve a separate ob
 
 | Split | normal | tool_wear | IM-01R segment |
 |---|---|---|---|
-| train | IMP-BASE, IMP-01…04, 06, 07, 08, 10, 11, TF-01, TF-03 + IM-01R head | A01, A02, A05 | CYCLE [3210956, 3570511), 719.1 s |
-| val | IMP-09, IMP-12, IM-01F + IM-01R middle | A04 | CYCLE [3573011, 3691196), 236.4 s |
+| train | IMP-BASE, IMP-01…04, 06, 07, 08, 10, 11, TF-01, TF-03 + IM-01R head | A01, A02, A05 | CYCLE [3210956, 3568011), 714.1 s |
+| val | IMP-09, IMP-12, IM-01F + IM-01R middle | A04 | CYCLE [3573011, 3688696), 231.4 s |
 | test (withheld) | IMP-05, TF-02 + IM-01R tail | A03 | CYCLE [3693696, 3814382), 241.4 s |
 
 Bounds are measured on the rows present in both `hfdata.csv` and `interim/IM-01R_sensor.parquet`,
-with a 2500-tick (5 s) gap at each boundary.
+with a 5000-tick (10 s) gap at each boundary (widened 2026-09-18 from 5 s, so a 6.4 s contract window fits; ADR-0008 M3).
 
 ### Deviation from `time-series-ml`: one run spans train and test
 
@@ -49,7 +49,7 @@ test").
 - **Risk:** the test-normal segment is the tail of a run whose head was trained on, and the test
   segment covers a later part of the toolpath than the worn trial's full run. Both can flatter
   specificity.
-- **Controls:** the window length chosen at M7 must be ≤ 2500 ticks (5 s), so no window crosses a
+- **Controls:** the window length chosen at M7 must be ≤ 5000 ticks (10 s), so no window crosses a
   gap. `ml-eval-reviewer` must check this at M8. Report metrics for the IM-01R segment against
   A03 separately from the cross-program normals.
 
@@ -66,11 +66,11 @@ test").
 
 These are binding on `/model-build` and are checked by `ml-eval-reviewer` at M8:
 
-1. **Window guard, hard fail.** `config.yaml` must refuse a window over 2500 ticks (5 s at
+1. **Window guard, hard fail.** `config.yaml` must refuse a window over 5000 ticks (10 s at
    500 Hz), or over the gap at whatever rate the use-case contract settles on. Re-derive the gap
    if the rate changes.
-   The portal use case's current 512 samples at 100 Hz = 5.12 s already exceeds it (see
-   `profile.json._channel_contract_M4`).
+   The locked contract (`use_case.lock.json`, 2026-09-18) is 64 samples at 10 Hz = 6.4 s = 3200 ticks,
+   inside the 10 s gap.
 2. **Windows come from the split files.** Build windows inside each unit's
    `[cycle_start, cycle_end_exclusive)` bounds from `splits/*.json`, keyed on `CYCLE`/`tick`,
    never by row position, and never window first and split afterwards. Assert at load time that

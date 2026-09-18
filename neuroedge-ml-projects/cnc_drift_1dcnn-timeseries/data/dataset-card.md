@@ -10,7 +10,7 @@ cross_machine_holdout: Bosch Research CNC_Machining (Tnani/Feil/Diepold, 2022) â
 verified_by: ml-data-engineer (AgentForge)
 verified_on: 2026-09-17
 local_path: data/raw/  # scope B (169 entries, 7.48 GB on disk, fetch-plan.json); vibration aligned into data/interim/
-split_hash: bca8a336e7edcef703dbe5865c6f8518f6ec6757e9fb665dd0ba10b0c1b286c4  # M4 taxonomy re-split 2026-09-17, see label-manifest.md
+split_hash: 47871db08ccc16d34f4947407ec731a9988afdfb00ac890baf645df45f07baad  # M4 taxonomy re-split 2026-09-17, see label-manifest.md
 profile: data/profile.json
 ---
 

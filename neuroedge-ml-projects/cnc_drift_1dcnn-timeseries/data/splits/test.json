@@ -22,7 +22,7 @@
         "cycle_end_exclusive": 3814382,
         "duration_s": 241.4,
         "basis": "CYCLE, on rows present in both hfdata.csv and interim/IM-01R_sensor.parquet",
-        "rule": "chronological 60/20/20 with a 2500-tick (5 s) gap at each boundary"
+        "rule": "chronological 60/20/20 with a 5000-tick (10 s) gap at each boundary (>= one 6.4 s contract window; ADR-0008 M3)"
       }
     },
     {
@@ -34,9 +34,9 @@
   ],
   "count": 4,
   "note": "WITHHELD. Never read by anything but eval.py. Not packaged into portal_upload.zip.",
-  "split_hash": "bca8a336e7edcef703dbe5865c6f8518f6ec6757e9fb665dd0ba10b0c1b286c4",
+  "split_hash": "47871db08ccc16d34f4947407ec731a9988afdfb00ac890baf645df45f07baad",
   "split_hash_method": "sha256 of json.dumps([train.units, val.units, test.units], sort_keys=True, separators=(\",\",\":\"))",
-  "deviation": "IM-01R (the only normal run of the tool-wear program) spans train/val/test by time, against time-series-ml \"never let one unit span train and test\". Chosen so val and test each hold a same-program normal beside a worn trial; the alternative rewards a program-identity shortcut. Risk: test-normal is the tail of a run whose head was trained on, which can flatter specificity. Mitigation: 5 s gaps; the window length chosen at M7 must be <= 2500 ticks; ml-eval-reviewer to check at M8.",
+  "deviation": "IM-01R (the only normal run of the tool-wear program) spans train/val/test by time, against time-series-ml \"never let one unit span train and test\". Chosen so val and test each hold a same-program normal beside a worn trial; the alternative rewards a program-identity shortcut. Risk: test-normal is the tail of a run whose head was trained on, which can flatter specificity. Mitigation: 10 s gaps (re-split 2026-09-18 for the 6.4 s contract window); the window must be <= 5000 ticks; ml-eval-reviewer to check at M8.",
   "excluded_units": [
     "IM-01F-A01",
     "IM-02F-A01",

@@ -1294,15 +1294,15 @@
     "rows_out": 608001,
     "centre_ticks": [
       3210956,
-      3570511
+      3568011
     ],
     "channel_means": {
-      "xAcceleration": 0.085174,
-      "yAcceleration": -0.09723,
-      "zAcceleration": 0.081327,
-      "xForce": -7.277091,
-      "yForce": 28.401495,
-      "zForce": -84.845091
+      "xAcceleration": 0.085463,
+      "yAcceleration": -0.097137,
+      "zAcceleration": 0.081204,
+      "xForce": -6.380708,
+      "yForce": 26.276747,
+      "zForce": -84.373843
     },
     "config": {
       "sensor_hz": 10000.0,

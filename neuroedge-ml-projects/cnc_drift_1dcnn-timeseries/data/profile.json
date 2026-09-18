@@ -164,18 +164,19 @@
     "status": "RESOLVED at M4 -- 0 missing in the 3 chosen channels on all 25 unit/segment entries; see _M4_measured_3ch"
   },
   "portal_upload_zip": {
-    "status": "REBUILT 2026-09-18 (IM-01R re-centred on its train segment)",
+    "status": "REBUILT 2026-09-18 from data/contract/ (10 Hz, lock-named channels, contract units)",
     "path": "data/portal_upload.zip",
-    "bytes": 53064611,
-    "sha256": "8bad6c1fe677a69ec55f81fdb60fd482f57727e5d977a96b44340ce8770b25f4",
+    "bytes": 1338182,
+    "sha256": "093753b374bd957db8f002612d5998b4291a8740ef844c0289815ab772aa4521",
     "contents": "train + val only (test withheld). One CSV per experiment (IM-01R: one per time segment) + manifest.tsv + README.txt",
-    "layout": "columns timestamp (=CYCLE), spindle_load, x_axis_error, vibration_rms, label; unit id in the file name (a text unit_id column would make the portal parser skip every row)",
+    "layout": "columns timestamp (= contract block start CYCLE), spindle_load (Nm), x_axis_error (um), vibration_rms (g), label",
     "class_names": [
       "normal",
       "tool_wear"
     ],
     "class_names_source": "use case cnc-machine-performance-drift-leading-to-production-loss: drift_class \"tool_wear\"; \"normal\" = no drift",
-    "portal_runner_warning": "NeuroEdge-Web ts_preprocessor.py concatenates all files into one stream (windows cross unit boundaries), z-scores over everything loaded, and splits windows by random shuffle -- window-level leakage that undoes the per-experiment split. Recommend runner: package (train.py reading data/splits/*.json) at M7."
+    "portal_runner_warning": "NeuroEdge-Web ts_preprocessor.py concatenates all files into one stream (windows cross unit boundaries), z-scores over everything loaded, and splits windows by random shuffle -- window-level leakage that undoes the per-experiment split. Recommend runner: package (train.py reading data/splits/*.json) at M7.",
+    "lock_sha256": "8c2a044d0e335b803ac5c0e811161ae854bd1b8ebbc823730e3c3d25a861d030"
   },
   "_channel_contract_finding_M2": {
     "raised_by": "user, 2026-09-17",
@@ -384,10 +385,11 @@
         "IMP-01-A04"
       ]
     },
-    "split": "hybrid: by experiment, except the IM-01R normal run, which is split chronologically 60/20/20 with 5 s gaps (a documented deviation)",
-    "split_hash": "bca8a336e7edcef703dbe5865c6f8518f6ec6757e9fb665dd0ba10b0c1b286c4",
+    "split": "hybrid: by experiment, except the IM-01R normal run, which is split chronologically 60/20/20 with 5 s gaps (a documented deviation) Re-split 2026-09-18: gaps widened to 10 s for the 6.4 s contract window (ADR-0008 M3).",
+    "split_hash": "47871db08ccc16d34f4947407ec731a9988afdfb00ac890baf645df45f07baad",
     "supersedes_split_hash": "6e204992c94c740228b619eb9b30c1ad1c0565217125b9c56960fd32422f7369",
-    "manifest": "data/label-manifest.md"
+    "manifest": "data/label-manifest.md",
+    "superseded_split_hash_2026_09_18": "bca8a336e7edcef703dbe5865c6f8518f6ec6757e9fb665dd0ba10b0c1b286c4"
   },
   "_M4_measured_3ch": {
     "measured_on": "2026-09-17",
@@ -1108,5 +1110,89 @@
       ],
       "status": "OPEN -- must be reconciled before M7/M8"
     }
+  },
+  "_contract_dataset_M4": {
+    "built": "2026-09-18",
+    "lock_sha256": "8c2a044d0e335b803ac5c0e811161ae854bd1b8ebbc823730e3c3d25a861d030",
+    "split_hash": "47871db08ccc16d34f4947407ec731a9988afdfb00ac890baf645df45f07baad",
+    "sources": "data/contract_sources.json",
+    "units": {
+      "IM-01F": {
+        "val": 6077
+      },
+      "IM-01R": {
+        "test": 2413,
+        "train": 7140,
+        "val": 2312
+      },
+      "IM-01R-A01": {
+        "train": 12013
+      },
+      "IM-01R-A02": {
+        "train": 12037
+      },
+      "IM-01R-A03": {
+        "test": 11991
+      },
+      "IM-01R-A04": {
+        "val": 12098
+      },
+      "IM-01R-A05": {
+        "train": 12006
+      },
+      "IMP-01": {
+        "train": 3335
+      },
+      "IMP-02": {
+        "train": 3426
+      },
+      "IMP-03": {
+        "train": 2862
+      },
+      "IMP-04": {
+        "train": 2531
+      },
+      "IMP-05": {
+        "test": 2998
+      },
+      "IMP-06": {
+        "train": 2603
+      },
+      "IMP-07": {
+        "train": 2242
+      },
+      "IMP-08": {
+        "train": 3365
+      },
+      "IMP-09": {
+        "val": 2400
+      },
+      "IMP-10": {
+        "train": 2410
+      },
+      "IMP-11": {
+        "train": 3255
+      },
+      "IMP-12": {
+        "val": 1892
+      },
+      "IMP-BASE": {
+        "train": 7458
+      },
+      "TF-01": {
+        "train": 2480
+      },
+      "TF-02": {
+        "test": 2517
+      },
+      "TF-03": {
+        "train": 2566
+      }
+    },
+    "spot_check": "IM-01R-A04 block 0 recomputed from raw: spindle_load, x_axis_error, vibration_rms identical",
+    "observations": [
+      "spindle torque is signed (mean -2.4 Nm, range -84..+64): spindle direction convention",
+      "x_axis_error reaches ~+/-630 um, most likely during rapid moves"
+    ]
   }
 }
