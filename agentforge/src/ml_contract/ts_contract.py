@@ -151,6 +151,12 @@ def _validate_sources(lock: dict[str, Any], sources: dict[str, Any]) -> list[str
             problems.append(f"{ch['name']}: sources produce {spec.get('unit')!r} but the lock says {ch.get('unit')!r}")
         if spec.get("agg") not in _AGGS:
             problems.append(f"{ch['name']}: agg must be one of {sorted(_AGGS)}")
+        # Training and the device must build a timestep the same way (ADR-0008 D1): the dataset's
+        # aggregation IS the device's reduction ('point' is the device's 'last').
+        expected_agg = {"mean": "mean", "rms": "rms", "last": "point"}.get(ch.get("reduce") or "")
+        if expected_agg and spec.get("agg") != expected_agg:
+            problems.append(f"{ch['name']}: sources aggregate by {spec.get('agg')!r} but the lock's reduce is "
+                            f"{ch.get('reduce')!r} (expected agg {expected_agg!r}); training and device would disagree")
         if spec.get("input") not in sources.get("inputs", {}):
             problems.append(f"{ch['name']}: input {spec.get('input')!r} is not declared under inputs")
     tick_hz = float(sources.get("tick_hz") or 0)

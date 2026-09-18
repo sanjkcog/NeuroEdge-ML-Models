@@ -41,6 +41,7 @@ but it is never `model.onnx`. Raw framework weights (`.pt`, `.h5`) may ride alon
 | `feature_order` (TS) / `input.layout` + `input.resolution` + `color_order` (vision) | Channel order is part of the contract; a sorted map on the device puts `sensor_10` before `sensor_2` and accuracy collapses silently |
 | `window`, `stride` (TS) | Windowing is runtime behaviour, not model behaviour |
 | `sample_rate_hz` (TS) | The device counts **rows**, not seconds, so the same window means a different time span at another rate. Without this field a rate mismatch is undetectable anywhere (NeuroEdge-Web ADR-0008 L-4) |
+| `reduce` per channel (TS): `last` \| `mean` \| `rms` | Copied from the lock. It tells the device how to build one timestep from the samples inside it, the way training built it. **Absent, the device keeps the last sample:** a model trained on 100 ms means is then fed point samples, silently |
 | `units` + `definitions` per channel (TS) | What one sample *is* (`100 ms mean of spindle torque, Nm`). The device never reads units; the contract must carry them so the field gateway can be checked against them |
 | `lock_sha256` | The `use_case.lock.json` the model was built on. Upload compares the package with the use case through it, and a simulator file with a different lock hash is refused on the device |
 | `normalization: {mean, std, applied: "in_graph" \| "runtime"}` | Statistics fitted on the **train split only**. Default is `in_graph` — folded into the exported graph so they cannot drift from the weights; the values are kept here for provenance and for foreign toolchains |
@@ -85,6 +86,8 @@ always:
   the model card and the product NOTICE
 - `split_hash`, `seed`, `code_commit`, `eval_split`
 - `lock_sha256`, `use_case_id` — the use-case lock the model was built on (NeuroEdge-Web ADR-0008)
+- TS: `sample_rate_hz`, `stride`, and per-channel `units`, `definitions`, `reduce`, copied from the lock. The
+  portal lifts them into the device's input contract (`model.input_contract.json`)
 - `baseline: {name, metrics, beats_baseline}` — the cheap reference (MiniRocket for TS) measured on the **same
   splits and metrics**; a deep model that does not beat it is reported as such, not hidden
 - `onnx_uri`, `meta_uri`, `calibration_data_uri`, `source: "custom_return" | "portal_trained"`

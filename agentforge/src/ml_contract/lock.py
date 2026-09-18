@@ -20,11 +20,12 @@ from __future__ import annotations
 
 import argparse
 import copy
-import hashlib
 import json
 import os
 import sys
 from typing import Any
+
+from ..state.lock_digest import lock_digest, source_digest
 
 LOCK_SCHEMA = "use-case-lock/1"
 LOCK_FILE = "use_case.lock.json"
@@ -62,14 +63,7 @@ def _get(d: dict[str, Any], path: str) -> Any:
     return cur
 
 
-def _sha256(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
-
-
-def lock_digest(lock: dict[str, Any]) -> str:
-    """sha256 of the lock's canonical JSON, excluding its own ``lock_sha256`` field."""
-    body = {k: v for k, v in lock.items() if k != "lock_sha256"}
-    return _sha256(json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode())
+_REDUCE_MODES = {"last", "mean", "rms"}
 
 
 def modality_of(use_case: dict[str, Any]) -> str | None:
@@ -107,7 +101,15 @@ def _timeseries_block(uc: dict[str, Any], definitions: dict[str, str], problems:
             )
         elif not ch.get("definition"):
             notes.append(f"definition of {name!r} supplied by the run, not the use case (ADR-0008 W2)")
-        channels.append({"name": name, "unit": unit, "definition": definition})
+        # The machine-readable half of the definition: how the device reduces the samples of one
+        # timestep window. Without it the device keeps the last sample, whatever training did.
+        reduce = ch.get("reduce")
+        if reduce not in _REDUCE_MODES:
+            problems.append(
+                f"channel {name!r} has no reduce (last | mean | rms): how one timestep is built from the "
+                "samples inside it. Without it the device point-samples, whatever the definition says"
+            )
+        channels.append({"name": name, "unit": unit, "definition": definition, "reduce": reduce})
 
     names = [c["name"] for c in channels]
     sensors = _get(uc, "ingress.sensors") or []
@@ -220,7 +222,7 @@ def build_lock(
     lock: dict[str, Any] = {
         "schema": LOCK_SCHEMA,
         "use_case_id": uc_id,
-        "use_case_sha256": _sha256(use_case_bytes),
+        "use_case_sha256": source_digest(use_case_bytes),
         "modality": modality,
         "class_names": classes,
         "head": head,
@@ -306,7 +308,7 @@ def main(argv: list[str] | None = None) -> int:
         lock = read_lock(a.dest)
         if a.use_case:
             _, raw = _load_yaml(a.use_case)
-            if _sha256(raw) != lock["use_case_sha256"]:
+            if source_digest(raw) != lock["use_case_sha256"]:
                 print("the use case changed since the lock was built: re-lock, and re-run every stage after M0",
                       file=sys.stderr)
                 return 1

@@ -59,8 +59,10 @@ does NOT run training** and assumes no local GPU. Spawns `ml-modeler` (applies `
      and builds windows inside each unit's split bounds, keyed on the tick column, never by row position.
    - `config.yaml` **refuses** a window that differs from the lock, or that is longer than the smallest
      time-split gap. Scaling is fitted on train only and folded in-graph.
-   - The package records `lock_sha256`, `sample_rate_hz`, per-channel `unit` and `definition`
-     (`ml-model-package`). Nothing here resamples or converts units.
+   - The package records `lock_sha256`, `sample_rate_hz`, `stride`, and per-channel `unit`, `definition` and
+     **`reduce`**, in `meta.json` and in `model_artifact.json` `extras` (`ml-model-package`). Without `reduce`
+     the device point-samples each timestep and upload refuses the package. Nothing here resamples or converts
+     units.
 2. **Verify the invariants** (device-agnostic · seed-reproducible · **leakage-safe** · checkpoint+export
    to the target format · config-driven, no hardcoded hyperparameters/seed · **task-correct metrics**,
    ranking metrics for recommenders · **package-complete**: every `ml-model-package` field present, threshold

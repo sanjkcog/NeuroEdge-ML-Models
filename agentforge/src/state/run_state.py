@@ -36,6 +36,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 
+try:  # package import (tests, ml_contract) / plain-script run (python agentforge/src/state/run_state.py)
+    from .lock_digest import lock_digest
+except ImportError:  # pragma: no cover - exercised by the script entry point
+    from lock_digest import lock_digest  # type: ignore[no-redef]
+
 _SCHEMA_PATH = Path(__file__).with_name("run_schema.json")
 SCHEMA_VERSION = "1.0"
 
@@ -1467,18 +1472,14 @@ def main(argv: list[str] | None = None) -> int:
         return _resume(state, Path(args.gates_path))
 
     if args.cmd == "record-lock":
-        # Stdlib-only check, deliberately not importing ml_contract: an edited lock no
-        # longer hashes to its own lock_sha256, and a run must not be pinned to one.
+        # An edited lock no longer hashes to its own lock_sha256, and a run must not be pinned to
+        # one. The digest is the shared stdlib definition (state/lock_digest.py), not a copy.
         try:
             lock = json.loads(Path(args.lock_path).read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             print(f"cannot read lock {args.lock_path}: {exc}", file=sys.stderr)
             return 1
-        body = {k: v for k, v in lock.items() if k != "lock_sha256"}
-        digest = hashlib.sha256(
-            json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
-        ).hexdigest()
-        if lock.get("lock_sha256") != digest:
+        if lock.get("lock_sha256") != lock_digest(lock):
             print(f"{args.lock_path} was edited after it was built; rebuild it", file=sys.stderr)
             return 1
         state.use_case_lock = {
