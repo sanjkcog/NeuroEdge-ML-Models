@@ -195,13 +195,20 @@ def rms_per_tick(
     partial ticks at either end of the recording are dropped rather than reported from one
     or two samples. Binning on the drift-corrected tick keeps exactly one value per
     controller row, which a fixed block size would not over a long run.
+
+    Which ticks are kept depends on `ticks` only, never on this channel's NaNs, so every
+    channel of a recording returns the SAME tick array and columns cannot be misaligned
+    when channels drop out independently. A kept tick with no finite sample is NaN.
     """
     whole = np.floor(np.asarray(ticks, dtype=float)).astype(np.int64)
     base = whole.min()
     key = whole - base
+    total = np.bincount(key)
     x = np.asarray(values, dtype=float)
     ok = np.isfinite(x)
-    count = np.bincount(key[ok], minlength=key.max() + 1)
-    sumsq = np.bincount(key[ok], weights=x[ok] ** 2, minlength=key.max() + 1)
-    keep = count >= min_samples
-    return np.flatnonzero(keep) + base, np.sqrt(sumsq[keep] / count[keep]), count[keep]
+    count = np.bincount(key[ok], minlength=total.size)
+    sumsq = np.bincount(key[ok], weights=x[ok] ** 2, minlength=total.size)
+    keep = total >= min_samples
+    with np.errstate(invalid="ignore", divide="ignore"):
+        rms = np.sqrt(sumsq[keep] / count[keep])
+    return np.flatnonzero(keep) + base, rms, total[keep]

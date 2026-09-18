@@ -16,12 +16,13 @@
 #
 # If this set conflicts with your own pins, reference the lines below individually instead and
 # leave out requirements-voice.txt: it pulls torch, the largest and most pin-sensitive package here.
-# requirements-sensor.txt (mat-io, numpy>=2.2.2) and requirements-voice.txt (numpy<2 on Python
-# < 3.13) cannot share one environment: keep the voice file, and run sensor_align in its own
-# environment with `uv run --no-project --with-requirements agentforge/src/requirements-sensor.txt`.
+#
+# NOT included here, on purpose: agentforge/src/requirements-sensor.txt (sensor_align: mat-io,
+# numpy>=2.2.2). It cannot share an environment with requirements-voice.txt (numpy<2 on Python
+# < 3.13), so listing it here would make this whole file unresolvable. Run sensor_align in its own
+# environment: `uv run --no-project --with-requirements agentforge/src/requirements-sensor.txt ...`
 
 -r ../agentforge/src/requirements.txt
--r ../agentforge/src/requirements-sensor.txt
 -r ../src/neuroedge_marketing/requirements.txt
 -r ../src/neuroedge_marketing/requirements-voice.txt
 -r ../agentforge_simulator/requirements.txt

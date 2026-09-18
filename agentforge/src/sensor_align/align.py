@@ -95,8 +95,18 @@ def anchor_from_events(events, cfg: RigConfig) -> tuple[int, float]:
     return end, (end - start) / cfg.tick_hz
 
 
-def align_trial(mat_path: str, events_path: str, cfg: RigConfig = RigConfig()):
-    """Return (features DataFrame keyed by controller tick, diagnostics dict) for one recording."""
+def align_trial(
+    mat_path: str,
+    events_path: str,
+    cfg: RigConfig = RigConfig(),
+    centre_ticks: tuple[int, int] | None = None,
+):
+    """Return (features DataFrame keyed by controller tick, diagnostics dict) for one recording.
+
+    ``centre_ticks`` = ``[start, end)`` restricts the samples each channel's mean is taken
+    from. 🔴 Pass the TRAIN segment's range for any recording whose ticks are split across
+    train/val/test: a mean over the whole recording is a statistic fitted on test data.
+    """
     import pandas as pd
 
     frame = load_timetable(mat_path, cfg.sensor_hz)
@@ -115,9 +125,17 @@ def align_trial(mat_path: str, events_path: str, cfg: RigConfig = RigConfig()):
     ticks = cmap.ticks(np.arange(len(frame)))
     min_samples = int(np.ceil(0.5 * cmap.nominal_samples_per_tick))
 
-    # Remove each channel's whole-recording mean first: an accelerometer's DC offset (and a
-    # force platform's preload) is not vibration, and it would dominate an RMS.
-    centred = {c: frame[c].to_numpy(float) - np.nanmean(frame[c].to_numpy(float)) for c in cfg.channels}
+    # Remove each channel's mean first: an accelerometer's DC offset (and a force platform's
+    # preload) is not vibration, and it would dominate an RMS. The mean comes from the whole
+    # recording unless `centre_ticks` confines it (see the docstring).
+    if centre_ticks is None:
+        centre_mask = np.ones(len(frame), dtype=bool)
+    else:
+        centre_mask = (ticks >= centre_ticks[0]) & (ticks < centre_ticks[1])
+        if not centre_mask.any():
+            raise AlignmentError(f"{mat_path}: centre_ticks {list(centre_ticks)} select no samples")
+    means = {c: float(np.nanmean(frame[c].to_numpy(float)[centre_mask])) for c in cfg.channels}
+    centred = {c: frame[c].to_numpy(float) - means[c] for c in cfg.channels}
     columns: dict[str, np.ndarray] = {}
     tick_index = None
     series = {f"{c}_rms": centred[c] for c in cfg.channels}
@@ -127,6 +145,10 @@ def align_trial(mat_path: str, events_path: str, cfg: RigConfig = RigConfig()):
         t, rms, n = rms_per_tick(values, ticks, min_samples)
         if tick_index is None:
             tick_index, columns["n_samples"] = t, n
+        elif not np.array_equal(t, tick_index):
+            # rms_per_tick keeps ticks by sample count alone, so this cannot happen; if it
+            # ever does, a column would be bound to the wrong ticks -- refuse, don't write it.
+            raise AlignmentError(f"{mat_path}: column {col} produced a different tick set")
         columns[col] = rms
     out = pd.DataFrame({"tick": tick_index, **columns})
 
@@ -148,6 +170,8 @@ def align_trial(mat_path: str, events_path: str, cfg: RigConfig = RigConfig()):
         "trailing_s_on_fitted_rate": round(cmap.trailing_edges_ignored * cfg.ticks_per_half_period / cfg.tick_hz, 2),
         "ticks": [int(out["tick"].iloc[0]), int(out["tick"].iloc[-1])] if len(out) else None,
         "rows_out": int(len(out)),
+        "centre_ticks": list(centre_ticks) if centre_ticks else "whole recording",
+        "channel_means": {c: round(v, 6) for c, v in means.items()},
         "config": asdict(cfg),
     }
     return out, diagnostics
@@ -171,6 +195,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--events-template", help="batch: events path; {mat_dir} {trial} available")
     p.add_argument("--out-template", help="batch: output path; {trial} available (relative to cwd)")
     p.add_argument("--diagnostics", help="write every trial's diagnostics to this JSON file")
+    p.add_argument("--centre-ranges", help="JSON file {trial: [start_tick, end_tick]}: take that trial's "
+                   "channel means from those ticks only (its train segment)")
     cfg0 = RigConfig()
     p.add_argument("--sensor-hz", type=float, default=cfg0.sensor_hz)
     p.add_argument("--tick-hz", type=float, default=cfg0.tick_hz)
@@ -196,24 +222,34 @@ def main(argv: list[str] | None = None) -> int:
     else:
         p.error("give --mat/--events/--out, or --root/--mat-glob/--events-template/--out-template")
 
+    centre_ranges: dict[str, list[int]] = {}
+    if a.centre_ranges:
+        with open(a.centre_ranges, encoding="utf-8") as fh:
+            centre_ranges = json.load(fh)
+
     report, failed = [], 0
-    for mat, events, out in jobs:
-        try:
-            frame, diag = align_trial(mat, events, cfg)
-            _write(frame, out)
-            diag["out"] = out
-            print(f"{diag['mat']}: {diag['rows_out']} ticks, drift {diag['drift_ppm']} ppm "
-                  f"({diag['drift_over_run_ms']} ms over run), gap {diag['sync_gap_s']} s vs dwell "
-                  f"{diag['logged_dwell_s']} s -> {out}")
-        except (AlignmentError, ValueError, OSError, KeyError) as exc:
-            failed += 1
-            diag = {"mat": os.path.basename(mat), "error": f"{type(exc).__name__}: {exc}"}
-            print(f"{diag['mat']}: FAILED {diag['error']}", file=sys.stderr)
-        report.append(diag)
-    if a.diagnostics:
-        os.makedirs(os.path.dirname(os.path.abspath(a.diagnostics)), exist_ok=True)
-        with open(a.diagnostics, "w", encoding="utf-8") as fh:
-            json.dump(report, fh, indent=2, default=str)
+    try:
+        for mat, events, out in jobs:
+            trial = os.path.splitext(os.path.basename(mat))[0]
+            rng = centre_ranges.get(trial)
+            try:
+                frame, diag = align_trial(mat, events, cfg, tuple(rng) if rng else None)
+                _write(frame, out)
+                diag["out"] = out
+                print(f"{diag['mat']}: {diag['rows_out']} ticks, drift {diag['drift_ppm']} ppm "
+                      f"({diag['drift_over_run_ms']} ms over run), gap {diag['sync_gap_s']} s vs dwell "
+                      f"{diag['logged_dwell_s']} s -> {out}")
+            except Exception as exc:  # noqa: BLE001 -- one bad file must not end an unattended batch
+                failed += 1
+                diag = {"mat": os.path.basename(mat), "error": f"{type(exc).__name__}: {exc}"}
+                print(f"{diag['mat']}: FAILED {diag['error']}", file=sys.stderr)
+            report.append(diag)
+    finally:
+        # Written even if the loop dies, so the trials that DID succeed keep their evidence.
+        if a.diagnostics:
+            os.makedirs(os.path.dirname(os.path.abspath(a.diagnostics)), exist_ok=True)
+            with open(a.diagnostics, "w", encoding="utf-8") as fh:
+                json.dump(report, fh, indent=2, default=str)
     print(f"{len(jobs) - failed}/{len(jobs)} aligned")
     return 1 if failed else 0
 
