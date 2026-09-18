@@ -1,0 +1,265 @@
+{
+  "schema": "fetch-plan/1",
+  "stage": "plan (M2, ADR-0024 D-3)",
+  "written": "2026-09-17",
+  "source": {
+    "url": "https://radar.kit.edu/radar-backend/archives/hvvwn1kfwf7qt48z/versions/1/content",
+    "doi": "10.35097/hvvwn1kfwf7qt48z",
+    "license": "CC BY 4.0",
+    "container": "BagIt tar -> data/dataset/Data.zip (ZIP64, 434 entries)",
+    "tar_size_bytes": 44584092672,
+    "zip_base_offset": 17920,
+    "zip_size_bytes": 44584069153,
+    "limit": 44584087073,
+    "strip_prefix": "Data/",
+    "client_library": "none (monolithic RADAR archive; byte-range path applies)"
+  },
+  "index": {
+    "manifest": "data/archive-manifest.tsv",
+    "rows": 434,
+    "derived_from": "data/raw/_metadata_extracts/archive_file_listing_434_files.txt (ZIP64 central directory read by byte-range, 2026-09-17)",
+    "crc": "not captured in the listing -- duplicate_groups not evaluable; re-reading the central directory (index-only) would add it"
+  },
+  "rate": {
+    "rate_bytes_per_s": 940000.0,
+    "per_request_penalty_s": 90.0,
+    "merge_threshold_bytes": 84600000,
+    "measured": "single full-body stream 0.94 MB/s; HTTP 429 per-request cooldown ~90 s (100-250 s observed) on radar.kit.edu, 2026-09-17 (README stage log, profile.json _M2_targeted_download)",
+    "limit_scope": "per-client (parallel connections starve each other) -- do not parallelise"
+  },
+  "excluded_groups": {
+    "processed_data/*_synchronized.mat": {
+      "compressed_bytes": 39272998355,
+      "derivable_from": "hfdata.csv (500 Hz Edge) PCHIP-upsampled to 10 kHz + raw_data/*.mat (README.txt l.11)"
+    },
+    "raw_data/*.json": {
+      "entries": 78,
+      "derivable_from": "hfdata.csv is the authors' preprocessed form of the SINUMERIK Edge JSON (README.txt l.7)"
+    },
+    "*.fig": {
+      "entries": 33,
+      "derivable_from": "Sync_Plot.fig is a visual check of the synchronized .mat only"
+    }
+  },
+  "prefix_fetch": "not used -- whole units only; no stationarity claim made (IM-01R-A01/A02 seed blowholes at a stated depth, localised in the toolpath)",
+  "scopes": {
+    "A-full-archive": {
+      "description": "Every entry.",
+      "entries": 317,
+      "requests": 1,
+      "payload_bytes": 44583943293,
+      "wire_bytes": 44584008648,
+      "disk_bytes": 54962398617,
+      "projected_hours": 13.2
+    },
+    "B-all-units-derivables-excluded": {
+      "description": "All 33 experiments + IMP-BASE: every *.csv, raw_data/*.mat, and small docs. Excludes processed_data/*_synchronized.mat, raw_data/*.json, *.fig, .DS_Store (all derivable).",
+      "entries": 169,
+      "requests": 35,
+      "payload_bytes": 3900052425,
+      "wire_bytes": 4889205709,
+      "disk_bytes": 7482366639,
+      "projected_hours": 2.32
+    },
+    "C-tool-wear-units-only": {
+      "description": "As B, restricted to IM-01R, IM-01F and IM-01R-A01..A05 (the only genuine machine-condition units, profile.json _anomaly_composition_finding_M2) + descriptive docs.",
+      "entries": 65,
+      "requests": 10,
+      "payload_bytes": 1721823919,
+      "wire_bytes": 2127561473,
+      "disk_bytes": 3408461874,
+      "projected_hours": 0.88
+    }
+  },
+  "selector": "B-all-units-derivables-excluded",
+  "budget": {
+    "wire_bytes": 4889205709,
+    "disk_bytes": 7482366639,
+    "payload_bytes": 3900052425
+  },
+  "spans": [
+    {
+      "start": 20253,
+      "end": 20422308,
+      "entries": 3
+    },
+    {
+      "start": 843061403,
+      "end": 958333950,
+      "entries": 4
+    },
+    {
+      "start": 1771492119,
+      "end": 1886161195,
+      "entries": 4
+    },
+    {
+      "start": 2702809430,
+      "end": 2817439713,
+      "entries": 4
+    },
+    {
+      "start": 3633985367,
+      "end": 3748750982,
+      "entries": 4
+    },
+    {
+      "start": 4557936916,
+      "end": 4671716329,
+      "entries": 4
+    },
+    {
+      "start": 5484106641,
+      "end": 5597191674,
+      "entries": 4
+    },
+    {
+      "start": 6302746558,
+      "end": 6399956451,
+      "entries": 4
+    },
+    {
+      "start": 7035217366,
+      "end": 7126138582,
+      "entries": 4
+    },
+    {
+      "start": 7875160922,
+      "end": 7977587095,
+      "entries": 4
+    },
+    {
+      "start": 8635712245,
+      "end": 8725170562,
+      "entries": 4
+    },
+    {
+      "start": 9291031023,
+      "end": 9377444023,
+      "entries": 4
+    },
+    {
+      "start": 10238316410,
+      "end": 10349720945,
+      "entries": 4
+    },
+    {
+      "start": 10956108794,
+      "end": 11040147815,
+      "entries": 4
+    },
+    {
+      "start": 11654550691,
+      "end": 11743650080,
+      "entries": 4
+    },
+    {
+      "start": 12544896089,
+      "end": 12648820762,
+      "entries": 4
+    },
+    {
+      "start": 13119876779,
+      "end": 13222325757,
+      "entries": 4
+    },
+    {
+      "start": 15125131400,
+      "end": 15371284888,
+      "entries": 4
+    },
+    {
+      "start": 16782196414,
+      "end": 16951861599,
+      "entries": 4
+    },
+    {
+      "start": 18387173742,
+      "end": 18619601758,
+      "entries": 4
+    },
+    {
+      "start": 21652232959,
+      "end": 22002440513,
+      "entries": 4
+    },
+    {
+      "start": 25050352591,
+      "end": 25401076180,
+      "entries": 4
+    },
+    {
+      "start": 28444192425,
+      "end": 28778566104,
+      "entries": 4
+    },
+    {
+      "start": 31843578956,
+      "end": 32176669522,
+      "entries": 4
+    },
+    {
+      "start": 35224807208,
+      "end": 35579497594,
+      "entries": 4
+    },
+    {
+      "start": 38748857684,
+      "end": 38946729281,
+      "entries": 1
+    },
+    {
+      "start": 39031735779,
+      "end": 39050239874,
+      "entries": 3
+    },
+    {
+      "start": 39807987595,
+      "end": 39893889249,
+      "entries": 4
+    },
+    {
+      "start": 40486314436,
+      "end": 40557641042,
+      "entries": 4
+    },
+    {
+      "start": 41052047593,
+      "end": 41116419327,
+      "entries": 4
+    },
+    {
+      "start": 41737468139,
+      "end": 41859798240,
+      "entries": 4
+    },
+    {
+      "start": 43041090689,
+      "end": 43174259454,
+      "entries": 4
+    },
+    {
+      "start": 43793158871,
+      "end": 43863651171,
+      "entries": 4
+    },
+    {
+      "start": 44232999349,
+      "end": 44296027226,
+      "entries": 4
+    },
+    {
+      "start": 44557097335,
+      "end": 44584026635,
+      "entries": 38
+    }
+  ],
+  "decision": {
+    "status": "approved",
+    "scope": "B-all-units-derivables-excluded",
+    "by": "sanjkcog",
+    "recorded": "2026-09-17",
+    "gate": "gates.json data/fetch-plan.json (stage plan, hard)",
+    "note": "Recorded after the transfer: the 3.9 GB scope was approved informally earlier on 2026-09-17 (README stage log) and fetched before the plan stage existed. This gate formalises it; nothing outside scope B is on disk."
+  }
+}

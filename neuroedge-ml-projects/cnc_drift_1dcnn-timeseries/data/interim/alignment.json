@@ -1,0 +1,1751 @@
+[
+  {
+    "mat": "IMP-01-A01.mat",
+    "events": "IMP-01-A01_hfblockevent.csv",
+    "sensor_rows": 3343000,
+    "sensor_duration_s": 334.3,
+    "anchor_tick": 13435381,
+    "anchor_sample": 38317.92,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0184,
+    "drift_ppm": 80.18,
+    "drift_over_run_ms": 26.8,
+    "edge_residual_max_ms": 2.308,
+    "sync_edges_used": 20439,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 213,
+    "trailing_s_on_fitted_rate": 3.41,
+    "ticks": [
+      13433465,
+      13600601
+    ],
+    "rows_out": 167137,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-01-A01_sensor.parquet"
+  },
+  {
+    "mat": "IMP-01-A02.mat",
+    "events": "IMP-01-A02_hfblockevent.csv",
+    "sensor_rows": 3348000,
+    "sensor_duration_s": 334.8,
+    "anchor_tick": 13717391,
+    "anchor_sample": 35928.47,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0422,
+    "drift_ppm": 80.37,
+    "drift_over_run_ms": 26.91,
+    "edge_residual_max_ms": 0.165,
+    "sync_edges_used": 20424,
+    "glitch_edges_dropped": 2,
+    "trailing_sync_edges_ignored": 274,
+    "trailing_s_on_fitted_rate": 4.38,
+    "ticks": [
+      13715595,
+      13882980
+    ],
+    "rows_out": 167386,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-01-A02_sensor.parquet"
+  },
+  {
+    "mat": "IMP-01-A03.mat",
+    "events": "IMP-01-A03_hfblockevent.csv",
+    "sensor_rows": 3362000,
+    "sensor_duration_s": 336.2,
+    "anchor_tick": 13979537,
+    "anchor_sample": 56457.69,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0203,
+    "drift_ppm": 80.27,
+    "drift_over_run_ms": 26.99,
+    "edge_residual_max_ms": 2.231,
+    "sync_edges_used": 20425,
+    "glitch_edges_dropped": 2,
+    "trailing_sync_edges_ignored": 232,
+    "trailing_s_on_fitted_rate": 3.71,
+    "ticks": [
+      13976714,
+      14144800
+    ],
+    "rows_out": 168087,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-01-A03_sensor.parquet"
+  },
+  {
+    "mat": "IMP-01-A04.mat",
+    "events": "IMP-01-A04_hfblockevent.csv",
+    "sensor_rows": 3350000,
+    "sensor_duration_s": 335.0,
+    "anchor_tick": 14274643,
+    "anchor_sample": 47191.71,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0303,
+    "drift_ppm": 80.27,
+    "drift_over_run_ms": 26.89,
+    "edge_residual_max_ms": 0.175,
+    "sync_edges_used": 20424,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 216,
+    "trailing_s_on_fitted_rate": 3.46,
+    "ticks": [
+      14272284,
+      14439769
+    ],
+    "rows_out": 167486,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-01-A04_sensor.parquet"
+  },
+  {
+    "mat": "IMP-01.mat",
+    "events": "IMP-01_hfblockevent.csv",
+    "sensor_rows": 3336000,
+    "sensor_duration_s": 333.6,
+    "anchor_tick": 4818091,
+    "anchor_sample": 35177.43,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0283,
+    "drift_ppm": 80.41,
+    "drift_over_run_ms": 26.82,
+    "edge_residual_max_ms": 2.257,
+    "sync_edges_used": 20411,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 217,
+    "trailing_s_on_fitted_rate": 3.47,
+    "ticks": [
+      4816332,
+      4983118
+    ],
+    "rows_out": 166787,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-01_sensor.parquet"
+  },
+  {
+    "mat": "IMP-02.mat",
+    "events": "IMP-02_hfblockevent.csv",
+    "sensor_rows": 3428000,
+    "sensor_duration_s": 342.8,
+    "anchor_tick": 5350063,
+    "anchor_sample": 38092.65,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0382,
+    "drift_ppm": 81.15,
+    "drift_over_run_ms": 27.82,
+    "edge_residual_max_ms": 5.933,
+    "sync_edges_used": 21185,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 0,
+    "trailing_s_on_fitted_rate": 0.0,
+    "ticks": [
+      5348158,
+      5519544
+    ],
+    "rows_out": 171387,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-02_sensor.parquet"
+  },
+  {
+    "mat": "IMP-03.mat",
+    "events": "IMP-03_hfblockevent.csv",
+    "sensor_rows": 2863000,
+    "sensor_duration_s": 286.3,
+    "anchor_tick": 5687789,
+    "anchor_sample": 37086.14,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0303,
+    "drift_ppm": 80.34,
+    "drift_over_run_ms": 23.0,
+    "edge_residual_max_ms": 2.286,
+    "sync_edges_used": 17305,
+    "glitch_edges_dropped": 2,
+    "trailing_sync_edges_ignored": 355,
+    "trailing_s_on_fitted_rate": 5.68,
+    "ticks": [
+      5685935,
+      5829072
+    ],
+    "rows_out": 143138,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-03_sensor.parquet"
+  },
+  {
+    "mat": "IMP-04.mat",
+    "events": "IMP-04_hfblockevent.csv",
+    "sensor_rows": 2533000,
+    "sensor_duration_s": 253.3,
+    "anchor_tick": 6255971,
+    "anchor_sample": 61384.64,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0322,
+    "drift_ppm": 80.37,
+    "drift_over_run_ms": 20.36,
+    "edge_residual_max_ms": 0.158,
+    "sync_edges_used": 15294,
+    "glitch_edges_dropped": 2,
+    "trailing_sync_edges_ignored": 151,
+    "trailing_s_on_fitted_rate": 2.42,
+    "ticks": [
+      6252902,
+      6379541
+    ],
+    "rows_out": 126640,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-04_sensor.parquet"
+  },
+  {
+    "mat": "IMP-05.mat",
+    "events": "IMP-05_hfblockevent.csv",
+    "sensor_rows": 3000000,
+    "sensor_duration_s": 300.0,
+    "anchor_tick": 10551539,
+    "anchor_sample": 59734.99,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0283,
+    "drift_ppm": 80.2,
+    "drift_over_run_ms": 24.06,
+    "edge_residual_max_ms": 2.201,
+    "sync_edges_used": 18376,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 0,
+    "trailing_s_on_fitted_rate": 0.0,
+    "ticks": [
+      10548552,
+      10698539
+    ],
+    "rows_out": 149988,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-05_sensor.parquet"
+  },
+  {
+    "mat": "IMP-06.mat",
+    "events": "IMP-06_hfblockevent.csv",
+    "sensor_rows": 2604000,
+    "sensor_duration_s": 260.4,
+    "anchor_tick": 10783529,
+    "anchor_sample": 34972.12,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0423,
+    "drift_ppm": 80.2,
+    "drift_over_run_ms": 20.88,
+    "edge_residual_max_ms": 0.157,
+    "sync_edges_used": 15780,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 275,
+    "trailing_s_on_fitted_rate": 4.4,
+    "ticks": [
+      10781780,
+      10911969
+    ],
+    "rows_out": 130190,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-06_sensor.parquet"
+  },
+  {
+    "mat": "IMP-07.mat",
+    "events": "IMP-07_hfblockevent.csv",
+    "sensor_rows": 2243000,
+    "sensor_duration_s": 224.3,
+    "anchor_tick": 12369139,
+    "anchor_sample": 41156.22,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0183,
+    "drift_ppm": 76.43,
+    "drift_over_run_ms": 17.14,
+    "edge_residual_max_ms": 5.55,
+    "sync_edges_used": 13761,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 0,
+    "trailing_s_on_fitted_rate": 0.0,
+    "ticks": [
+      12367081,
+      12479222
+    ],
+    "rows_out": 112142,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-07_sensor.parquet"
+  },
+  {
+    "mat": "IMP-08.mat",
+    "events": "IMP-08_hfblockevent.csv",
+    "sensor_rows": 3367000,
+    "sensor_duration_s": 336.7,
+    "anchor_tick": 11261577,
+    "anchor_sample": 41368.98,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0422,
+    "drift_ppm": 80.67,
+    "drift_over_run_ms": 27.16,
+    "edge_residual_max_ms": 2.027,
+    "sync_edges_used": 20784,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 0,
+    "trailing_s_on_fitted_rate": 0.0,
+    "ticks": [
+      11259509,
+      11427844
+    ],
+    "rows_out": 168336,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-08_sensor.parquet"
+  },
+  {
+    "mat": "IMP-09.mat",
+    "events": "IMP-09_hfblockevent.csv",
+    "sensor_rows": 2401000,
+    "sensor_duration_s": 240.1,
+    "anchor_tick": 11506887,
+    "anchor_sample": 36443.84,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0383,
+    "drift_ppm": 80.23,
+    "drift_over_run_ms": 19.26,
+    "edge_residual_max_ms": 0.156,
+    "sync_edges_used": 14508,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 269,
+    "trailing_s_on_fitted_rate": 4.3,
+    "ticks": [
+      11505065,
+      11625104
+    ],
+    "rows_out": 120040,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-09_sensor.parquet"
+  },
+  {
+    "mat": "IMP-10.mat",
+    "events": "IMP-10_hfblockevent.csv",
+    "sensor_rows": 2411000,
+    "sensor_duration_s": 241.1,
+    "anchor_tick": 11694525,
+    "anchor_sample": 43577.06,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0164,
+    "drift_ppm": 80.32,
+    "drift_over_run_ms": 19.37,
+    "edge_residual_max_ms": 2.294,
+    "sync_edges_used": 14607,
+    "glitch_edges_dropped": 2,
+    "trailing_sync_edges_ignored": 187,
+    "trailing_s_on_fitted_rate": 2.99,
+    "ticks": [
+      11692346,
+      11812886
+    ],
+    "rows_out": 120541,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-10_sensor.parquet"
+  },
+  {
+    "mat": "IMP-11.mat",
+    "events": "IMP-11_hfblockevent.csv",
+    "sensor_rows": 3256000,
+    "sensor_duration_s": 325.6,
+    "anchor_tick": 11904623,
+    "anchor_sample": 42907.32,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0342,
+    "drift_ppm": 79.35,
+    "drift_over_run_ms": 25.83,
+    "edge_residual_max_ms": 5.888,
+    "sync_edges_used": 20081,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 0,
+    "trailing_s_on_fitted_rate": 0.0,
+    "ticks": [
+      11902478,
+      12065264
+    ],
+    "rows_out": 162787,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-11_sensor.parquet"
+  },
+  {
+    "mat": "IMP-12.mat",
+    "events": "IMP-12_hfblockevent.csv",
+    "sensor_rows": 1893000,
+    "sensor_duration_s": 189.3,
+    "anchor_tick": 12141461,
+    "anchor_sample": 45579.12,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0363,
+    "drift_ppm": 80.13,
+    "drift_over_run_ms": 15.17,
+    "edge_residual_max_ms": 0.149,
+    "sync_edges_used": 11370,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 175,
+    "trailing_s_on_fitted_rate": 2.8,
+    "ticks": [
+      12139182,
+      12233824
+    ],
+    "rows_out": 94643,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-12_sensor.parquet"
+  },
+  {
+    "mat": "IMP-BASE.mat",
+    "events": "IMP-BASE_hfblockevent.csv",
+    "sensor_rows": 7460000,
+    "sensor_duration_s": 746.0,
+    "anchor_tick": 1599609,
+    "anchor_sample": 51907.08,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0303,
+    "drift_ppm": 80.35,
+    "drift_over_run_ms": 59.94,
+    "edge_residual_max_ms": 0.159,
+    "sync_edges_used": 46114,
+    "glitch_edges_dropped": 2,
+    "trailing_sync_edges_ignored": 182,
+    "trailing_s_on_fitted_rate": 2.91,
+    "ticks": [
+      1597014,
+      1969983
+    ],
+    "rows_out": 372970,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IMP-BASE_sensor.parquet"
+  },
+  {
+    "mat": "IM-01F-A01.mat",
+    "events": "IM-01F-A01_hfblockevent.csv",
+    "sensor_rows": 6086000,
+    "sensor_duration_s": 608.6,
+    "anchor_tick": 1227746,
+    "anchor_sample": 121315.32,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0263,
+    "drift_ppm": 80.51,
+    "drift_over_run_ms": 49.0,
+    "edge_residual_max_ms": 2.268,
+    "sync_edges_used": 37277,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 0,
+    "trailing_s_on_fitted_rate": 0.0,
+    "ticks": [
+      1221681,
+      1525955
+    ],
+    "rows_out": 304275,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IM-01F-A01_sensor.parquet"
+  },
+  {
+    "mat": "IM-01F.mat",
+    "events": "IM-01F_hfblockevent.csv",
+    "sensor_rows": 6155000,
+    "sensor_duration_s": 615.5,
+    "anchor_tick": 3884512,
+    "anchor_sample": 133404.03,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0443,
+    "drift_ppm": 80.46,
+    "drift_over_run_ms": 49.52,
+    "edge_residual_max_ms": 0.178,
+    "sync_edges_used": 36958,
+    "glitch_edges_dropped": 2,
+    "trailing_sync_edges_ignored": 673,
+    "trailing_s_on_fitted_rate": 10.77,
+    "ticks": [
+      3877842,
+      4185567
+    ],
+    "rows_out": 307726,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IM-01F_sensor.parquet"
+  },
+  {
+    "mat": "IM-01R-A01.mat",
+    "events": "IM-01R-A01_hfblockevent.csv",
+    "sensor_rows": 12079000,
+    "sensor_duration_s": 1207.9,
+    "anchor_tick": 4350270,
+    "anchor_sample": 120271.34,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0343,
+    "drift_ppm": 80.45,
+    "drift_over_run_ms": 97.18,
+    "edge_residual_max_ms": 0.18,
+    "sync_edges_used": 74370,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 366,
+    "trailing_s_on_fitted_rate": 5.86,
+    "ticks": [
+      4344257,
+      4948157
+    ],
+    "rows_out": 603901,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IM-01R-A01_sensor.parquet"
+  },
+  {
+    "mat": "IM-01R-A02.mat",
+    "events": "IM-01R-A02_hfblockevent.csv",
+    "sensor_rows": 12100000,
+    "sensor_duration_s": 1210.0,
+    "anchor_tick": 5522192,
+    "anchor_sample": 107786.91,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0443,
+    "drift_ppm": 80.33,
+    "drift_over_run_ms": 97.2,
+    "edge_residual_max_ms": 0.182,
+    "sync_edges_used": 74366,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 579,
+    "trailing_s_on_fitted_rate": 9.26,
+    "ticks": [
+      5516803,
+      6121753
+    ],
+    "rows_out": 604951,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IM-01R-A02_sensor.parquet"
+  },
+  {
+    "mat": "IM-01R-A03.mat",
+    "events": "IM-01R-A03_hfblockevent.csv",
+    "sensor_rows": 12057000,
+    "sensor_duration_s": 1205.7,
+    "anchor_tick": 3894354,
+    "anchor_sample": 111326.16,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0303,
+    "drift_ppm": 80.21,
+    "drift_over_run_ms": 96.71,
+    "edge_residual_max_ms": 7.978,
+    "sync_edges_used": 74655,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 0,
+    "trailing_s_on_fitted_rate": 0.0,
+    "ticks": [
+      3888788,
+      4491589
+    ],
+    "rows_out": 602802,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IM-01R-A03_sensor.parquet"
+  },
+  {
+    "mat": "IM-01R-A04.mat",
+    "events": "IM-01R-A04_hfblockevent.csv",
+    "sensor_rows": 12171000,
+    "sensor_duration_s": 1217.1,
+    "anchor_tick": 5263446,
+    "anchor_sample": 131544.21,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0164,
+    "drift_ppm": 80.36,
+    "drift_over_run_ms": 97.81,
+    "edge_residual_max_ms": 2.279,
+    "sync_edges_used": 74363,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 877,
+    "trailing_s_on_fitted_rate": 14.03,
+    "ticks": [
+      5256869,
+      5865369
+    ],
+    "rows_out": 608501,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IM-01R-A04_sensor.parquet"
+  },
+  {
+    "mat": "IM-01R-A05.mat",
+    "events": "IM-01R-A05_hfblockevent.csv",
+    "sensor_rows": 12079000,
+    "sensor_duration_s": 1207.9,
+    "anchor_tick": 369344,
+    "anchor_sample": 128046.69,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0442,
+    "drift_ppm": 80.27,
+    "drift_over_run_ms": 96.96,
+    "edge_residual_max_ms": 0.172,
+    "sync_edges_used": 74688,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 0,
+    "trailing_s_on_fitted_rate": 0.0,
+    "ticks": [
+      362942,
+      966843
+    ],
+    "rows_out": 603902,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IM-01R-A05_sensor.parquet"
+  },
+  {
+    "mat": "IM-01R.mat",
+    "events": "IM-01R_hfblockevent.csv",
+    "sensor_rows": 12161000,
+    "sensor_duration_s": 1216.1,
+    "anchor_tick": 3213414,
+    "anchor_sample": 140671.31,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0363,
+    "drift_ppm": 80.32,
+    "drift_over_run_ms": 97.68,
+    "edge_residual_max_ms": 0.18,
+    "sync_edges_used": 74324,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 797,
+    "trailing_s_on_fitted_rate": 12.75,
+    "ticks": [
+      3206381,
+      3814381
+    ],
+    "rows_out": 608001,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IM-01R_sensor.parquet"
+  },
+  {
+    "mat": "IM-02F-A01.mat",
+    "events": "IM-02F-A01_hfblockevent.csv",
+    "sensor_rows": 3202000,
+    "sensor_duration_s": 320.2,
+    "anchor_tick": 1227428,
+    "anchor_sample": 120539.82,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0403,
+    "drift_ppm": 80.25,
+    "drift_over_run_ms": 25.7,
+    "edge_residual_max_ms": 0.159,
+    "sync_edges_used": 18894,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 363,
+    "trailing_s_on_fitted_rate": 5.81,
+    "ticks": [
+      1221401,
+      1381488
+    ],
+    "rows_out": 160088,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/IM-02F-A01_sensor.parquet"
+  },
+  {
+    "mat": "TF-01-A01.mat",
+    "events": "TF-01-A01_hfblockevent.csv",
+    "sensor_rows": 2080000,
+    "sensor_duration_s": 208.0,
+    "anchor_tick": 2027097,
+    "anchor_sample": 43555.82,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0263,
+    "drift_ppm": 75.48,
+    "drift_over_run_ms": 15.7,
+    "edge_residual_max_ms": 7.457,
+    "sync_edges_used": 12728,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 0,
+    "trailing_s_on_fitted_rate": 0.0,
+    "ticks": [
+      2024919,
+      2128911
+    ],
+    "rows_out": 103993,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/TF-01-A01_sensor.parquet"
+  },
+  {
+    "mat": "TF-01.mat",
+    "events": "TF-01_hfblockevent.csv",
+    "sensor_rows": 2481000,
+    "sensor_duration_s": 248.1,
+    "anchor_tick": 1068739,
+    "anchor_sample": 67859.7,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0283,
+    "drift_ppm": 80.44,
+    "drift_over_run_ms": 19.96,
+    "edge_residual_max_ms": 2.23,
+    "sync_edges_used": 14907,
+    "glitch_edges_dropped": 2,
+    "trailing_sync_edges_ignored": 173,
+    "trailing_s_on_fitted_rate": 2.77,
+    "ticks": [
+      1065346,
+      1189385
+    ],
+    "rows_out": 124040,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/TF-01_sensor.parquet"
+  },
+  {
+    "mat": "TF-02-A01.mat",
+    "events": "TF-02-A01_hfblockevent.csv",
+    "sensor_rows": 5000000,
+    "sensor_duration_s": 500.0,
+    "anchor_tick": 2258817,
+    "anchor_sample": 37989.45,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0303,
+    "drift_ppm": 80.42,
+    "drift_over_run_ms": 40.21,
+    "edge_residual_max_ms": 0.147,
+    "sync_edges_used": 30600,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 410,
+    "trailing_s_on_fitted_rate": 6.56,
+    "ticks": [
+      2256918,
+      2506897
+    ],
+    "rows_out": 249980,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/TF-02-A01_sensor.parquet"
+  },
+  {
+    "mat": "TF-02.mat",
+    "events": "TF-02_hfblockevent.csv",
+    "sensor_rows": 2519000,
+    "sensor_duration_s": 251.9,
+    "anchor_tick": 1309921,
+    "anchor_sample": 43349.22,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0422,
+    "drift_ppm": 80.36,
+    "drift_over_run_ms": 20.24,
+    "edge_residual_max_ms": 0.176,
+    "sync_edges_used": 15276,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 195,
+    "trailing_s_on_fitted_rate": 3.12,
+    "ticks": [
+      1307754,
+      1433693
+    ],
+    "rows_out": 125940,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/TF-02_sensor.parquet"
+  },
+  {
+    "mat": "TF-03-A01.mat",
+    "events": "TF-03-A01_hfblockevent.csv",
+    "sensor_rows": 1527000,
+    "sensor_duration_s": 152.7,
+    "anchor_tick": 2672983,
+    "anchor_sample": 50853.77,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0423,
+    "drift_ppm": 80.35,
+    "drift_over_run_ms": 12.27,
+    "edge_residual_max_ms": 0.14,
+    "sync_edges_used": 9016,
+    "glitch_edges_dropped": 2,
+    "trailing_sync_edges_ignored": 208,
+    "trailing_s_on_fitted_rate": 3.33,
+    "ticks": [
+      2670440,
+      2746783
+    ],
+    "rows_out": 76344,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/TF-03-A01_sensor.parquet"
+  },
+  {
+    "mat": "TF-03-A02.mat",
+    "events": "TF-03-A02_hfblockevent.csv",
+    "sensor_rows": 1035000,
+    "sensor_duration_s": 103.5,
+    "anchor_tick": 3004241,
+    "anchor_sample": 40393.54,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0243,
+    "drift_ppm": 80.14,
+    "drift_over_run_ms": 8.29,
+    "edge_residual_max_ms": 2.246,
+    "sync_edges_used": 6087,
+    "glitch_edges_dropped": 2,
+    "trailing_sync_edges_ignored": 128,
+    "trailing_s_on_fitted_rate": 2.05,
+    "ticks": [
+      3002221,
+      3053966
+    ],
+    "rows_out": 51746,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/TF-03-A02_sensor.parquet"
+  },
+  {
+    "mat": "TF-03.mat",
+    "events": "TF-03_hfblockevent.csv",
+    "sensor_rows": 2567000,
+    "sensor_duration_s": 256.7,
+    "anchor_tick": 1600145,
+    "anchor_sample": 56985.39,
+    "logged_dwell_s": 2.002,
+    "sync_gap_s": 2.0283,
+    "drift_ppm": 80.49,
+    "drift_over_run_ms": 20.66,
+    "edge_residual_max_ms": 2.261,
+    "sync_edges_used": 15295,
+    "glitch_edges_dropped": 0,
+    "trailing_sync_edges_ignored": 391,
+    "trailing_s_on_fitted_rate": 6.26,
+    "ticks": [
+      1597296,
+      1725635
+    ],
+    "rows_out": 128340,
+    "config": {
+      "sensor_hz": 10000.0,
+      "tick_hz": 500.0,
+      "ticks_per_half_period": 8,
+      "sync_col": "Sync_Signal",
+      "channels": [
+        "xAcceleration",
+        "yAcceleration",
+        "zAcceleration",
+        "xForce",
+        "yForce",
+        "zForce"
+      ],
+      "magnitudes": {
+        "vibration": [
+          "xAcceleration",
+          "yAcceleration",
+          "zAcceleration"
+        ],
+        "force": [
+          "xForce",
+          "yForce",
+          "zForce"
+        ]
+      },
+      "anchor_pattern": "^G04\\b",
+      "event_text_col": "GCode",
+      "event_counter_col": "HFProbeCounter",
+      "min_gap_s": 1.0
+    },
+    "out": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/data/interim/TF-03_sensor.parquet"
+  }
+]

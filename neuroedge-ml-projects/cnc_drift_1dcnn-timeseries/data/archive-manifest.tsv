@@ -1,0 +1,435 @@
+path	offset	compressed	uncompressed	method	crc
+Data/	0	0	0	0	
+Data/.DS_Store	67	366	6148	8	
+Data/Dataset/	525	0	0	0	
+Data/Dataset/.DS_Store	600	370	6148	8	
+Data/Dataset/Impeller/	1070	0	0	0	
+Data/Dataset/Impeller/.DS_Store	1154	367	6148	8	
+Data/Dataset/Impeller/IMP-01/	1630	0	0	0	
+Data/Dataset/Impeller/IMP-01/.DS_Store	1721	390	6148	8	
+Data/Dataset/Impeller/IMP-01/processed_data/	2227	0	0	0	
+Data/Dataset/Impeller/IMP-01/processed_data/IMP-01_header.csv	2333	592	3203	8	
+Data/Dataset/Impeller/IMP-01/processed_data/IMP-01_hfblockevent.csv	3064	6155	26351	8	
+Data/Dataset/Impeller/IMP-01/processed_data/IMP-01_hfdata.csv	9364	20390928	95754725	8	
+Data/Dataset/Impeller/IMP-01/processed_data/IMP-01_synchronized.mat	20400431	815036880	841974588	8	
+Data/Dataset/Impeller/IMP-01/processed_data/IMP-01_Sync_Plot.fig	835437456	7605785	16616001	8	
+Data/Dataset/Impeller/IMP-01/raw_data/	843043383	0	0	0	
+Data/Dataset/Impeller/IMP-01/raw_data/IMP-01.mat	843043483	72252509	74647774	8	
+Data/Dataset/Impeller/IMP-01/raw_data/IMP-01_b6d827c3-0799-442a-bd41-c653bcc94e88_20250328-085737.json	915296118	17523283	100039265	8	
+Data/Dataset/Impeller/IMP-01/raw_data/IMP-01_b6d827c3-0799-442a-bd41-c653bcc94e88_20250328-090159.json	932819581	5071215	31696730	8	
+Data/Dataset/Impeller/IMP-01-A01/	937890976	0	0	0	
+Data/Dataset/Impeller/IMP-01-A01/processed_data/	937891071	0	0	0	
+Data/Dataset/Impeller/IMP-01-A01/processed_data/IMP-01-A01_header.csv	937891181	592	3203	8	
+Data/Dataset/Impeller/IMP-01-A01/processed_data/IMP-01-A01_hfblockevent.csv	937891920	6185	26931	8	
+Data/Dataset/Impeller/IMP-01-A01/processed_data/IMP-01-A01_hfdata.csv	937898258	20413676	96748933	8	
+Data/Dataset/Impeller/IMP-01-A01/processed_data/IMP-01-A01_synchronized.mat	958312081	805528758	832670580	8	
+Data/Dataset/Impeller/IMP-01-A01/processed_data/IMP-01-A01_Sync_Plot.fig	1763840992	7632953	16675283	8	
+Data/Dataset/Impeller/IMP-01-A01/raw_data/	1771474095	0	0	0	
+Data/Dataset/Impeller/IMP-01-A01/raw_data/IMP-01-A01.mat	1771474199	71607293	74024367	8	
+Data/Dataset/Impeller/IMP-01-A01/raw_data/IMP-01-A01_f32542ac-e636-4e43-b0d3-6dc6b8bd4220_20250328-134449.json	1843081626	17233505	100057052	8	
+Data/Dataset/Impeller/IMP-01-A01/raw_data/IMP-01-A01_f32542ac-e636-4e43-b0d3-6dc6b8bd4220_20250328-134911.json	1860315319	5355675	33014123	8	
+Data/Dataset/Impeller/IMP-01-A02/	1865671182	0	0	0	
+Data/Dataset/Impeller/IMP-01-A02/processed_data/	1865671277	0	0	0	
+Data/Dataset/Impeller/IMP-01-A02/processed_data/IMP-01-A02_header.csv	1865671387	592	3203	8	
+Data/Dataset/Impeller/IMP-01-A02/processed_data/IMP-01-A02_hfblockevent.csv	1865672126	6192	26931	8	
+Data/Dataset/Impeller/IMP-01-A02/processed_data/IMP-01-A02_hfdata.csv	1865678471	20460708	97476036	8	
+Data/Dataset/Impeller/IMP-01-A02/processed_data/IMP-01-A02_synchronized.mat	1886139326	808976387	836042134	8	
+Data/Dataset/Impeller/IMP-01-A02/processed_data/IMP-01-A02_Sync_Plot.fig	2695115866	7675390	16719955	8	
+Data/Dataset/Impeller/IMP-01-A02/raw_data/	2702791406	0	0	0	
+Data/Dataset/Impeller/IMP-01-A02/raw_data/IMP-01-A02.mat	2702791510	71433193	73860830	8	
+Data/Dataset/Impeller/IMP-01-A02/raw_data/IMP-01-A02_6670bf2a-8dd9-4cb2-b115-af0d98a930f9_20250328-135419.json	2774224837	17549758	100033882	8	
+Data/Dataset/Impeller/IMP-01-A02/raw_data/IMP-01-A02_6670bf2a-8dd9-4cb2-b115-af0d98a930f9_20250328-135840.json	2791774783	5127764	34056438	8	
+Data/Dataset/Impeller/IMP-01-A03/	2796902735	0	0	0	
+Data/Dataset/Impeller/IMP-01-A03/processed_data/	2796902830	0	0	0	
+Data/Dataset/Impeller/IMP-01-A03/processed_data/IMP-01-A03_header.csv	2796902940	592	3203	8	
+Data/Dataset/Impeller/IMP-01-A03/processed_data/IMP-01-A03_hfblockevent.csv	2796903679	6191	26931	8	
+Data/Dataset/Impeller/IMP-01-A03/processed_data/IMP-01-A03_hfdata.csv	2796910023	20507674	97206525	8	
+Data/Dataset/Impeller/IMP-01-A03/processed_data/IMP-01-A03_synchronized.mat	2817417844	809020502	836212796	8	
+Data/Dataset/Impeller/IMP-01-A03/processed_data/IMP-01-A03_Sync_Plot.fig	3626438499	7528694	16615193	8	
+Data/Dataset/Impeller/IMP-01-A03/raw_data/	3633967343	0	0	0	
+Data/Dataset/Impeller/IMP-01-A03/raw_data/IMP-01-A03.mat	3633967447	71674230	74116096	8	
+Data/Dataset/Impeller/IMP-01-A03/raw_data/IMP-01-A03_dd52006e-df82-4e0d-ae6e-f474789a12ea_20250328-140257.json	3705641811	17257879	100049217	8	
+Data/Dataset/Impeller/IMP-01-A03/raw_data/IMP-01-A03_dd52006e-df82-4e0d-ae6e-f474789a12ea_20250328-140718.json	3722899878	5388628	33696109	8	
+Data/Dataset/Impeller/IMP-01-A04/	3728288694	0	0	0	
+Data/Dataset/Impeller/IMP-01-A04/processed_data/	3728288789	0	0	0	
+Data/Dataset/Impeller/IMP-01-A04/processed_data/IMP-01-A04_header.csv	3728288899	592	3203	8	
+Data/Dataset/Impeller/IMP-01-A04/processed_data/IMP-01-A04_hfblockevent.csv	3728289638	6179	26931	8	
+Data/Dataset/Impeller/IMP-01-A04/processed_data/IMP-01-A04_hfdata.csv	3728295970	20432996	96889595	8	
+Data/Dataset/Impeller/IMP-01-A04/processed_data/IMP-01-A04_synchronized.mat	3748729113	801673955	828835704	8	
+Data/Dataset/Impeller/IMP-01-A04/processed_data/IMP-01-A04_Sync_Plot.fig	4550403221	7515521	16597672	8	
+Data/Dataset/Impeller/IMP-01-A04/raw_data/	4557918892	0	0	0	
+Data/Dataset/Impeller/IMP-01-A04/raw_data/IMP-01-A04.mat	4557918996	71294456	73729516	8	
+Data/Dataset/Impeller/IMP-01-A04/raw_data/IMP-01-A04_cc143fe9-b44b-4a42-9e02-6fa62533801e_20250328-141247.json	4629213586	17200396	100018623	8	
+Data/Dataset/Impeller/IMP-01-A04/raw_data/IMP-01-A04_cc143fe9-b44b-4a42-9e02-6fa62533801e_20250328-141708.json	4646414170	5406051	33234599	8	
+Data/Dataset/Impeller/IMP-02/	4651820409	0	0	0	
+Data/Dataset/Impeller/IMP-02/processed_data/	4651820500	0	0	0	
+Data/Dataset/Impeller/IMP-02/processed_data/IMP-02_header.csv	4651820606	592	3203	8	
+Data/Dataset/Impeller/IMP-02/processed_data/IMP-02_hfblockevent.csv	4651821337	5399	23179	8	
+Data/Dataset/Impeller/IMP-02/processed_data/IMP-02_hfdata.csv	4651826881	19867432	97313569	8	
+Data/Dataset/Impeller/IMP-02/processed_data/IMP-02_synchronized.mat	4671694452	804557365	837029739	8	
+Data/Dataset/Impeller/IMP-02/processed_data/IMP-02_Sync_Plot.fig	5476251962	7836517	17076534	8	
+Data/Dataset/Impeller/IMP-02/raw_data/	5484088621	0	0	0	
+Data/Dataset/Impeller/IMP-02/raw_data/IMP-02.mat	5484088721	73437765	75916259	8	
+Data/Dataset/Impeller/IMP-02/raw_data/IMP-02_7f46be54-edaf-4c7d-87d2-965d2b4c18ab_20250328-091521.json	5557526612	16698193	100059681	8	
+Data/Dataset/Impeller/IMP-02/raw_data/IMP-02_7f46be54-edaf-4c7d-87d2-965d2b4c18ab_20250328-091945.json	5574224985	5401357	34123111	8	
+Data/Dataset/Impeller/IMP-03/	5579626522	0	0	0	
+Data/Dataset/Impeller/IMP-03/processed_data/	5579626613	0	0	0	
+Data/Dataset/Impeller/IMP-03/processed_data/IMP-03_header.csv	5579626719	592	3203	8	
+Data/Dataset/Impeller/IMP-03/processed_data/IMP-03_hfblockevent.csv	5579627450	4552	19103	8	
+Data/Dataset/Impeller/IMP-03/processed_data/IMP-03_hfdata.csv	5579632147	17537511	82061161	8	
+Data/Dataset/Impeller/IMP-03/processed_data/IMP-03_synchronized.mat	5597169797	698863767	722232545	8	
+Data/Dataset/Impeller/IMP-03/processed_data/IMP-03_Sync_Plot.fig	6296033709	6694687	14434140	8	
+Data/Dataset/Impeller/IMP-03/raw_data/	6302728538	0	0	0	
+Data/Dataset/Impeller/IMP-03/raw_data/IMP-03.mat	6302728638	61798015	63838385	8	
+Data/Dataset/Impeller/IMP-03/raw_data/IMP-03_d2284c9a-3405-4867-9eb7-db59c330035f_20250328-092637.json	6364526779	17646408	100082904	8	
+Data/Dataset/Impeller/IMP-03/raw_data/IMP-03_d2284c9a-3405-4867-9eb7-db59c330035f_20250328-093059.json	6382173367	1739933	12855117	8	
+Data/Dataset/Impeller/IMP-04/	6383913480	0	0	0	
+Data/Dataset/Impeller/IMP-04/processed_data/	6383913571	0	0	0	
+Data/Dataset/Impeller/IMP-04/processed_data/IMP-04_header.csv	6383913677	592	3203	8	
+Data/Dataset/Impeller/IMP-04/processed_data/IMP-04_hfblockevent.csv	6383914408	6117	26972	8	
+Data/Dataset/Impeller/IMP-04/processed_data/IMP-04_hfdata.csv	6383920670	16013765	73350987	8	
+Data/Dataset/Impeller/IMP-04/processed_data/IMP-04_synchronized.mat	6399934574	629424800	649120356	8	
+Data/Dataset/Impeller/IMP-04/processed_data/IMP-04_Sync_Plot.fig	7029359519	5839685	12721093	8	
+Data/Dataset/Impeller/IMP-04/raw_data/	7035199346	0	0	0	
+Data/Dataset/Impeller/IMP-04/raw_data/IMP-04.mat	7035199446	54345081	56135852	8	
+Data/Dataset/Impeller/IMP-04/raw_data/IMP-04_14d01124-77f4-42a8-a211-68314b6f151f_20250328-094529.json	7089544653	17712910	100057473	8	
+Data/Dataset/Impeller/IMP-04/raw_data/IMP-04_14d01124-77f4-42a8-a211-68314b6f151f_20250328-094951.json	7107257743	43278	855125	8	
+Data/Dataset/Impeller/IMP-05/	7107301201	0	0	0	
+Data/Dataset/Impeller/IMP-05/processed_data/	7107301292	0	0	0	
+Data/Dataset/Impeller/IMP-05/processed_data/IMP-05_header.csv	7107301398	592	3203	8	
+Data/Dataset/Impeller/IMP-05/processed_data/IMP-05_hfblockevent.csv	7107302129	5591	23161	8	
+Data/Dataset/Impeller/IMP-05/processed_data/IMP-05_hfdata.csv	7107307865	18808701	87178040	8	
+Data/Dataset/Impeller/IMP-05/processed_data/IMP-05_synchronized.mat	7126116705	742169657	765468621	8	
+Data/Dataset/Impeller/IMP-05/processed_data/IMP-05_Sync_Plot.fig	7868286507	6856253	14960063	8	
+Data/Dataset/Impeller/IMP-05/raw_data/	7875142902	0	0	0	
+Data/Dataset/Impeller/IMP-05/raw_data/IMP-05.mat	7875143002	64786751	66924197	8	
+Data/Dataset/Impeller/IMP-05/raw_data/IMP-05_3e25ebcd-8421-4e07-8dea-bacdbb57235b_20250328-120841.json	7939929879	17573957	100031010	8	
+Data/Dataset/Impeller/IMP-05/raw_data/IMP-05_3e25ebcd-8421-4e07-8dea-bacdbb57235b_20250328-121302.json	7957504016	3226621	19814839	8	
+Data/Dataset/Impeller/IMP-06/	7960730817	0	0	0	
+Data/Dataset/Impeller/IMP-06/processed_data/	7960730908	0	0	0	
+Data/Dataset/Impeller/IMP-06/processed_data/IMP-06_header.csv	7960731014	592	3203	8	
+Data/Dataset/Impeller/IMP-06/processed_data/IMP-06_hfblockevent.csv	7960731745	4229	17271	8	
+Data/Dataset/Impeller/IMP-06/processed_data/IMP-06_hfdata.csv	7960736119	16828960	77884607	8	
+Data/Dataset/Impeller/IMP-06/processed_data/IMP-06_synchronized.mat	7977565218	652035148	672202863	8	
+Data/Dataset/Impeller/IMP-06/processed_data/IMP-06_Sync_Plot.fig	8629600511	6093572	13236624	8	
+Data/Dataset/Impeller/IMP-06/raw_data/	8635694225	0	0	0	
+Data/Dataset/Impeller/IMP-06/raw_data/IMP-06.mat	8635694325	56265272	58097930	8	
+Data/Dataset/Impeller/IMP-06/raw_data/IMP-06_4e348da2-d42e-4b44-ae71-774854154415_20250328-121629.json	8691959723	18167437	100034675	8	
+Data/Dataset/Impeller/IMP-06/raw_data/IMP-06_4e348da2-d42e-4b44-ae71-774854154415_20250328-122050.json	8710127340	450844	7099336	8	
+Data/Dataset/Impeller/IMP-07/	8710578364	0	0	0	
+Data/Dataset/Impeller/IMP-07/processed_data/	8710578455	0	0	0	
+Data/Dataset/Impeller/IMP-07/processed_data/IMP-07_header.csv	8710578561	592	3203	8	
+Data/Dataset/Impeller/IMP-07/processed_data/IMP-07_hfblockevent.csv	8710579292	4880	21146	8	
+Data/Dataset/Impeller/IMP-07/processed_data/IMP-07_hfdata.csv	8710584317	14564229	66043510	8	
+Data/Dataset/Impeller/IMP-07/processed_data/IMP-07_synchronized.mat	8725148685	560798078	576953588	8	
+Data/Dataset/Impeller/IMP-07/processed_data/IMP-07_Sync_Plot.fig	9285946908	5065953	11344517	8	
+Data/Dataset/Impeller/IMP-07/raw_data/	9291013003	0	0	0	
+Data/Dataset/Impeller/IMP-07/raw_data/IMP-07.mat	9291013103	48357932	49989617	8	
+Data/Dataset/Impeller/IMP-07/raw_data/IMP-07_0a214296-f863-4540-84b4-eb288252ff27_20250328-130916.json	9339371161	16025339	90677199	8	
+Data/Dataset/Impeller/IMP-08/	9355396680	0	0	0	
+Data/Dataset/Impeller/IMP-08/processed_data/	9355396771	0	0	0	
+Data/Dataset/Impeller/IMP-08/processed_data/IMP-08_header.csv	9355396877	592	3203	8	
+Data/Dataset/Impeller/IMP-08/processed_data/IMP-08_hfblockevent.csv	9355397608	9443	42085	8	
+Data/Dataset/Impeller/IMP-08/processed_data/IMP-08_hfdata.csv	9355407196	22014811	97635304	8	
+Data/Dataset/Impeller/IMP-08/processed_data/IMP-08_synchronized.mat	9377422146	853262109	877958835	8	
+Data/Dataset/Impeller/IMP-08/processed_data/IMP-08_Sync_Plot.fig	10230684400	7613848	16745013	8	
+Data/Dataset/Impeller/IMP-08/raw_data/	10238298390	0	0	0	
+Data/Dataset/Impeller/IMP-08/raw_data/IMP-08.mat	10238298490	71477240	73905412	8	
+Data/Dataset/Impeller/IMP-08/raw_data/IMP-08_2b6ff62d-6d17-4241-a9fe-a86dcfdae4c7_20250328-123221.json	10309775856	18314360	100030963	8	
+Data/Dataset/Impeller/IMP-08/raw_data/IMP-08_2b6ff62d-6d17-4241-a9fe-a86dcfdae4c7_20250328-123641.json	10328090396	6019176	34199507	8	
+Data/Dataset/Impeller/IMP-09/	10334109752	0	0	0	
+Data/Dataset/Impeller/IMP-09/processed_data/	10334109843	0	0	0	
+Data/Dataset/Impeller/IMP-09/processed_data/IMP-09_header.csv	10334109949	592	3203	8	
+Data/Dataset/Impeller/IMP-09/processed_data/IMP-09_hfblockevent.csv	10334110680	5045	20180	8	
+Data/Dataset/Impeller/IMP-09/processed_data/IMP-09_hfdata.csv	10334115870	15583059	70273309	8	
+Data/Dataset/Impeller/IMP-09/processed_data/IMP-09_synchronized.mat	10349699068	600820331	618289622	8	
+Data/Dataset/Impeller/IMP-09/processed_data/IMP-09_Sync_Plot.fig	10950519544	5571088	12219132	8	
+Data/Dataset/Impeller/IMP-09/raw_data/	10956090774	0	0	0	
+Data/Dataset/Impeller/IMP-09/raw_data/IMP-09.mat	10956090874	51205478	52938073	8	
+Data/Dataset/Impeller/IMP-09/raw_data/IMP-09_2a21ac4d-138d-422e-8d0c-f71a5433ca13_20250328-124035.json	11007296478	17174314	96480013	8	
+Data/Dataset/Impeller/IMP-10/	11024470972	0	0	0	
+Data/Dataset/Impeller/IMP-10/processed_data/	11024471063	0	0	0	
+Data/Dataset/Impeller/IMP-10/processed_data/IMP-10_header.csv	11024471169	592	3203	8	
+Data/Dataset/Impeller/IMP-10/processed_data/IMP-10_hfblockevent.csv	11024471900	7399	31493	8	
+Data/Dataset/Impeller/IMP-10/processed_data/IMP-10_hfdata.csv	11024479444	15646355	69758317	8	
+Data/Dataset/Impeller/IMP-10/processed_data/IMP-10_synchronized.mat	11040125938	608910112	627100723	8	
+Data/Dataset/Impeller/IMP-10/processed_data/IMP-10_Sync_Plot.fig	11649036195	5496334	12174527	8	
+Data/Dataset/Impeller/IMP-10/raw_data/	11654532671	0	0	0	
+Data/Dataset/Impeller/IMP-10/raw_data/IMP-10.mat	11654532771	51748257	53470876	8	
+Data/Dataset/Impeller/IMP-10/raw_data/IMP-10_0acd1e7d-bde6-4eb8-9be6-20198d043fca_20250328-124651.json	11706281154	17274009	95845863	8	
+Data/Dataset/Impeller/IMP-11/	11723555343	0	0	0	
+Data/Dataset/Impeller/IMP-11/processed_data/	11723555434	0	0	0	
+Data/Dataset/Impeller/IMP-11/processed_data/IMP-11_header.csv	11723555540	592	3203	8	
+Data/Dataset/Impeller/IMP-11/processed_data/IMP-11_hfblockevent.csv	11723556271	6144	26585	8	
+Data/Dataset/Impeller/IMP-11/processed_data/IMP-11_hfdata.csv	11723562560	20065504	93631694	8	
+Data/Dataset/Impeller/IMP-11/processed_data/IMP-11_synchronized.mat	11743628203	793775492	822003078	8	
+Data/Dataset/Impeller/IMP-11/processed_data/IMP-11_Sync_Plot.fig	12537403840	7474087	16266479	8	
+Data/Dataset/Impeller/IMP-11/raw_data/	12544878069	0	0	0	
+Data/Dataset/Impeller/IMP-11/raw_data/IMP-11.mat	12544878169	69785322	72129866	8	
+Data/Dataset/Impeller/IMP-11/raw_data/IMP-11_e209d8c2-dc14-4fb4-812f-20fd57d07be3_20250328-125351.json	12614663617	17584742	100027951	8	
+Data/Dataset/Impeller/IMP-11/raw_data/IMP-11_e209d8c2-dc14-4fb4-812f-20fd57d07be3_20250328-125812.json	12632248539	4712807	28887264	8	
+Data/Dataset/Impeller/IMP-12/	12636961526	0	0	0	
+Data/Dataset/Impeller/IMP-12/processed_data/	12636961617	0	0	0	
+Data/Dataset/Impeller/IMP-12/processed_data/IMP-12_header.csv	12636961723	592	3203	8	
+Data/Dataset/Impeller/IMP-12/processed_data/IMP-12_hfblockevent.csv	12636962454	6018	26263	8	
+Data/Dataset/Impeller/IMP-12/processed_data/IMP-12_hfdata.csv	12636968617	11830129	54658592	8	
+Data/Dataset/Impeller/IMP-12/processed_data/IMP-12_synchronized.mat	12648798885	466866346	481164419	8	
+Data/Dataset/Impeller/IMP-12/processed_data/IMP-12_Sync_Plot.fig	13115665376	4193241	9557274	8	
+Data/Dataset/Impeller/IMP-12/raw_data/	13119858759	0	0	0	
+Data/Dataset/Impeller/IMP-12/raw_data/IMP-12.mat	13119858859	40584408	42010973	8	
+Data/Dataset/Impeller/IMP-12/raw_data/IMP-12_8c33c6a0-4d3e-444f-a06e-f8188b222863_20250328-130145.json	13160443393	13148865	75112923	8	
+Data/Dataset/Impeller/IMP-BASE/	13173592438	0	0	0	
+Data/Dataset/Impeller/IMP-BASE/processed_data/	13173592531	0	0	0	
+Data/Dataset/Impeller/IMP-BASE/processed_data/IMP-BASE_header.csv	13173592639	592	3203	8	
+Data/Dataset/Impeller/IMP-BASE/processed_data/IMP-BASE_hfblockevent.csv	13173593374	13013	67181	8	
+Data/Dataset/Impeller/IMP-BASE/processed_data/IMP-BASE_hfdata.csv	13173606536	48697205	213188242	8	
+Data/Dataset/Impeller/IMP-BASE/processed_data/IMP-BASE_synchronized.mat	13222303884	1887286656	1940000693	8	
+Data/Dataset/Impeller/IMP-BASE/processed_data/IMP-BASE_Sync_Plot.fig	15109590689	15522543	35257209	8	
+Data/Dataset/Impeller/IMP-BASE/raw_data/	15125113378	0	0	0	
+Data/Dataset/Impeller/IMP-BASE/raw_data/IMP-BASE.mat	15125113480	158436518	164916892	8	
+Data/Dataset/Impeller/IMP-BASE/raw_data/IMP-BASE_0b88a33e-091b-4269-8e55-cf9960567129_20250328-071017.json	15283550128	18152722	100070786	8	
+Data/Dataset/Impeller/IMP-BASE/raw_data/IMP-BASE_0b88a33e-091b-4269-8e55-cf9960567129_20250328-071438.json	15301703034	18514855	100073990	8	
+Data/Dataset/Impeller/IMP-BASE/raw_data/IMP-BASE_0b88a33e-091b-4269-8e55-cf9960567129_20250328-071855.json	15320218073	16821102	93189172	8	
+Data/Dataset/Injection mold/	15337039359	0	0	0	
+Data/Dataset/Injection mold/IM-01F/	15337039449	0	0	0	
+Data/Dataset/Injection mold/IM-01F/processed_data/	15337039546	0	0	0	
+Data/Dataset/Injection mold/IM-01F/processed_data/IM-01F_header.csv	15337039658	593	3203	8	
+Data/Dataset/Injection mold/IM-01F/processed_data/IM-01F_hfblockevent.csv	15337040396	20879	92243	8	
+Data/Dataset/Injection mold/IM-01F/processed_data/IM-01F_hfdata.csv	15337061426	34201446	169783751	8	
+Data/Dataset/Injection mold/IM-01F/processed_data/IM-01F_synchronized.mat	15371263017	1397712333	1444218419	8	
+Data/Dataset/Injection mold/IM-01F/processed_data/IM-01F_Sync_Plot.fig	16768975501	13202739	29313174	8	
+Data/Dataset/Injection mold/IM-01F/raw_data/	16782178388	0	0	0	
+Data/Dataset/Injection mold/IM-01F/raw_data/IM-01F.mat	16782178494	98200145	105397056	8	
+Data/Dataset/Injection mold/IM-01F/raw_data/IM-01F_ac635110-91da-41fa-bef2-a01adc35a73e_20250522-072642.json	16880378771	16059476	100076045	8	
+Data/Dataset/Injection mold/IM-01F/raw_data/IM-01F_ac635110-91da-41fa-bef2-a01adc35a73e_20250522-073107.json	16896438433	16291662	100023325	8	
+Data/Dataset/Injection mold/IM-01F/raw_data/IM-01F_ac635110-91da-41fa-bef2-a01adc35a73e_20250522-073528.json	16912730281	4946808	34034403	8	
+Data/Dataset/Injection mold/IM-01F-A01/	16917677275	0	0	0	
+Data/Dataset/Injection mold/IM-01F-A01/processed_data/	16917677376	0	0	0	
+Data/Dataset/Injection mold/IM-01F-A01/processed_data/IM-01F-A01_header.csv	16917677492	593	3203	8	
+Data/Dataset/Injection mold/IM-01F-A01/processed_data/IM-01F-A01_hfblockevent.csv	16917678238	20891	92227	8	
+Data/Dataset/Injection mold/IM-01F-A01/processed_data/IM-01F-A01_hfdata.csv	16917699288	34140295	169413559	8	
+Data/Dataset/Injection mold/IM-01F-A01/processed_data/IM-01F-A01_synchronized.mat	16951839736	1422322416	1468109502	8	
+Data/Dataset/Injection mold/IM-01F-A01/processed_data/IM-01F-A01_Sync_Plot.fig	18374162311	12993245	29004970	8	
+Data/Dataset/Injection mold/IM-01F-A01/raw_data/	18387155712	0	0	0	
+Data/Dataset/Injection mold/IM-01F-A01/raw_data/IM-01F-A01.mat	18387155822	121286483	127812648	8	
+Data/Dataset/Injection mold/IM-01F-A01/raw_data/IM-01F-A01_4a13a767-39c6-4560-b08b-341ae996c5a8_20250522-055808.json	18508442445	15944879	100074196	8	
+Data/Dataset/Injection mold/IM-01F-A01/raw_data/IM-01F-A01_4a13a767-39c6-4560-b08b-341ae996c5a8_20250522-060230.json	18524387518	16197653	100015249	8	
+Data/Dataset/Injection mold/IM-01F-A01/raw_data/IM-01F-A01_4a13a767-39c6-4560-b08b-341ae996c5a8_20250522-060649.json	18540585365	5192037	35266043	8	
+Data/Dataset/Injection mold/IM-01R/	18545777596	0	0	0	
+Data/Dataset/Injection mold/IM-01R/processed_data/	18545777693	0	0	0	
+Data/Dataset/Injection mold/IM-01R/processed_data/IM-01R_header.csv	18545777805	593	3203	8	
+Data/Dataset/Injection mold/IM-01R/processed_data/IM-01R_hfblockevent.csv	18545778543	32630	143592	8	
+Data/Dataset/Injection mold/IM-01R/processed_data/IM-01R_hfdata.csv	18545811324	73768418	338657384	8	
+Data/Dataset/Injection mold/IM-01R/processed_data/IM-01R_synchronized.mat	18619579887	3008860586	3100637693	8	
+Data/Dataset/Injection mold/IM-01R/processed_data/IM-01R_Sync_Plot.fig	21628440624	23774161	56560610	8	
+Data/Dataset/Injection mold/IM-01R/raw_data/	21652214933	0	0	0	
+Data/Dataset/Injection mold/IM-01R/raw_data/IM-01R.mat	21652215039	194744482	209669832	8	
+Data/Dataset/Injection mold/IM-01R/raw_data/IM-01R_f9b4006a-6fb2-44fb-a2f8-c44537e99e9e_20250522-070420.json	21846959653	18232152	100020937	8	
+Data/Dataset/Injection mold/IM-01R/raw_data/IM-01R_f9b4006a-6fb2-44fb-a2f8-c44537e99e9e_20250522-070843.json	21865191991	18178306	100057613	8	
+Data/Dataset/Injection mold/IM-01R/raw_data/IM-01R_f9b4006a-6fb2-44fb-a2f8-c44537e99e9e_20250522-071306.json	21883370483	17758627	100017800	8	
+Data/Dataset/Injection mold/IM-01R/raw_data/IM-01R_f9b4006a-6fb2-44fb-a2f8-c44537e99e9e_20250522-071725.json	21901129296	17089175	100063148	8	
+Data/Dataset/Injection mold/IM-01R/raw_data/IM-01R_f9b4006a-6fb2-44fb-a2f8-c44537e99e9e_20250522-072145.json	21918218657	10331284	66638919	8	
+Data/Dataset/Injection mold/IM-01R-A01/	21928550127	0	0	0	
+Data/Dataset/Injection mold/IM-01R-A01/processed_data/	21928550228	0	0	0	
+Data/Dataset/Injection mold/IM-01R-A01/processed_data/IM-01R-A01_header.csv	21928550344	593	3203	8	
+Data/Dataset/Injection mold/IM-01R-A01/processed_data/IM-01R-A01_hfblockevent.csv	21928551090	32569	143638	8	
+Data/Dataset/Injection mold/IM-01R-A01/processed_data/IM-01R-A01_hfdata.csv	21928583818	73834679	336469163	8	
+Data/Dataset/Injection mold/IM-01R-A01/processed_data/IM-01R-A01_synchronized.mat	22002418650	3024177718	3117243323	8	
+Data/Dataset/Injection mold/IM-01R-A01/processed_data/IM-01R-A01_Sync_Plot.fig	25026596527	23737878	56203817	8	
+Data/Dataset/Injection mold/IM-01R-A01/raw_data/	25050334561	0	0	0	
+Data/Dataset/Injection mold/IM-01R-A01/raw_data/IM-01R-A01.mat	25050334671	195692296	210468551	8	
+Data/Dataset/Injection mold/IM-01R-A01/raw_data/IM-01R-A01_2f225232-c6f0-45a5-9f22-dd419e7605fc_20250522-074213.json	25246027107	18112024	100043736	8	
+Data/Dataset/Injection mold/IM-01R-A01/raw_data/IM-01R-A01_2f225232-c6f0-45a5-9f22-dd419e7605fc_20250522-074638.json	25264139325	18207058	100063332	8	
+Data/Dataset/Injection mold/IM-01R-A01/raw_data/IM-01R-A01_2f225232-c6f0-45a5-9f22-dd419e7605fc_20250522-075100.json	25282346577	17768369	100075130	8	
+Data/Dataset/Injection mold/IM-01R-A01/raw_data/IM-01R-A01_2f225232-c6f0-45a5-9f22-dd419e7605fc_20250522-075519.json	25300115140	17086182	100025575	8	
+Data/Dataset/Injection mold/IM-01R-A01/raw_data/IM-01R-A01_2f225232-c6f0-45a5-9f22-dd419e7605fc_20250522-075939.json	25317201516	10113184	62259047	8	
+Data/Dataset/Injection mold/IM-01R-A02/	25327314894	0	0	0	
+Data/Dataset/Injection mold/IM-01R-A02/processed_data/	25327314995	0	0	0	
+Data/Dataset/Injection mold/IM-01R-A02/processed_data/IM-01R-A02_header.csv	25327315111	593	3203	8	
+Data/Dataset/Injection mold/IM-01R-A02/processed_data/IM-01R-A02_hfblockevent.csv	25327315857	32613	143638	8	
+Data/Dataset/Injection mold/IM-01R-A02/processed_data/IM-01R-A02_hfdata.csv	25327348629	73705535	337012348	8	
+Data/Dataset/Injection mold/IM-01R-A02/processed_data/IM-01R-A02_synchronized.mat	25401054317	3019268159	3112060111	8	
+Data/Dataset/Injection mold/IM-01R-A02/processed_data/IM-01R-A02_Sync_Plot.fig	28420322635	23851604	56454258	8	
+Data/Dataset/Injection mold/IM-01R-A02/raw_data/	28444174395	0	0	0	
+Data/Dataset/Injection mold/IM-01R-A02/raw_data/IM-01R-A02.mat	28444174505	196164120	210777016	8	
+Data/Dataset/Injection mold/IM-01R-A02/raw_data/IM-01R-A02_092427ce-4b3d-4838-9eea-194011b8486e_20250522-082118.json	28640338765	18109076	100019619	8	
+Data/Dataset/Injection mold/IM-01R-A02/raw_data/IM-01R-A02_092427ce-4b3d-4838-9eea-194011b8486e_20250522-082541.json	28658448035	18073065	100034015	8	
+Data/Dataset/Injection mold/IM-01R-A02/raw_data/IM-01R-A02_092427ce-4b3d-4838-9eea-194011b8486e_20250522-083004.json	28676521294	17750142	100075364	8	
+Data/Dataset/Injection mold/IM-01R-A02/raw_data/IM-01R-A02_092427ce-4b3d-4838-9eea-194011b8486e_20250522-083423.json	28694271630	17138052	100037652	8	
+Data/Dataset/Injection mold/IM-01R-A02/raw_data/IM-01R-A02_092427ce-4b3d-4838-9eea-194011b8486e_20250522-083842.json	28711409876	10270571	63973605	8	
+Data/Dataset/Injection mold/IM-01R-A03/	28721680641	0	0	0	
+Data/Dataset/Injection mold/IM-01R-A03/processed_data/	28721680742	0	0	0	
+Data/Dataset/Injection mold/IM-01R-A03/processed_data/IM-01R-A03_header.csv	28721680858	594	3203	8	
+Data/Dataset/Injection mold/IM-01R-A03/processed_data/IM-01R-A03_hfblockevent.csv	28721681605	32605	143592	8	
+Data/Dataset/Injection mold/IM-01R-A03/processed_data/IM-01R-A03_hfdata.csv	28721714369	56829719	257554995	8	
+Data/Dataset/Injection mold/IM-01R-A03/processed_data/IM-01R-A03_synchronized.mat	28778544241	3041228967	3133140683	8	
+Data/Dataset/Injection mold/IM-01R-A03/processed_data/IM-01R-A03_Sync_Plot.fig	31819773367	23787403	56190932	8	
+Data/Dataset/Injection mold/IM-01R-A03/raw_data/	31843560926	0	0	0	
+Data/Dataset/Injection mold/IM-01R-A03/raw_data/IM-01R-A03.mat	31843561036	195323250	209867049	8	
+Data/Dataset/Injection mold/IM-01R-A03/raw_data/IM-01R-A03_251b0037-423a-44f0-a54a-c06e735afbdc_20250522-111238.json	32038884426	18040645	100063321	8	
+Data/Dataset/Injection mold/IM-01R-A03/raw_data/IM-01R-A03_251b0037-423a-44f0-a54a-c06e735afbdc_20250522-111703.json	32056925265	18163058	100041710	8	
+Data/Dataset/Injection mold/IM-01R-A03/raw_data/IM-01R-A03_251b0037-423a-44f0-a54a-c06e735afbdc_20250522-112128.json	32075088517	17687854	100030032	8	
+Data/Dataset/Injection mold/IM-01R-A03/raw_data/IM-01R-A03_251b0037-423a-44f0-a54a-c06e735afbdc_20250522-112548.json	32092776565	17130338	100039151	8	
+Data/Dataset/Injection mold/IM-01R-A03/raw_data/IM-01R-A03_251b0037-423a-44f0-a54a-c06e735afbdc_20250522-113010.json	32109907097	9567057	59410662	8	
+Data/Dataset/Injection mold/IM-01R-A04/	32119474348	0	0	0	
+Data/Dataset/Injection mold/IM-01R-A04/processed_data/	32119474449	0	0	0	
+Data/Dataset/Injection mold/IM-01R-A04/processed_data/IM-01R-A04_header.csv	32119474565	594	3203	8	
+Data/Dataset/Injection mold/IM-01R-A04/processed_data/IM-01R-A04_hfblockevent.csv	32119475312	32570	143638	8	
+Data/Dataset/Injection mold/IM-01R-A04/processed_data/IM-01R-A04_hfdata.csv	32119508041	57139465	259310025	8	
+Data/Dataset/Injection mold/IM-01R-A04/processed_data/IM-01R-A04_synchronized.mat	32176647659	3024261466	3117227413	8	
+Data/Dataset/Injection mold/IM-01R-A04/processed_data/IM-01R-A04_Sync_Plot.fig	35200909284	23879738	56654610	8	
+Data/Dataset/Injection mold/IM-01R-A04/raw_data/	35224789178	0	0	0	
+Data/Dataset/Injection mold/IM-01R-A04/raw_data/IM-01R-A04.mat	35224789288	197139760	212047074	8	
+Data/Dataset/Injection mold/IM-01R-A04/raw_data/IM-01R-A04_ab3e3cf6-be17-49e0-9f23-c5503cc55c9c_20250522-115816.json	35421929188	18061205	100076556	8	
+Data/Dataset/Injection mold/IM-01R-A04/raw_data/IM-01R-A04_ab3e3cf6-be17-49e0-9f23-c5503cc55c9c_20250522-120241.json	35439990587	18187449	100025680	8	
+Data/Dataset/Injection mold/IM-01R-A04/raw_data/IM-01R-A04_ab3e3cf6-be17-49e0-9f23-c5503cc55c9c_20250522-120706.json	35458178230	17732266	100050584	8	
+Data/Dataset/Injection mold/IM-01R-A04/raw_data/IM-01R-A04_ab3e3cf6-be17-49e0-9f23-c5503cc55c9c_20250522-121126.json	35475910690	17085280	100037476	8	
+Data/Dataset/Injection mold/IM-01R-A04/raw_data/IM-01R-A04_ab3e3cf6-be17-49e0-9f23-c5503cc55c9c_20250522-121548.json	35492996164	9809125	62492006	8	
+Data/Dataset/Injection mold/IM-01R-A05/	35502805483	0	0	0	
+Data/Dataset/Injection mold/IM-01R-A05/processed_data/	35502805584	0	0	0	
+Data/Dataset/Injection mold/IM-01R-A05/processed_data/IM-01R-A05_header.csv	35502805700	590	3203	8	
+Data/Dataset/Injection mold/IM-01R-A05/processed_data/IM-01R-A05_hfblockevent.csv	35502806443	32531	140802	8	
+Data/Dataset/Injection mold/IM-01R-A05/processed_data/IM-01R-A05_hfdata.csv	35502839133	76636445	336786784	8	
+Data/Dataset/Injection mold/IM-01R-A05/processed_data/IM-01R-A05_synchronized.mat	35579475731	3145625288	3234025253	8	
+Data/Dataset/Injection mold/IM-01R-A05/processed_data/IM-01R-A05_Sync_Plot.fig	38725101178	23738320	56271757	8	
+Data/Dataset/Injection mold/IM-01R-A05/raw_data/	38748839654	0	0	0	
+Data/Dataset/Injection mold/IM-01R-A05/raw_data/IM-01R-A05.mat	38748839764	197867501	212590315	8	
+Data/Dataset/Injection mold/IM-01R-A05/raw_data/IM-01R-A05_daa74a1c-29c7-43a4-bb37-dfbf7a9029ec_20250522-125433.json	38946707405	18977488	100065010	8	
+Data/Dataset/Injection mold/IM-01R-A05/raw_data/IM-01R-A05_daa74a1c-29c7-43a4-bb37-dfbf7a9029ec_20250522-125856.json	38965685087	19073493	100034166	8	
+Data/Dataset/Injection mold/IM-01R-A05/raw_data/IM-01R-A05_daa74a1c-29c7-43a4-bb37-dfbf7a9029ec_20250522-130317.json	38984758774	18537953	100071580	8	
+Data/Dataset/Injection mold/IM-01R-A05/raw_data/IM-01R-A05_daa74a1c-29c7-43a4-bb37-dfbf7a9029ec_20250522-130735.json	39003296921	17497428	100008589	8	
+Data/Dataset/Injection mold/IM-01R-A05/raw_data/IM-01R-A05_daa74a1c-29c7-43a4-bb37-dfbf7a9029ec_20250522-131154.json	39020794543	10922905	64448269	8	
+Data/Dataset/Injection mold/IM-02F-A01/	39031717642	0	0	0	
+Data/Dataset/Injection mold/IM-02F-A01/processed_data/	39031717743	0	0	0	
+Data/Dataset/Injection mold/IM-02F-A01/processed_data/IM-02F-A01_header.csv	39031717859	590	3203	8	
+Data/Dataset/Injection mold/IM-02F-A01/processed_data/IM-02F-A01_hfblockevent.csv	39031718602	20536	92273	8	
+Data/Dataset/Injection mold/IM-02F-A01/processed_data/IM-02F-A01_hfdata.csv	39031739297	18478561	88727551	8	
+Data/Dataset/Injection mold/IM-02F-A01/processed_data/IM-02F-A01_synchronized.mat	39050218011	750542019	772141484	8	
+Data/Dataset/Injection mold/IM-02F-A01/processed_data/IM-02F-A01_Sync_Plot.fig	39800760189	7209220	15708595	8	
+Data/Dataset/Injection mold/IM-02F-A01/raw_data/	39807969565	0	0	0	
+Data/Dataset/Injection mold/IM-02F-A01/raw_data/IM-02F-A01.mat	39807969675	51330316	55268318	8	
+Data/Dataset/Injection mold/IM-02F-A01/raw_data/IM-02F-A01_4907801c-97fc-4b8b-a20d-e38b2ad01dcf_20250522-132310.json	39859300131	16930910	100032088	8	
+Data/Dataset/Injection mold/IM-02F-A01/raw_data/IM-02F-A01_4907801c-97fc-4b8b-a20d-e38b2ad01dcf_20250522-132732.json	39876231235	3305875	22149995	8	
+Data/Dataset/Thermoforming mold/	39879537304	0	0	0	
+Data/Dataset/Thermoforming mold/TF-01/	39879537398	0	0	0	
+Data/Dataset/Thermoforming mold/TF-01/processed_data/	39879537498	0	0	0	
+Data/Dataset/Thermoforming mold/TF-01/processed_data/TF-01_header.csv	39879537613	594	3203	8	
+Data/Dataset/Thermoforming mold/TF-01/processed_data/TF-01_hfblockevent.csv	39879538354	1156	3891	8	
+Data/Dataset/Thermoforming mold/TF-01/processed_data/TF-01_hfdata.csv	39879539663	14327570	71284610	8	
+Data/Dataset/Thermoforming mold/TF-01/processed_data/TF-01_synchronized.mat	39893867380	586768902	606002678	8	
+Data/Dataset/Thermoforming mold/TF-01/processed_data/TF-01_Sync_Plot.fig	40480636435	5659822	12432412	8	
+Data/Dataset/Thermoforming mold/TF-01/raw_data/	40486296407	0	0	0	
+Data/Dataset/Thermoforming mold/TF-01/raw_data/TF-01.mat	40486296516	43254148	45145250	8	
+Data/Dataset/Thermoforming mold/TF-01/raw_data/TF-01_359311ba-bfeb-41ba-9a75-fc5116bd06f9_20250331-063049.json	40529550798	15982582	97614373	8	
+Data/Dataset/Thermoforming mold/TF-01-A01/	40545533568	0	0	0	
+Data/Dataset/Thermoforming mold/TF-01-A01/processed_data/	40545533672	0	0	0	
+Data/Dataset/Thermoforming mold/TF-01-A01/processed_data/TF-01-A01_header.csv	40545533791	594	3203	8	
+Data/Dataset/Thermoforming mold/TF-01-A01/processed_data/TF-01-A01_hfblockevent.csv	40545534540	1160	3891	8	
+Data/Dataset/Thermoforming mold/TF-01-A01/processed_data/TF-01-A01_hfdata.csv	40545535861	12083165	58996219	8	
+Data/Dataset/Thermoforming mold/TF-01-A01/processed_data/TF-01-A01_synchronized.mat	40557619181	489860334	506389370	8	
+Data/Dataset/Thermoforming mold/TF-01-A01/processed_data/TF-01-A01_Sync_Plot.fig	41047479676	4549726	10458583	8	
+Data/Dataset/Thermoforming mold/TF-01-A01/raw_data/	41052029560	0	0	0	
+Data/Dataset/Thermoforming mold/TF-01-A01/raw_data/TF-01-A01.mat	41052029673	36025278	37681286	8	
+Data/Dataset/Thermoforming mold/TF-01-A01/raw_data/TF-01-A01_dd9c5c47-c819-46a4-b3fd-16052bebd6ba_20250331-070253.json	41088055093	13382630	81231253	8	
+Data/Dataset/Thermoforming mold/TF-02/	41101437919	0	0	0	
+Data/Dataset/Thermoforming mold/TF-02/processed_data/	41101438019	0	0	0	
+Data/Dataset/Thermoforming mold/TF-02/processed_data/TF-02_header.csv	41101438134	594	3203	8	
+Data/Dataset/Thermoforming mold/TF-02/processed_data/TF-02_hfblockevent.csv	41101438875	1156	3869	8	
+Data/Dataset/Thermoforming mold/TF-02/processed_data/TF-02_hfdata.csv	41101440184	14957127	72063533	8	
+Data/Dataset/Thermoforming mold/TF-02/processed_data/TF-02_synchronized.mat	41116397458	615180087	634748110	8	
+Data/Dataset/Thermoforming mold/TF-02/processed_data/TF-02_Sync_Plot.fig	41731577698	5872262	12766749	8	
+Data/Dataset/Thermoforming mold/TF-02/raw_data/	41737450110	0	0	0	
+Data/Dataset/Thermoforming mold/TF-02/raw_data/TF-02.mat	41737450219	76908025	80552930	8	
+Data/Dataset/Thermoforming mold/TF-02/raw_data/TF-02_0d6367a7-a07f-4edf-a9fd-70ce6da70673_20250331-063858.json	41814358378	16735875	98752304	8	
+Data/Dataset/Thermoforming mold/TF-02-A01/	41831094441	0	0	0	
+Data/Dataset/Thermoforming mold/TF-02-A01/processed_data/	41831094545	0	0	0	
+Data/Dataset/Thermoforming mold/TF-02-A01/processed_data/TF-02-A01_header.csv	41831094664	594	3203	8	
+Data/Dataset/Thermoforming mold/TF-02-A01/processed_data/TF-02-A01_hfblockevent.csv	41831095413	1157	3898	8	
+Data/Dataset/Thermoforming mold/TF-02-A01/processed_data/TF-02-A01_hfdata.csv	41831096731	28679493	139979218	8	
+Data/Dataset/Thermoforming mold/TF-02-A01/processed_data/TF-02-A01_synchronized.mat	41859776379	1170194950	1211401250	8	
+Data/Dataset/Thermoforming mold/TF-02-A01/processed_data/TF-02-A01_Sync_Plot.fig	43029971490	11101008	24434424	8	
+Data/Dataset/Thermoforming mold/TF-02-A01/raw_data/	43041072656	0	0	0	
+Data/Dataset/Thermoforming mold/TF-02-A01/raw_data/TF-02-A01.mat	43041072769	85762057	89793861	8	
+Data/Dataset/Thermoforming mold/TF-02-A01/raw_data/TF-02-A01_6478c3c5-a7f0-43dd-bf6c-05031b82e33f_20250331-071035.json	43126834968	16502433	100071048	8	
+Data/Dataset/Thermoforming mold/TF-02-A01/raw_data/TF-02-A01_6478c3c5-a7f0-43dd-bf6c-05031b82e33f_20250331-071502.json	43143337597	15463522	92693976	8	
+Data/Dataset/Thermoforming mold/TF-03/	43158801315	0	0	0	
+Data/Dataset/Thermoforming mold/TF-03/processed_data/	43158801415	0	0	0	
+Data/Dataset/Thermoforming mold/TF-03/processed_data/TF-03_header.csv	43158801530	594	3203	8	
+Data/Dataset/Thermoforming mold/TF-03/processed_data/TF-03_hfblockevent.csv	43158802271	1159	3897	8	
+Data/Dataset/Thermoforming mold/TF-03/processed_data/TF-03_hfdata.csv	43158803583	15433855	78242736	8	
+Data/Dataset/Thermoforming mold/TF-03/processed_data/TF-03_synchronized.mat	43174237585	612983283	632744795	8	
+Data/Dataset/Thermoforming mold/TF-03/processed_data/TF-03_Sync_Plot.fig	43787221021	5919671	12948567	8	
+Data/Dataset/Thermoforming mold/TF-03/raw_data/	43793140842	0	0	0	
+Data/Dataset/Thermoforming mold/TF-03/raw_data/TF-03.mat	43793140951	43898897	45823827	8	
+Data/Dataset/Thermoforming mold/TF-03/raw_data/TF-03_dc3e6a4b-c499-4641-937b-cc4d3aea5b9a_20250331-064836.json	43837039982	16806731	100051562	8	
+Data/Dataset/Thermoforming mold/TF-03/raw_data/TF-03_dc3e6a4b-c499-4641-937b-cc4d3aea5b9a_20250331-065302.json	43853846901	487333	8091595	8	
+Data/Dataset/Thermoforming mold/TF-03-A01/	43854334422	0	0	0	
+Data/Dataset/Thermoforming mold/TF-03-A01/processed_data/	43854334526	0	0	0	
+Data/Dataset/Thermoforming mold/TF-03-A01/processed_data/TF-03-A01_header.csv	43854334645	594	3203	8	
+Data/Dataset/Thermoforming mold/TF-03-A01/processed_data/TF-03-A01_hfblockevent.csv	43854335394	1152	3897	8	
+Data/Dataset/Thermoforming mold/TF-03-A01/processed_data/TF-03-A01_hfdata.csv	43854336707	9292448	44649338	8	
+Data/Dataset/Thermoforming mold/TF-03-A01/processed_data/TF-03-A01_synchronized.mat	43863629310	366032216	379268140	8	
+Data/Dataset/Thermoforming mold/TF-03-A01/processed_data/TF-03-A01_Sync_Plot.fig	44229661687	3319471	7754466	8	
+Data/Dataset/Thermoforming mold/TF-03-A01/raw_data/	44232981316	0	0	0	
+Data/Dataset/Thermoforming mold/TF-03-A01/raw_data/TF-03-A01.mat	44232981429	46315482	48663675	8	
+Data/Dataset/Thermoforming mold/TF-03-A01/raw_data/TF-03-A01_107ed096-d6fc-4a0a-bfc7-8d5cb5feced9_20250331-072423.json	44279297053	10386116	61773267	8	
+Data/Dataset/Thermoforming mold/TF-03-A02/	44289683365	0	0	0	
+Data/Dataset/Thermoforming mold/TF-03-A02/processed_data/	44289683469	0	0	0	
+Data/Dataset/Thermoforming mold/TF-03-A02/processed_data/TF-03-A02_header.csv	44289683588	594	3203	8	
+Data/Dataset/Thermoforming mold/TF-03-A02/processed_data/TF-03-A02_hfblockevent.csv	44289684337	1148	3897	8	
+Data/Dataset/Thermoforming mold/TF-03-A02/processed_data/TF-03-A02_hfdata.csv	44289685646	6319564	31035024	8	
+Data/Dataset/Thermoforming mold/TF-03-A02/processed_data/TF-03-A02_synchronized.mat	44296005365	258973288	267175736	8	
+Data/Dataset/Thermoforming mold/TF-03-A02/processed_data/TF-03-A02_Sync_Plot.fig	44554978814	2100330	5288474	8	
+Data/Dataset/Thermoforming mold/TF-03-A02/raw_data/	44557079302	0	0	0	
+Data/Dataset/Thermoforming mold/TF-03-A02/raw_data/TF-03-A02.mat	44557079415	19408727	20291409	8	
+Data/Dataset/Thermoforming mold/TF-03-A02/raw_data/TF-03-A02_366f6469-2f53-462d-a94c-9dd327e9f460_20250331-073528.json	44576488284	7153555	42793489	8	
+Data/Descriptive/	44583642035	0	0	0	
+Data/Descriptive/DoE/	44583642114	0	0	0	
+Data/Descriptive/DoE/DoE.xlsx	44583642197	18099	21360	8	
+Data/Descriptive/Part description/	44583660403	0	0	0	
+Data/Descriptive/Part description/Impeller/	44583660499	0	0	0	
+Data/Descriptive/Part description/Impeller/cad_data/	44583660604	0	0	0	
+Data/Descriptive/Part description/Impeller/cad_data/IMP-01-A01_to_IMP-01-A04.stp	44583660718	11152	54405	8	
+Data/Descriptive/Part description/Impeller/cad_data/IMP-01_and_IMP-02.stp	44583672028	11322	59171	8	
+Data/Descriptive/Part description/Impeller/cad_data/IMP-03_and_IMP-04.stp	44583683501	19720	110934	8	
+Data/Descriptive/Part description/Impeller/cad_data/IMP-05_and_IMP-06.stp	44583703372	1196	2781	8	
+Data/Descriptive/Part description/Impeller/cad_data/IMP-07_and_IMP-08.stp	44583704719	13607	74498	8	
+Data/Descriptive/Part description/Impeller/cad_data/IMP-09_and_IMP-10.stp	44583718477	16920	85186	8	
+Data/Descriptive/Part description/Impeller/cad_data/IMP-11_and_IMP-12.stp	44583735548	22446	121288	8	
+Data/Descriptive/Part description/Impeller/nc_data/	44583758145	0	0	0	
+Data/Descriptive/Part description/Impeller/nc_data/IMP-01.nc	44583758258	2890	7259	8	
+Data/Descriptive/Part description/Impeller/nc_data/IMP-02.nc	44583761286	2317	5863	8	
+Data/Descriptive/Part description/Impeller/nc_data/IMP-03.nc	44583763741	1964	4902	8	
+Data/Descriptive/Part description/Impeller/nc_data/IMP-04.nc	44583765843	2766	7220	8	
+Data/Descriptive/Part description/Impeller/nc_data/IMP-05.nc	44583768747	2661	6263	8	
+Data/Descriptive/Part description/Impeller/nc_data/IMP-06.nc	44583771546	2046	4851	8	
+Data/Descriptive/Part description/Impeller/nc_data/IMP-07.nc	44583773730	2520	5954	8	
+Data/Descriptive/Part description/Impeller/nc_data/IMP-08.nc	44583776388	4667	11978	8	
+Data/Descriptive/Part description/Impeller/nc_data/IMP-09.nc	44583781193	2776	6161	8	
+Data/Descriptive/Part description/Impeller/nc_data/IMP-10.nc	44583784107	3621	8551	8	
+Data/Descriptive/Part description/Impeller/nc_data/IMP-11.nc	44583787866	2709	6883	8	
+Data/Descriptive/Part description/Impeller/nc_data/IMP-12.nc	44583790713	2958	7203	8	
+Data/Descriptive/Part description/Impeller/nc_data/IMP-BASE.nc	44583793809	4215	20287	8	
+Data/Descriptive/Part description/Injection mold/	44583798164	0	0	0	
+Data/Descriptive/Part description/Injection mold/cad_data/	44583798275	0	0	0	
+Data/Descriptive/Part description/Injection mold/cad_data/IM.stp	44583798395	17416	97401	8	
+Data/Descriptive/Part description/Injection mold/nc_data/	44583815953	0	0	0	
+Data/Descriptive/Part description/Injection mold/nc_data/IM-01F.nc	44583816072	8971	23234	8	
+Data/Descriptive/Part description/Injection mold/nc_data/IM-01R.nc	44583825187	11251	37395	8	
+Data/Descriptive/Part description/Injection mold/nc_data/IM-02F.nc	44583836582	8971	23234	8	
+Data/Descriptive/Part description/Thermoforming mold/	44583845697	0	0	0	
+Data/Descriptive/Part description/Thermoforming mold/cad_data/	44583845812	0	0	0	
+Data/Descriptive/Part description/Thermoforming mold/cad_data/TF-01_and_TF-02.stp	44583845936	11054	58707	8	
+Data/Descriptive/Part description/Thermoforming mold/cad_data/TF-03.stp	44583857149	11038	58649	8	
+Data/Descriptive/Part description/Thermoforming mold/nc_data/	44583868336	0	0	0	
+Data/Descriptive/Part description/Thermoforming mold/nc_data/TF-01.nc	44583868459	746	1724	8	
+Data/Descriptive/Part description/Thermoforming mold/nc_data/TF-02-A01.nc	44583869352	749	1735	8	
+Data/Descriptive/Part description/Thermoforming mold/nc_data/TF-02.nc	44583870252	749	1731	8	
+Data/Descriptive/Part description/Thermoforming mold/nc_data/TF-03-A01.nc	44583871148	750	1734	8	
+Data/Descriptive/Part description/Thermoforming mold/nc_data/TF-03-A02.nc	44583872049	751	1734	8	
+Data/Descriptive/Part description/Thermoforming mold/nc_data/TF-03.nc	44583872951	749	1730	8	
+Data/Descriptive/Tools/	44583873847	0	0	0	
+Data/Descriptive/Tools/HSS_20_mm.pdf	44583873932	44688	52821	8	
+Data/Descriptive/Tools/SCEM_10_mm.pdf	44583918734	48733	56927	8	
+Data/Descriptive/Tools/SCEM_5_mm.pdf	44583967582	35256	41547	8	
+Data/README.txt	44584002952	1667	3666	8	

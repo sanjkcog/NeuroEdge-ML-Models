@@ -2,11 +2,13 @@
   "schema_version": "1.0",
   "objective": "cnc drift 1D CNN model with 3 sensors",
   "created": "2026-09-17T22:28:24.692128+00:00",
-  "updated": "2026-09-17T22:39:43.536424+00:00",
-  "current_stage": "verify",
+  "updated": "2026-09-18T05:25:30.820189+00:00",
+  "current_stage": "download",
   "completed_stages": [
     "destination",
-    "scout"
+    "scout",
+    "plan",
+    "download"
   ],
   "escalation": null,
   "sprint_id": null,
@@ -198,6 +200,55 @@
       "artifacts": [],
       "consecutive_failures": 0,
       "spawns": [],
+      "usage": {
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "api_calls": 0,
+        "cost_usd": 0.0,
+        "source": "unrecorded"
+      },
+      "usage_history": []
+    },
+    "download": {
+      "agent": "none (orchestrator executes the fetch plan; resumable, budget-guarded)",
+      "status": "complete",
+      "artifacts": [
+        "data/raw/"
+      ],
+      "consecutive_failures": 0,
+      "spawns": [
+        {
+          "spawned_by": "orchestrator",
+          "at": "2026-09-18T05:25:11.153618+00:00",
+          "result": "complete",
+          "identity": ""
+        }
+      ],
+      "usage": {
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "api_calls": 0,
+        "cost_usd": 0.0,
+        "source": "unrecorded"
+      },
+      "usage_history": []
+    },
+    "plan": {
+      "agent": "ml-data-engineer",
+      "status": "complete",
+      "artifacts": [
+        "data/archive-manifest.tsv",
+        "data/fetch-plan.json"
+      ],
+      "consecutive_failures": 0,
+      "spawns": [
+        {
+          "spawned_by": "orchestrator",
+          "at": "2026-09-18T05:23:12.559643+00:00",
+          "result": "complete",
+          "identity": ""
+        }
+      ],
       "usage": {
         "tokens_in": 0,
         "tokens_out": 0,

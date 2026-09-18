@@ -12,6 +12,8 @@ agentic-assets/INSTALLED_MANIFEST.json
 
 # ML dataset blobs — raw downloads never enter git (ml-artifact-destination: "No blobs")
 neuroedge-ml-projects/*/data/raw/
+# Derived per-trial features (sensor_align) — regenerable from data/raw/; alignment.json stays tracked
+neuroedge-ml-projects/*/data/interim/*.parquet
 
 # Python bytecode
 __pycache__/

@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "updated": "2026-09-18T05:25:01.802327+00:00",
+  "gates": {
+    "data/fetch-plan.json": {
+      "stage": "plan",
+      "type": "hard",
+      "status": "approved",
+      "opened_at": "2026-09-18T05:23:58.803251+00:00",
+      "decisions": [
+        {
+          "identity": "sanjkcog",
+          "timestamp": "2026-09-18T05:25:01.802327+00:00",
+          "outcome": "approved",
+          "reason": "Scope B: 169 entries, 3.90 GB payload / 4.89 GB wire / 7.48 GB disk; synchronized.mat, raw JSON, .fig excluded as derivable. Confirms the informal 3.9 GB approval of 2026-09-17."
+        }
+      ],
+      "opened_by": "ml-data-engineer"
+    }
+  }
+}

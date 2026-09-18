@@ -214,36 +214,117 @@ place on the part.
 
 ## 5. `raw_data/*.mat` — force and vibration
 
-**What's inside:** the 10 kHz signals from the force platform (cutting force in X, Y, Z) and
-the spindle accelerometer (vibration). This is where `vibration_rms` has to come from — it is
-**not** in the CSV.
+**What's inside:** the 10 kHz signals from the force platform and the spindle accelerometer:
+seven columns, `Sync_Signal`, `xForce`, `yForce`, `zForce`, `xAcceleration`, `yAcceleration`,
+`zAcceleration`. This is the **only** place `vibration_rms` can come from; the CSV has no
+vibration channel.
 
 ### Why MATLAB at all?
 
 MATLAB is the standard tool in mechanical-engineering labs, and its **timetable** type stores
-a signal with its timestamps attached as one object. KIT saved them the way they worked with
-them. It is a convenience for the authors, not a format choice aimed at Python users.
+a signal with its timestamps attached as one object. KIT saved the files the way they worked
+with them. That was convenient for the authors, not a choice made for Python users.
 
-### The catch — verified on these files
+### Reading them — tested on these files
 
-These are **MATLAB object files (MCOS timetables)**, not plain arrays. `scipy` cannot decode
-them:
+These are **MATLAB object files (MCOS timetables)** in MAT v5 format, not plain arrays. Most
+readers fail **silently**:
+
+| Reader | What you actually get |
+|---|---|
+| `scipy.io.loadmat` | `{'None': MatlabOpaque(...)}`: an opaque handle, no data |
+| `pymatreader` | `tmp_new = {'_TypeSystem', '_Class', '_ObjectMetadata'}`: object metadata, **no signal arrays**, no error |
+| `mat73` / `h5py` | these are for v7.3 (HDF5) files; the KIT files are v5 |
+| Octave | has no `timetable` class (not tested: Octave isn't installed here) |
+| **`mat-io`** (`import matio`) | **works**: a pandas DataFrame, 1,035,000 × 7 for `TF-03-A02` |
 
 ```python
-import scipy.io
-m = scipy.io.loadmat("IMP-01.mat")
-# -> {'None': MatlabOpaque(...)}     class 'timetable', variable 'tmp_new'
+import matio                                   # pip install mat-io  (needs numpy>=2.2)
+df = matio.load_from_mat(path)["tmp_new"]      # DataFrame, 10 kHz
+t_s = np.arange(len(df)) / 10_000              # the index is truncated to WHOLE seconds
 ```
 
-You get an opaque handle, not data. Options, in order of least effort:
+The decoded index is `timedelta64[s]`, so `TF-03-A02` has 1,035,000 rows but only 104
+distinct index values. Rebuild time from the sample number, never from the index.
 
-1. **`pymatreader`** (`pip install pymatreader`) — handles MCOS objects.
-2. **Octave** (free) or MATLAB — load and re-export to CSV/Parquet once:
-   `load('IMP-01.mat'); writetimetable(tmp_new, 'IMP-01.csv')`
-3. **Read the JSON Edge export instead** — only if you need controller signals, which are
-   already in the CSV anyway.
+### The real problem: the two recorders are not in step
 
-Convert once, work in Parquet thereafter.
+The `.mat` and `hfdata.csv` start at different moments (**offsets from −9.3 s to +6.4 s** across
+trials) and run at different lengths (`TF-03-A02`: 103.5 s against 114.1 s). "Row 0 = row 0" is
+wrong by seconds. Cross-correlating vibration against spindle power does **not** find the
+offset (r = −0.2 to 0.25, no clear peak).
+
+What does work is the **sync pulse** KIT wired in on purpose. Every NC program starts with:
+
+```
+TAKTGEBER          ; "clock generator": drives Sync_Signal, a 0/5 V square wave, 16 ms per phase
+R60=0
+G04 F2             ; 2-second dwell: the square wave stops
+R60=1              ; ...and starts again
+S3050 M3           ; spindle on
+```
+
+- **Anchor.** The dwell is the **only** long gap in `Sync_Signal`: exactly one per trial,
+  2.016–2.044 s long against the logged 2.002 s. `hfblockevent.csv` logs the `G04 F2` block and
+  the block after it on the same counter as `hfdata.csv`'s `CYCLE`. So the first edge after the
+  gap and the counter of the block after the dwell are the same instant.
+- **Rate.** Each phase of the square wave is 8 controller ticks (16 ms). Fitting edge position
+  against edge number measures the DAQ clock directly: it runs **75–81 ppm fast on every
+  trial**, which adds up to **98 ms** over `IM-01R`'s 20 minutes. A fixed offset leaves that
+  error in; the fit removes it.
+- **Program end.** The clock generator stretches one phase at `M5`/`M30`, in the last 2–14 s, so
+  the fit stops there and the fitted rate covers the tail.
+
+**Accuracy:** 33/33 trials aligned. The anchor is good to about one sync phase: vibration
+leaves baseline a median **8 ms before** spindle current does (range −14 to +8 ms), because the
+generator restarts on its own phase grid. That's negligible for RMS over windows of 0.2 s or
+more. It's too coarse for timing events shorter than ~20 ms.
+
+### Getting `vibration_rms` — one command
+
+This is packaged as AgentForge's `sensor_align` module (shipped into this repo at
+`agentforge/src/sensor_align/`; see the "Joining a second recorder" section of
+`agentic-assets/docs/guides/how_to_build_ml_models_v2.md`). From the repo root:
+
+```bash
+D=neuroedge-ml-projects/cnc_drift_1dcnn-timeseries
+uv run --no-project --with-requirements agentforge/src/requirements-sensor.txt \
+  python -m agentforge.src.sensor_align.align --root $D/data/raw/Dataset \
+    --mat-glob "*/*/raw_data/*.mat" \
+    --events-template "{mat_dir}/../processed_data/{trial}_hfblockevent.csv" \
+    --out-template "$D/data/interim/{trial}_sensor.parquet" \
+    --diagnostics "$D/data/interim/alignment.json"
+```
+
+It runs in a throwaway environment because `mat-io` needs `numpy>=2.2`, and this project's
+`agentforge` group holds `numpy<2` for the voice stack. The run takes a few minutes and writes:
+
+- `data/interim/<trial>_sensor.parquet`: **one row per controller tick**, where `tick`
+  equals `hfdata.csv`'s `CYCLE`. Columns: `n_samples` (20 per tick), per-axis `*_rms`, and the
+  magnitudes `vibration_rms` = RMS of the 3-axis acceleration vector and `force_rms` likewise.
+  Each channel's whole-run mean is removed first, so sensor DC offset and platform preload
+  don't count. Gitignored and regenerable, 590 MB in total.
+- `data/interim/alignment.json`: per trial, the anchor, the measured gap against the logged
+  dwell, drift in ppm, fit residual and trailing seconds. This file is tracked, and it is the
+  evidence that the join is right.
+
+```python
+h = pd.read_csv(f"{trial_dir}/processed_data/{trial}_hfdata.csv", usecols=["CYCLE", "TORQUE|6", "CTRL_DIFF|1"])
+s = pd.read_parquet(f"data/interim/{trial}_sensor.parquet", columns=["tick", "vibration_rms"])
+df = h.merge(s, left_on="CYCLE", right_on="tick", how="inner")   # >= 89% of CSV rows matched, median 96%
+```
+
+Rows without a match are outside the DAQ recording, which started later or stopped earlier
+than the controller log. Drop them rather than filling them.
+
+### Still open
+
+- **Units.** The dataset doesn't state the acceleration unit. Values (peaks around ±30, 0.1 s
+  RMS of 2–5 while cutting) are plausible in *g*, but that's unconfirmed. Settle it before the
+  model card quotes a threshold.
+- **Deployment.** This accelerometer was bolted on for the experiment, and §1 notes a typical
+  plant has only the controller signals. `vibration_rms` is a valid model input **only if the
+  edge device will carry an accelerometer**. That's a channel-contract decision for M4.
 
 | Trial | `.mat` size |
 |---|---|
@@ -431,7 +512,7 @@ The edge device is to emit a `drift_score` (0–1, alert above 0.7) from three c
 |---|---|---|
 | `spindle_load` | `TORQUE\|6` (or `CURRENT\|6`) | `LOAD\|6` is missing in 2 of 5 tool-wear trials |
 | `x_axis_error` | `CTRL_DIFF\|1` | the subtraction needs `ENC_POS`, missing in the same 2 |
-| `vibration_rms` | accelerometer in `raw_data/*.mat`, RMS per window | not in the CSV at all — needs the conversion in §5 |
+| `vibration_rms` | `vibration_rms` from `data/interim/<trial>_sensor.parquet`, joined on `CYCLE` (§5) | not in the CSV at all; lives in the `.mat`, on a different clock |
 
 Two open questions this data does **not** settle, both recorded in `data/profile.json`:
 
