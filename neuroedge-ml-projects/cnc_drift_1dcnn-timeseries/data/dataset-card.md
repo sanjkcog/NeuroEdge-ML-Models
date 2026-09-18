@@ -10,7 +10,7 @@ cross_machine_holdout: Bosch Research CNC_Machining (Tnani/Feil/Diepold, 2022) â
 verified_by: ml-data-engineer (AgentForge)
 verified_on: 2026-09-17
 local_path: data/raw/_metadata_extracts/  # metadata-only this pass; full 44.6 GB payload NOT downloaded â€” see profile.json
-split_hash: 6e204992c94c740228b619eb9b30c1ad1c0565217125b9c56960fd32422f7369
+split_hash: bca8a336e7edcef703dbe5865c6f8518f6ec6757e9fb665dd0ba10b0c1b286c4  # M4 taxonomy re-split 2026-09-17, see label-manifest.md
 profile: data/profile.json
 ---
 

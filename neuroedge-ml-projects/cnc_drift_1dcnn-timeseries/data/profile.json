@@ -256,7 +256,7 @@
       }
     },
     "consequence": "Restricted to genuine machine drift, the usable signal is 5 anomalous experiments on ONE component type and ONE material against 2 normal baselines. Thin for a 1D-CNN. Drives the M3 taxonomy decision and very likely makes M4 /synth-data necessary rather than optional.",
-    "status": "OPEN -- user decision at M3."
+    "status": "RESOLVED at M4 on 2026-09-17: tool_wear only; see _taxonomy_decision_M4"
   },
   "_channel_availability_finding_M4": {
     "measured_on": "2026-09-17, against all 33 downloaded hfdata.csv files",
@@ -343,5 +343,39 @@
     },
     "consequence": "A model trained here learns \"is this tool worn\" (binary state), not \"how far has this tool drifted\" (progression). The use case emits drift_score 0..1 against a 0.7 threshold, which such a detector can populate — but the score is a wear PROBABILITY, not a measured degree of wear, and it cannot be validated as a progression because nothing in the data progresses. Say so in the model card rather than letting the name imply more.",
     "status": "MEASURED 2026-09-17"
+  },
+  "_taxonomy_decision_M4": {
+    "decided_by": "sanjkcog",
+    "date": "2026-09-17",
+    "labels": {
+      "normal": 18,
+      "tool_wear": [
+        "IM-01R-A01",
+        "IM-01R-A02",
+        "IM-01R-A03",
+        "IM-01R-A04",
+        "IM-01R-A05"
+      ]
+    },
+    "excluded": {
+      "commanded_parameter_change_leakage": [
+        "TF-01-A01",
+        "TF-02-A01",
+        "TF-03-A01",
+        "TF-03-A02",
+        "IM-01F-A01",
+        "IM-02F-A01"
+      ],
+      "workpiece_defect_different_use_case": [
+        "IMP-01-A01",
+        "IMP-01-A02",
+        "IMP-01-A03",
+        "IMP-01-A04"
+      ]
+    },
+    "split": "hybrid: by experiment, except the IM-01R normal run, which is split chronologically 60/20/20 with 5 s gaps (a documented deviation)",
+    "split_hash": "bca8a336e7edcef703dbe5865c6f8518f6ec6757e9fb665dd0ba10b0c1b286c4",
+    "supersedes_split_hash": "6e204992c94c740228b619eb9b30c1ad1c0565217125b9c56960fd32422f7369",
+    "manifest": "data/label-manifest.md"
   }
 }

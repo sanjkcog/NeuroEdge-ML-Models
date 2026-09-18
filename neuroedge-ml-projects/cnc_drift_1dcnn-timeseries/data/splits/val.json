@@ -1,12 +1,56 @@
 {
   "split": "val",
-  "group_key": "experiment",
+  "group_key": "experiment; IM-01R normal run split chronologically (see deviation)",
+  "taxonomy": "normal vs tool_wear (label-manifest.md)",
   "units": [
-    {"unit_id": "IMP-09", "component_type": "Impeller", "label": "normal"},
-    {"unit_id": "IMP-12", "component_type": "Impeller", "label": "normal"},
-    {"unit_id": "IMP-01-A04", "component_type": "Impeller", "label": "anomaly", "anomaly_comment": "Chipped Edge"},
-    {"unit_id": "IM-01F", "component_type": "Injection mold", "label": "normal"},
-    {"unit_id": "TF-01-A01", "component_type": "Thermoforming mold", "label": "anomaly", "anomaly_comment": "Feedrate+ 20%"}
+    {
+      "unit_id": "IMP-09",
+      "component_type": "Impeller",
+      "label": "normal"
+    },
+    {
+      "unit_id": "IMP-12",
+      "component_type": "Impeller",
+      "label": "normal"
+    },
+    {
+      "unit_id": "IM-01F",
+      "component_type": "Injection mold",
+      "label": "normal"
+    },
+    {
+      "unit_id": "IM-01R",
+      "component_type": "Injection mold",
+      "label": "normal",
+      "segment": {
+        "cycle_start": 3573011,
+        "cycle_end_exclusive": 3691196,
+        "duration_s": 236.4,
+        "basis": "CYCLE, on rows present in both hfdata.csv and interim/IM-01R_sensor.parquet",
+        "rule": "chronological 60/20/20 with a 2500-tick (5 s) gap at each boundary"
+      }
+    },
+    {
+      "unit_id": "IM-01R-A04",
+      "component_type": "Injection mold",
+      "label": "tool_wear",
+      "anomaly_comment": "Roughing with Toolwear"
+    }
   ],
-  "count": 5
+  "count": 5,
+  "split_hash": "bca8a336e7edcef703dbe5865c6f8518f6ec6757e9fb665dd0ba10b0c1b286c4",
+  "split_hash_method": "sha256 of json.dumps([train.units, val.units, test.units], sort_keys=True, separators=(\",\",\":\"))",
+  "deviation": "IM-01R (the only normal run of the tool-wear program) spans train/val/test by time, against time-series-ml \"never let one unit span train and test\". Chosen so val and test each hold a same-program normal beside a worn trial; the alternative rewards a program-identity shortcut. Risk: test-normal is the tail of a run whose head was trained on, which can flatter specificity. Mitigation: 5 s gaps; the window length chosen at M7 must be <= 2500 ticks; ml-eval-reviewer to check at M8.",
+  "excluded_units": [
+    "IM-01F-A01",
+    "IM-02F-A01",
+    "IMP-01-A01",
+    "IMP-01-A02",
+    "IMP-01-A03",
+    "IMP-01-A04",
+    "TF-01-A01",
+    "TF-02-A01",
+    "TF-03-A01",
+    "TF-03-A02"
+  ]
 }

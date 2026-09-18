@@ -2,8 +2,8 @@
   "schema_version": "1.0",
   "objective": "cnc drift 1D CNN model with 3 sensors",
   "created": "2026-09-17T22:28:24.692128+00:00",
-  "updated": "2026-09-18T05:25:30.820189+00:00",
-  "current_stage": "download",
+  "updated": "2026-09-18T06:26:55.779580+00:00",
+  "current_stage": "verify",
   "completed_stages": [
     "destination",
     "scout",
@@ -76,6 +76,12 @@
         {
           "spawned_by": "orchestrator",
           "at": "2026-09-17T22:39:43.536424+00:00",
+          "result": "in_progress",
+          "identity": ""
+        },
+        {
+          "spawned_by": "orchestrator",
+          "at": "2026-09-18T06:26:55.779580+00:00",
           "result": "in_progress",
           "identity": ""
         }
