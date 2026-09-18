@@ -25,10 +25,12 @@ each transition.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import os
 import re
+import sys
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -121,6 +123,9 @@ ML_STAGE_SEQUENCE: tuple[str, ...] = (
     "train",
     "eval",
     "return",
+    # M12 (NeuroEdge-Web ADR-0008): simulator data exported from the same split data the
+    # model was trained and evaluated on, stamped with the use-case lock of the returned model.
+    "data-simulator",
     "model-card",
 )
 ML_STAGE_AGENTS: dict[str, str] = {
@@ -136,6 +141,7 @@ ML_STAGE_AGENTS: dict[str, str] = {
     "train": "none (external — laptop GPU / AWS VM / portal; dependency-wait)",
     "eval": "none (orchestrator runs eval.py on the withheld test split)",
     "return": "none (POST upload-return-package to the portal)",
+    "data-simulator": "none (orchestrator exports simulator data from the split data, ADR-0008)",
     "model-card": "ml-modeler",
 }
 
@@ -565,6 +571,9 @@ class RunState:
     # ML_STAGE_AGENTS). Defaults to "sdlc" so a pre-existing run.json with no such key
     # loads unchanged.
     sequence: str = DEFAULT_SEQUENCE
+    # NeuroEdge-Web ADR-0008 L-1 (ml sequence): the use-case lock this run was built on --
+    # {"path", "lock_sha256", "use_case_id"}. None for runs that predate it, and for sdlc runs.
+    use_case_lock: dict | None = None
 
     def enrol_sprint(self, sprint_id: str) -> None:
         """Set at S5 enrolment (D23) — the run.json-side pointer to its cross-run
@@ -598,6 +607,7 @@ class RunState:
             "sprint_id": self.sprint_id,
             "sequence": self.sequence,
             "gate": self.gate,
+            **({"use_case_lock": self.use_case_lock} if self.use_case_lock else {}),
             "stages": {
                 name: {
                     "agent": st.agent,
@@ -649,6 +659,7 @@ class RunState:
             created=data.get("created", ""),
             updated=data.get("updated", ""),
             sequence=data.get("sequence", DEFAULT_SEQUENCE),
+            use_case_lock=data.get("use_case_lock"),
         )
 
     def save(self, path: str | Path) -> None:
@@ -1310,6 +1321,12 @@ def main(argv: list[str] | None = None) -> int:
              "belong to --sequence.",
     )
 
+    p_lock = sub.add_parser(
+        "record-lock",
+        help="Record the use-case lock this ml run is built on (ADR-0008 L-1); refuses an edited lock",
+    )
+    p_lock.add_argument("lock_path", help="Path to use_case.lock.json")
+
     p_start = sub.add_parser("start", help="Mark a stage in_progress before spawning its agent")
     p_start.add_argument("stage", choices=ALL_STAGE_IDS)
     p_start.add_argument("--spawned-by", choices=["orchestrator", "human"], default="orchestrator")
@@ -1448,6 +1465,30 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "resume":
         return _resume(state, Path(args.gates_path))
+
+    if args.cmd == "record-lock":
+        # Stdlib-only check, deliberately not importing ml_contract: an edited lock no
+        # longer hashes to its own lock_sha256, and a run must not be pinned to one.
+        try:
+            lock = json.loads(Path(args.lock_path).read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            print(f"cannot read lock {args.lock_path}: {exc}", file=sys.stderr)
+            return 1
+        body = {k: v for k, v in lock.items() if k != "lock_sha256"}
+        digest = hashlib.sha256(
+            json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+        ).hexdigest()
+        if lock.get("lock_sha256") != digest:
+            print(f"{args.lock_path} was edited after it was built; rebuild it", file=sys.stderr)
+            return 1
+        state.use_case_lock = {
+            "path": str(args.lock_path),
+            "lock_sha256": lock["lock_sha256"],
+            "use_case_id": lock.get("use_case_id"),
+        }
+        state.save(path)
+        print(f"lock {lock['lock_sha256'][:12]} recorded ({lock.get('use_case_id')})")
+        return 0
 
     if args.cmd == "start":
         enter_stage(state, args.stage, spawned_by=args.spawned_by)

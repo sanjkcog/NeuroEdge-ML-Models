@@ -40,6 +40,9 @@ but it is never `model.onnx`. Raw framework weights (`.pt`, `.h5`) may ride alon
 |---|---|
 | `feature_order` (TS) / `input.layout` + `input.resolution` + `color_order` (vision) | Channel order is part of the contract; a sorted map on the device puts `sensor_10` before `sensor_2` and accuracy collapses silently |
 | `window`, `stride` (TS) | Windowing is runtime behaviour, not model behaviour |
+| `sample_rate_hz` (TS) | The device counts **rows**, not seconds, so the same window means a different time span at another rate. Without this field a rate mismatch is undetectable anywhere (NeuroEdge-Web ADR-0008 L-4) |
+| `units` + `definitions` per channel (TS) | What one sample *is* (`100 ms mean of spindle torque, Nm`). The device never reads units; the contract must carry them so the field gateway can be checked against them |
+| `lock_sha256` | The `use_case.lock.json` the model was built on. Upload compares the package with the use case through it, and a simulator file with a different lock hash is refused on the device |
 | `normalization: {mean, std, applied: "in_graph" \| "runtime"}` | Statistics fitted on the **train split only**. Default is `in_graph` — folded into the exported graph so they cannot drift from the weights; the values are kept here for provenance and for foreign toolchains |
 | `head: {shape: "scalar" \| "multiclass", classes: [...], range, activation}` | A scalar anomaly head with `argmax` over a length-1 output always reports class 0. `scalar` ⇒ two class names and a threshold; `multiclass` ⇒ `len(classes) == output_length`. Exporters validate this against the real output length |
 | `output_schema` | What the output tensor *means*: `anomaly_score`, `class_logits`, `yolo_boxes_v8`, … Runtimes pick a post-processor by this key instead of assuming |
@@ -81,6 +84,7 @@ always:
 - `dataset_id`, `dataset_license`, `attribution` — a CC BY licence is only satisfied if the attribution reaches
   the model card and the product NOTICE
 - `split_hash`, `seed`, `code_commit`, `eval_split`
+- `lock_sha256`, `use_case_id` — the use-case lock the model was built on (NeuroEdge-Web ADR-0008)
 - `baseline: {name, metrics, beats_baseline}` — the cheap reference (MiniRocket for TS) measured on the **same
   splits and metrics**; a deep model that does not beat it is reported as such, not hidden
 - `onnx_uri`, `meta_uri`, `calibration_data_uri`, `source: "custom_return" | "portal_trained"`
@@ -92,6 +96,8 @@ always:
 3. `head.shape` is consistent with the real output length; one ORT-CPU forward pass on calibration (or a
    synthetic batch) lands inside `head.range` for a scalar head.
 4. `class_names` identical, in order, across `meta.json`, `model_artifact.json` and the use case.
+4a. **Consistent with the use case, not just internally** (ADR-0008 L-4): `feature_order`, window, `sample_rate_hz`
+    and head match the use case the package names. A mismatch is a package-integrity refusal (NeuroEdge: 422).
 5. `metrics.json` carries `eval_split` and `split_hash`; `model_artifact.json` carries `baseline`.
 6. No framework pickle is opened. Ever.
 

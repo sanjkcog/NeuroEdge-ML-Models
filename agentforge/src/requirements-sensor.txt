@@ -1,4 +1,5 @@
-# agentforge/src/sensor_align -- Python dependencies (M4 verify: align a DAQ .mat to the controller).
+# agentforge/src/sensor_align and the ml_contract data steps (contract dataset, simulator export) --
+# Python dependencies for /agentforge-ml data preparation (M4 verify, M12 data-simulator).
 #
 # Ships to <project>/agentforge/src/requirements-sensor.txt and is reached from the single entry
 # point agentic-assets/requirements-agentforge.txt.

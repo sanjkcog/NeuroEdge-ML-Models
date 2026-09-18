@@ -52,8 +52,22 @@ Nothing downstream is allowed to re-shuffle what this step decides.
    or chronological with a one-window gap when no key exists; **fail loudly** when neither exists. Stratify by
    class so no split is single-class (a single-class test set fails the run). Write
    `<dest>/data/splits/{train,val,test}.json` (unit ids + file lists) and a `split_hash` over their contents.
+4a. **Contract dataset (time series, NeuroEdge-Web ADR-0008 L-3).** Write `<dest>/data/contract_sources.json`,
+   which says how each of the lock's channels is produced from this dataset's raw columns: input file template,
+   column, aggregation (`mean` | `rms` | `point`), scale and unit. Then run
+   `python -m agentforge.src.ml_contract.ts_contract --dest <dest>` in the data-prep environment
+   (`uv run --no-project --with-requirements agentforge/src/requirements-sensor.txt …`).
+   - It writes `data/contract/<unit>.parquet` at the lock's rate, names and units, with blocks cut inside split
+     bounds.
+   - It **refuses**:
+     - sources that are not exactly the lock's channels, or not in the lock's units
+     - a source rate that is not a whole multiple of the lock's rate
+     - any time-split segment gap shorter than one window. Re-split with a gap ≥ the window; don't shorten the window.
+   - This is the **only** place data is resampled or converted. The trainer package (6), `train.py`/`eval.py`
+     and the M12 simulator data all read `data/contract/`.
 5. **Withhold test.** The test split stays under `<dest>/data/` and is never packaged for a trainer.
-6. **Platform-ready upload** → `<dest>/data/portal_upload.zip` from **train + val only**: vision → YOLO layout
+6. **Platform-ready upload** → `<dest>/data/portal_upload.zip` from **train + val only** (time series: built from
+   `data/contract/`, so it carries the contract's rate, names and units): vision → YOLO layout
    with `data.yaml`, class names identical to the use case; time series → the platform's CSV/JSON layout with a
    `label` column and unit id. Record the layout and the class list in `profile.json`.
 7. **Gate (human).** Present claimed vs measured, the split summary, and any licence discrepancy. Outcomes,

@@ -1,6 +1,6 @@
 ---
-description: Orchestrate the ML model lifecycle — dataset scout, acquire/verify, label, synth, model select, model build, external training wait, held-out eval, return to the platform, model card — sequencing the existing ai-ml commands and agents, resolving the model folder once, and persisting state to <dest>/run.json after every transition (ADR-0022).
-argument-hint: "<objective>" [--dest <folder>] [--stage <id>] | --status | --resume | --dry-run
+description: Orchestrate the ML model lifecycle — lock the use case, dataset scout, acquire/verify, label, synth, model select, model build, external training wait, held-out eval, return to the platform, simulator data, model card — sequencing the existing ai-ml commands and agents, resolving the model folder once, and persisting state to <dest>/run.json after every transition (ADR-0022).
+argument-hint: "<objective>" --use-case <id|path> [--dest <folder>] [--stage <id>] | --status | --resume | --dry-run
 ---
 
 ## Arguments
@@ -8,6 +8,9 @@ argument-hint: "<objective>" [--dest <folder>] [--stage <id>] | --status | --res
 `$ARGUMENTS` — one of:
 - `"<objective>"` — the ML objective for a new or continuing run, e.g. `"detect CNC machining drift from
   spindle-load, x_axis_error and vibration signals"`. If blank, ask for one before doing anything else.
+- `--use-case <id|path>` — **required for a new run** (NeuroEdge-Web ADR-0008 L-1). The portal use-case YAML (a
+  path, or an id resolved to `<portal repo>/use_cases/**/<id>.yaml`). It is the source of truth for channels, rate,
+  window, classes and head; M0 locks it into `<dest>/use_case.lock.json` and every later stage reads the lock.
 - `--dest <folder>` — the model folder. Given → used as-is. Omitted → derived and confirmed **once** at the
   `destination` stage (`ml-artifact-destination`), then passed to every stage and agent. **No later stage asks.**
 - `--stage <id>` — join the pipeline at an already-wired stage (a user who has a dataset starts at `verify` or
@@ -27,11 +30,11 @@ Do not delegate this command to an agent (D1, same as `/agentforge`): it spawns 
 
 | # | id | Command → agent | Produces (under `<dest>/`) | Gate |
 |---|---|---|---|---|
-| M0 | `destination` | this command | `README.md`, `run.json`, `gates.json` | none |
+| M0 | `destination` | this command | `README.md`, `run.json`, `gates.json`, **`use_case.lock.json`** | **hard, automatic: the use case must lock** |
 | M1 | `scout` | `/dataset-scout --dest <dest>` → `ml-data-engineer` | `data/dataset-card.md` | **hard, automatic: licence** |
 | M2 | `plan` | `/dataset-download --dest <dest>` (phase 1) → `ml-data-engineer` | `data/archive-manifest.tsv`, `data/fetch-plan.json` | **hard, human: scope** |
 | M3 | `download` | `/dataset-download --dest <dest>` (phase 2) | `data/raw/**` (gitignored) | dependency-wait (resumable) |
-| M4 | `verify` | `/dataset-verify --dest <dest>` → `ml-data-engineer` | `data/profile.json`, `data/splits/*.json` + `split_hash`, `data/portal_upload.zip` | **hard, human: data-verified** |
+| M4 | `verify` | `/dataset-verify --dest <dest>` → `ml-data-engineer` | `data/profile.json`, `data/splits/*.json` + `split_hash`, `data/contract/` (TS: at the lock's rate, names, units), `data/portal_upload.zip` | **hard, human: data-verified** |
 | M5 | `label` | `/auto-label --dest <dest>` (vision) / TS window rule | `data/label-manifest.md` | hard for vision; soft for TS |
 | M6 | `synth` | `/synth-data --dest <dest>` — only if M4 said *accept as hold-out* or a class is rare | `data/synthetic-recipe.md` | none |
 | M7 | `model-select` | `/model-select --dest <dest>` → `ml-modeler` | `model-select.md` | none |
@@ -39,7 +42,8 @@ Do not delegate this command to an agent (D1, same as `/agentforge`): it spawns 
 | M9 | `train` | **external** — laptop GPU / AWS VM / platform trainer | `<arch>/runs/<run_id>/model-package/` | dependency-wait |
 | M10 | `eval` | this command runs `<arch>/eval.py` on `data/splits/test.json` | `metrics.json` (`eval_split: held_out_test`) | **hard: KPIs + `beats_baseline`** |
 | M11 | `return` | `POST /models/{use_case_id}/upload-return-package` | registration response saved to `<arch>/runs/<run_id>/return.json` | none |
-| M12 | `model-card` | `ml-modeler` | `model-card.md` | none |
+| M12 | `data-simulator` | `/data-simulator --dest <dest>` | `sim/<split>/…` + `sim/manifest.json` (stamped with the lock of the returned model) | none |
+| M13 | `model-card` | `ml-modeler` | `model-card.md` | none |
 
 State lives **inside the model folder**. Every `run_state.py` / `gate_state.py` call below uses:
 
@@ -58,9 +62,20 @@ python agentforge/src/state/gate_state.py --path "$GATES" <subcommand>
 2. Create `<dest>/README.md` (objective, modality, stage log) if missing.
 3. `run_state.py --path "$RUN" init --objective "<objective>" --sequence ml [--start-stage <id>]`. If `run.json`
    exists, ask before `--force`; a decline means `--resume`.
-4. `run_state.py start destination` → `complete destination --artifact README.md`.
+4. **Lock the use case (ADR-0008 L-1, L-2).** Run
+   `python -m agentforge.src.ml_contract.lock build --use-case <yaml> --dest <dest> [--expect-channels a,b,c]
+   [--definitions <json>]`. Pass the signals the objective names as `--expect-channels`, so an objective that
+   disagrees with the use case is caught here and not at the device. **A refusal stops the run**: show every listed
+   problem and send the user to fix the use case (portal Step 1). Do not edit the lock, and do not work around a
+   refusal. `--definitions` is only for per-sample definitions the portal schema cannot hold yet (ADR-0008 W2); the
+   lock records that they came from the run. Then `run_state.py record-lock <dest>/use_case.lock.json`.
+5. `run_state.py start destination` → `complete destination --artifact README.md --artifact use_case.lock.json`.
 
-### Stage loop (M1–M12)
+**Every later stage reads the lock and never re-derives it**: channels, order, units, per-sample definition, rate,
+window, stride, classes, head, `at_fpr`. If the use case changes, re-lock (`--force`) and re-run every stage from
+the first one the change affects. `lock verify --dest <dest> --use-case <yaml>` tells you whether it changed.
+
+### Stage loop (M1–M13)
 For each stage not yet `complete`, in order: `start <id>` **before** the spawn → run the stage's command with
 `--dest <dest>` (the command spawns its agent; pass the absolute path through) → check the stage's gate → `complete
 <id> --artifact <path>…` only after the artifact exists, or `fail <id>` (two consecutive failures escalate to you).
@@ -76,6 +91,9 @@ Gate handling, in stage order:
 - **M4 data-verified (human):** `/dataset-verify` opens the gate; you record the decision it presents:
   `approve` → continue; `reject` with reason → re-enter M1 with the reason as a constraint (second real candidate
   at most) or M6 if the user chooses synthetic; `accept-as-hold-out` → M6 is mandatory.
+- **M4 contract (TS):** the gate is not presented until `data/contract/` exists. It is built by
+  `python -m agentforge.src.ml_contract.ts_contract --dest <dest>` from the lock plus `data/contract_sources.json`.
+  That step refuses sources in the wrong unit, and any time-split segment gap shorter than one window.
 - **M5:** vision — human review is the gate; TS — the window rule is recorded, no gate.
 - **M8 eval-methodology:** `ml-eval-reviewer`'s report is the gate; any **leakage** or **wrong-metric** finding
   loops back to `ml-modeler` before the stage completes.
@@ -103,7 +121,14 @@ gate above.
 `calibration_data`); save the response. The platform re-validates (opset, head range, class order, baseline —
 `ml-model-package`); a 422 here is a defect in M8/M10 to fix, not a second opinion to argue with.
 
-### `model-card` (M12)
+### `data-simulator` (M12)
+`/data-simulator --dest <dest>` exports simulator data from the **same split data** the model was trained and
+evaluated on, stamped with the lock of the model M11 just registered. Train and val are exported by default. Test is
+exported only when the user asks for on-device acceptance, and is marked acceptance-only in `sim/manifest.json`.
+It is generic: the lock's modality decides the format (time series → CSV at the contract rate; vision → an image
+folder per split). Complete with `--artifact sim/manifest.json`.
+
+### `model-card` (M13)
 `ml-modeler` writes `<dest>/model-card.md`: dataset id + licence + attribution, split hash, seed, commit, baseline vs
 model, threshold, known caveats. Add the stage-log row to `README.md`. The run is complete; Part 3 → device is the
 platform's.
@@ -122,6 +147,8 @@ platform's.
 - Do not transfer a byte before the M2 scope gate is recorded.
 - Do not mark `train` complete without a package on disk; do not run training here.
 - Do not present a metric without its `eval_split`; do not skip the baseline.
+- Do not start a new run without `--use-case`, and do not continue past a lock refusal.
+- Do not resample, rescale or convert units anywhere except the contract dataset (ADR-0008 L-3).
 
 ## NeuroEdge Assets
 

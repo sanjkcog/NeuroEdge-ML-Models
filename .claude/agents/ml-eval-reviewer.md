@@ -55,7 +55,19 @@ perform badly in production — the ones generic reviewers miss.
 - Held-out **real** validation exists (not synthetic-only); early-stopping/regularization present.
 - Augmentation is task-valid (e.g. not flipping orientation-critical defects).
 
-### 4. Reproducibility & handoff
+### 4. Conformance to the use-case lock (NeuroEdge-Web ADR-0008)
+When `<dest>/use_case.lock.json` exists, the model must be buildable against the use case it will be deployed
+with. Each item below is a **blocker**: the device cannot detect the mismatch, and the score would be silently wrong.
+- **Contract taken from the lock, not re-derived:** the input shape is `[1, len(channels), window_samples]`, the
+  channel order is the lock's, and the head and class order are the lock's.
+- **The data read is `data/contract/`:** it is at the lock's rate and units, and nothing in `train.py`/`eval.py`
+  resamples, rescales or converts units.
+- **Windows fit the split:** built inside split bounds, keyed on the tick column, and the window is no longer than
+  the smallest time-split gap.
+- **The package records `lock_sha256`, `sample_rate_hz`, and per-channel `unit` and `definition`.**
+- **Metrics are compared against the lock's `target`** (metric, `min_value`, `at_fpr`).
+
+### 5. Reproducibility & handoff
 - Single seed across framework+numpy+python; config-driven hyperparameters.
 - `RUN_ON_GPU.md` is complete and self-consistent; export format matches the deployment target.
 - No dataset blob committed; dataset reachable by id/URL/recipe.

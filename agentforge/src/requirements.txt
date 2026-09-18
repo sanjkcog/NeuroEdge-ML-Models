@@ -17,3 +17,6 @@ trcli
 # transport is injected, so they test without a network), but the caller wired up by
 # /dataset-download supplies `requests.get` as that transport.
 requests
+
+# ml_contract/lock.py reads the portal use-case YAML at /agentforge-ml M0 (NeuroEdge-Web ADR-0008).
+pyyaml

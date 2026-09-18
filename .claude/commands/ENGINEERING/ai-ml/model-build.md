@@ -53,6 +53,14 @@ does NOT run training** and assumes no local GPU. Spawns `ml-modeler` (applies `
    When the consuming platform publishes a scaffold (NeuroEdge: `GET /models/scaffold`), **read its context**
    (use case id, classes, resolution, target device, KPIs) and write the package through its return helper
    (`neuroedge_return`) rather than re-typing the contract; the training body is yours, the contract is theirs.
+   **The lock drives the build (NeuroEdge-Web ADR-0008).** Inside `/agentforge-ml`:
+   - Read `<dest>/use_case.lock.json` and take from it the channel order, window, stride, rate, head and class
+     order. For time series, `train.py` reads **`<dest>/data/contract/`** (already at the lock's rate and units)
+     and builds windows inside each unit's split bounds, keyed on the tick column, never by row position.
+   - `config.yaml` **refuses** a window that differs from the lock, or that is longer than the smallest
+     time-split gap. Scaling is fitted on train only and folded in-graph.
+   - The package records `lock_sha256`, `sample_rate_hz`, per-channel `unit` and `definition`
+     (`ml-model-package`). Nothing here resamples or converts units.
 2. **Verify the invariants** (device-agnostic · seed-reproducible · **leakage-safe** · checkpoint+export
    to the target format · config-driven, no hardcoded hyperparameters/seed · **task-correct metrics**,
    ranking metrics for recommenders · **package-complete**: every `ml-model-package` field present, threshold

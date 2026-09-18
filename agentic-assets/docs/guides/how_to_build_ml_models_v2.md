@@ -39,11 +39,11 @@ portal side).
 
 | # | Stage id | What runs | Produces (under the model folder) | Gate |
 |---|---|---|---|---|
-| M0 | `destination` | the orchestrator | `README.md`, `run.json`, `gates.json` | — |
+| M0 | `destination` | the orchestrator — resolves the folder **and locks the use case** | `README.md`, `run.json`, `gates.json`, `use_case.lock.json` | **hard, automatic: the use case must lock** |
 | M1 | `scout` | `/dataset-scout` → `ml-data-engineer` | `data/dataset-card.md` | **hard, automatic: licence** |
 | M2 | `plan` | `/dataset-download` phase 1 → `ml-data-engineer` | `data/archive-manifest.tsv`, `data/fetch-plan.json` | **hard, human: scope** |
 | M3 | `download` | `/dataset-download` phase 2 | `data/raw/**` (gitignored) | waits — resumable |
-| M4 | `verify` | `/dataset-verify` → `ml-data-engineer` | `data/profile.json`, `data/splits/{train,val,test}.json`, `data/portal_upload.zip` | **hard, human: data verified** |
+| M4 | `verify` | `/dataset-verify` → `ml-data-engineer` | `data/profile.json`, `data/splits/{train,val,test}.json`, `data/contract/` (TS), `data/portal_upload.zip` | **hard, human: data verified** |
 | M5 | `label` | `/auto-label` (vision zero-shot → review · TS window rule) | `data/label-manifest.md` | hard for vision, soft for TS |
 | M6 | `synth` | `/synth-data` — only when needed | `data/synthetic-recipe.md` | — |
 | M7 | `model-select` | `/model-select` → `ml-modeler` | `model-select.md` | — |
@@ -51,7 +51,8 @@ portal side).
 | M9 | `train` | **you**, on your GPU (laptop / AWS VM) or the portal's trainer | `<arch>/runs/<run_id>/model-package/` | waits for you |
 | M10 | `eval` | the orchestrator runs `eval.py` on the **withheld test split** | `metrics.json` (`eval_split: held_out_test`) | **hard: KPIs + beats the baseline** |
 | M11 | `return` | `POST /models/{id}/upload-return-package` | `return.json` | — |
-| M12 | `model-card` | `ml-modeler` | `model-card.md` | — |
+| M12 | `data-simulator` | `/data-simulator` | `sim/<split>/…`, `sim/manifest.json` | — |
+| M13 | `model-card` | `ml-modeler` | `model-card.md` | — |
 
 Four rules hold the whole thing together:
 
@@ -164,15 +165,16 @@ Stages before the entry point are marked *supplied outside this run* — never f
 ## `/agentforge-ml` arguments
 
 ```text
-/agentforge-ml "<objective>" [--dest <folder>] [--stage <id>]
+/agentforge-ml "<objective>" --use-case <id|path> [--dest <folder>] [--stage <id>]
 /agentforge-ml --status | --resume | --dry-run
 ```
 
 | Argument | Meaning |
 |---|---|
 | `"<objective>"` | Plain-language objective. Drives the derived folder name (`<intent>-<modality>`) and the task family. Blank ⇒ you are asked. |
+| `--use-case <id\|path>` | **Required for a new run.** The portal use-case YAML. M0 locks it (`use_case.lock.json`); every later stage reads the lock for channels, rate, window, classes and head (NeuroEdge-Web ADR-0008). |
 | `--dest <folder>` | Use this folder as-is; **no question asked**. Omitted ⇒ derived from the objective and confirmed once. |
-| `--stage <id>` | Join at `destination · scout · verify · label · synth · model-select · model-build · train · eval · return · model-card`. |
+| `--stage <id>` | Join at `destination · scout · plan · download · verify · label · synth · model-select · model-build · train · eval · return · data-simulator · model-card`. |
 | `--status` | One screen: stage, gate, blocker, owner. No changes. |
 | `--resume` | Reload `run.json` + `gates.json` from the folder and continue. This is how you come back after training. |
 | `--dry-run` | Print the remaining stages and their owners. Writes nothing, spawns nothing. |
@@ -188,6 +190,7 @@ delegate it to a subagent.
 <NEUROEDGE_ML_ROOT>/<intent>-<modality>/          e.g. cnc_drift-timeseries/
   README.md                 objective · modality · stage log (one row per command run)
   run.json  gates.json      orchestrator state — the run resumes from these alone
+  use_case.lock.json        M0 — the input contract, locked from the portal use case (ADR-0008)
   data/
     dataset-card.md         M1 — YAML front matter (id, url, licence, units, split_rule, keys_required) + prose
     archive-manifest.tsv    M1 — the source's own index: path · offset · compressed · uncompressed · crc
@@ -196,6 +199,8 @@ delegate it to a subagent.
     raw/                    M3 — the payload. GITIGNORED — never committed, never in the repo
     profile.json            M4 — what actually arrived: units, channels, rates, counts (claimed vs measured)
     splits/                 M4 — train.json · val.json · test.json + split_hash   ← test never leaves here
+    contract_sources.json   M4 — how each locked channel is produced from this dataset's raw columns (TS)
+    contract/               M4 — the data at the lock's rate, names and units; everything below reads it (TS)
     portal_upload.zip       M4 — train + val only, in the portal's upload layout
     label-manifest.md       M5
     synthetic-recipe.md     M6
@@ -204,7 +209,8 @@ delegate it to a subagent.
     train.py eval.py config.yaml requirements.txt RUN_ON_GPU.md HANDOFF.md
     runs/<run_id>/model-package/    M9 — model.onnx · meta.json · model_artifact.json · metrics.json · calibration/
     runs/<run_id>/return.json       M11
-  model-card.md             M12
+  sim/                      M12 — simulator data per split + manifest.json (lock hash, purpose per file)
+  model-card.md             M13
 ```
 
 Folder name = `<intent>-<modality>`, derived from the objective: intent is 1–3 `snake_case` words for
@@ -220,7 +226,11 @@ objective is usually built more than once (a baseline and a deep model).
 You see: *"It will be created under `C:\…\neuroedge-ml-projects` (from `NEUROEDGE_ML_ROOT`):
 **cnc_drift-timeseries** — accept, or give a different name or a full path."* Existing folders that look
 like the same objective are offered first, so a second run reuses rather than duplicates.
-**Verify:** `README.md` names your objective; `run.json` says `"sequence": "ml"`.
+It then **locks the use case** you passed with `--use-case`. `use_case.lock.json` holds the channels (name, unit,
+per-sample definition, order), rate, window, stride, classes and head, taken from the portal YAML. If the YAML is
+incomplete, or disagrees with the objective (for example it names signals you didn't), the run **stops** with every
+problem listed. You fix the use case in the portal's Step 1, then re-run.
+**Verify:** `README.md` names your objective; `run.json` says `"sequence": "ml"` and records `use_case_lock`.
 
 ### M1 — `scout`
 `ml-data-engineer` searches the right portals for the family (PdM sources for time series, HF / Roboflow
@@ -308,7 +318,17 @@ Posts `model_artifact.json`, `metrics.json`, `model.onnx`, `meta.json` (and cali
 portal. The portal re-validates the package (see the integration section). A 422 here means a defect in
 M6/M8 to fix — not a second opinion to argue with.
 
-### M12 — `model-card`
+### M12 — `data-simulator`
+Exports simulator data from the **same split data** the model was trained and evaluated on, stamped with the lock
+of the returned model:
+- **Time series:** CSVs at the contract rate, with the lock's channel names, in order.
+- **Vision:** image folders built from each split's file list.
+
+Train is for smoke tests (the model has seen it), val for device debugging and score parity, and test only for final
+on-device acceptance, and only after M10. The device refuses a simulator file whose lock hash isn't the deployed
+model's. The whole chain is in NeuroEdge-Device `docs/reference/how_to_design_model_simulator_web_in_sync.md`.
+
+### M13 — `model-card`
 Dataset id, licence and **attribution** (CC BY is only satisfied if it reaches the card and the
 product NOTICE), split hash, seed, commit, baseline vs model, threshold, caveats.
 
@@ -523,7 +543,8 @@ cd …\cnc_drift-timeseries\1DCNN ; python train.py --config config.yaml      # 
 # 10. eval   → eval.py on the withheld experiments: pr_auc, recall@fpr=0.01, event_f1 … beats_baseline
 #              gate: approve
 # 11. return → upload-return-package → 200, source=custom_return
-# 12. card   → model-card.md
+# 12. sim    → sim/train, sim/val CSVs at 10 Hz + manifest (lock-stamped)
+# 13. card   → model-card.md
 
 # Portal: Optimize shows "Uploaded: model.onnx · opset 13 · validated ✓" → Prepare Device → Deploy
 ```
@@ -551,8 +572,8 @@ If you already had the KIT data on disk: `/agentforge-ml "<objective>" --stage v
 
 ## Reference
 
-**Stage ids (run_state sequence `ml`):** `destination scout verify label synth model-select model-build
-train eval return model-card`.
+**Stage ids (run_state sequence `ml`):** `destination scout plan download verify label synth model-select
+model-build train eval return data-simulator model-card`.
 
 **Environment variables:** `NEUROEDGE_ML_ROOT` (model root) · `NEUROEDGE_ML_DATA` (raw downloads,
 optional) · `KAGGLE_USERNAME` / `KAGGLE_KEY` · `ROBOFLOW_API_KEY` · `HF_TOKEN` (all optional) ·

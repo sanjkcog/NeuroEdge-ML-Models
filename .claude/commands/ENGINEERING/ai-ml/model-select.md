@@ -42,6 +42,11 @@ Chooses **what model to build** before code is generated (ADR-0014). Spawns `ml-
      (MiniRocket / ROCKET, some TS foundation models) may be the **baseline** but not the deployable pick.
    - **Baseline** — name the cheap reference the deep model must beat on the same splits and metrics
      (TS: MiniRocket + ridge; tabular: gradient-boosted trees; vision: a linear probe on a frozen backbone).
+   - **The contract is not a choice here.** Inside `/agentforge-ml`, read `<dest>/use_case.lock.json`
+     (NeuroEdge-Web ADR-0008). Its channels and order, rate, window, stride, classes and head are fixed inputs
+     to the recommendation, never outputs of it. An architecture that cannot honour the lock's static window
+     and head is not a candidate. If the evidence says the window or rate is wrong, stop and send the change
+     back to the use case (re-lock), rather than choosing a different window here.
    - **Runner** — `package` (the generated `train.py` on the user's GPU / VM) or `portal` (the consuming
      platform's own trainer, only when the family is one it supports **and** its split integrity is proven —
      for NeuroEdge time series that is disallowed until Web ADR-0002 V-1/V-2 land; ADR-0022 Q-2).
