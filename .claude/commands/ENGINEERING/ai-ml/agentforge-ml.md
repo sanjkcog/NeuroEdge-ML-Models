@@ -33,7 +33,7 @@ Do not delegate this command to an agent (D1, same as `/agentforge`): it spawns 
 | M3 | `download` | `/dataset-download --dest <dest>` (phase 2) | `data/raw/**` (gitignored) | dependency-wait (resumable) |
 | M4 | `verify` | `/dataset-verify --dest <dest>` → `ml-data-engineer` | `data/profile.json`, `data/splits/*.json` + `split_hash`, `data/portal_upload.zip` | **hard, human: data-verified** |
 | M5 | `label` | `/auto-label --dest <dest>` (vision) / TS window rule | `data/label-manifest.md` | hard for vision; soft for TS |
-| M6 | `synth` | `/synth-data --dest <dest>` — only if M2 said *accept as hold-out* or a class is rare | `data/synthetic-recipe.md` | none |
+| M6 | `synth` | `/synth-data --dest <dest>` — only if M4 said *accept as hold-out* or a class is rare | `data/synthetic-recipe.md` | none |
 | M7 | `model-select` | `/model-select --dest <dest>` → `ml-modeler` | `model-select.md` | none |
 | M8 | `model-build` | `/model-build --dest <dest>` → `ml-modeler`, then `ml-eval-reviewer` | `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md` | **hard: eval-methodology** |
 | M9 | `train` | **external** — laptop GPU / AWS VM / platform trainer | `<arch>/runs/<run_id>/model-package/` | dependency-wait |
