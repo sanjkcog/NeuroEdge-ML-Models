@@ -1,0 +1,27 @@
+# cnc_drift_1dcnn-timeseries
+
+- **Objective:** cnc drift 1D CNN model with 3 sensors — detect CNC machining drift from three
+  sensor channels and emit a drift score for the edge device.
+- **Modality:** timeseries
+- **Architecture (requested):** 1D-CNN. A MiniRocket/ROCKET baseline is still required as the
+  honesty floor at `/model-select` — a deep net that cannot beat it is not earning its inference
+  cost (`time-series-ml`). ONNX is the only deployable format; ROCKET is baseline-only.
+- **Destination root:** `NEUROEDGE_ML_ROOT` (`.env:125`)
+
+> **Folder-name note.** The name carries the architecture, which departs from the
+> `<intent>-<modality>` convention in `ml-artifact-destination` (ADR-0021). Chosen deliberately at
+> M0 on 2026-09-17. Consequence to watch: the MiniRocket baseline lands inside a folder named for
+> the 1D-CNN. Keep it here and on the **same splits / same `split_hash`**, or `beats_baseline` at
+> M8 is not like-for-like.
+
+Layout per `ml-artifact-destination`: `data/` for cards, manifests and splits; `model-select.md`;
+one `<architecture>/` subfolder per built model.
+
+## Stage log
+
+| Date | Stage | Command | Artifact | Note |
+|---|---|---|---|---|
+| 2026-09-17 | M0 `destination` | `/agentforge-ml` | `README.md`, `run.json`, `gates.json` | Fresh start; a prior `cnc_drift-timeseries` scout-only attempt was deleted at the user's request (recoverable at git `db22b17`) |
+| 2026-09-17 | M2 `verify` | `/dataset-verify` | `data/profile.json`, `data/splits/{train,val,test}.json`, `data/raw/_metadata_extracts/*` | Confirmed via partial byte-range reads (no full download — archive is 44.6 GB, exceeds the 20 GB stop-and-report threshold): **33 experiments** confirmed (resolves 32-vs-33 TBD), **`x_axis_error` IS derivable** (`DES_POS|n` and `ENC_POS|n` both present as separate columns in `hfdata.csv`), CC BY 4.0 re-confirmed from the archive's own bundled metadata. `vibration_rms` still unresolved (lives in separate `.mat` files, not opened this pass). Full data pull and `portal_upload.zip` deferred pending user go-ahead on the 44.6 GB size. See `data/profile.json` for claimed-vs-measured detail. |
+| 2026-09-17 | M2 `verify` (targeted download) | ml-data-engineer, `/agentforge-ml` continuation | `data/raw/Dataset/**` (in progress), `data/profile.json._M2_targeted_download` | User approved a **3.9 GB targeted scope** (all 99 `*.csv`, all 33 `raw_data/*.mat`, ~0.01 GB of small docs — explicitly excluding the 39.27 GB `processed_data/*_synchronized.mat` PCHIP-upsampled files). Re-verified the tar-relative `Data.zip` payload base offset (17920 bytes, via USTAR header walk + GNU base-256 size decode, exact match against the ZIP64 central-directory size) and fetch logic is byte-exact (verified against `DoE.xlsx`, 21360/21360 bytes). Every Range GET now asserts HTTP 206 and exact response length before trusting the bytes, plus a hard 3.9 GB cumulative-budget stop. **RADAR enforces a ~100–250s per-request cooldown independent of client behavior** — completing all 169 approved entries will take several hours. Left running as a **detached background OS process** (not blocking this session); only 2 of 169 files had landed when this pass had to conclude. `vibration_rms` derivation, X-axis NC cross-correlation, at-scale `CTRL_DIFF` check, row counts, label granularity, and `portal_upload.zip` all remain **blocked on bytes not yet on disk**, not on open logic. Resume/inspect via the process log noted in `profile.json`. |
+| 2026-09-17 | M2 `verify` | `/dataset-verify` (transfer) | `data/raw/` | **RADAR transfer note.** Three strategies measured, not guessed: 169 per-entry Range requests hit a per-request rate limit (HTTP 429, ~90 s backoff each, 2 files/hour); a single full-body stream avoided 429s but is capped at a measured **0.94 MB/s**, i.e. 13.2 h for all 44.58 GB; **41 merged ranges** (50 MB gap tolerance, 4.43 GB) is the optimum at ~2.3 h. Reuse the merged-range approach for any future KIT/RADAR pull. |

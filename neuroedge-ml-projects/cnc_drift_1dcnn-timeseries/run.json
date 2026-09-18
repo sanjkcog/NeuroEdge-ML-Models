@@ -1,0 +1,211 @@
+{
+  "schema_version": "1.0",
+  "objective": "cnc drift 1D CNN model with 3 sensors",
+  "created": "2026-09-17T22:28:24.692128+00:00",
+  "updated": "2026-09-17T22:39:43.536424+00:00",
+  "current_stage": "verify",
+  "completed_stages": [
+    "destination",
+    "scout"
+  ],
+  "escalation": null,
+  "sprint_id": null,
+  "sequence": "ml",
+  "gate": {
+    "pending": false,
+    "stage": null,
+    "reason": null
+  },
+  "stages": {
+    "destination": {
+      "agent": "none (orchestrator — resolves the model folder, ADR-0021/0022)",
+      "status": "complete",
+      "artifacts": [
+        "README.md"
+      ],
+      "consecutive_failures": 0,
+      "spawns": [
+        {
+          "spawned_by": "orchestrator",
+          "at": "2026-09-17T22:28:24.866499+00:00",
+          "result": "complete",
+          "identity": ""
+        }
+      ],
+      "usage": {
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "api_calls": 0,
+        "cost_usd": 0.0,
+        "source": "unrecorded"
+      },
+      "usage_history": []
+    },
+    "scout": {
+      "agent": "ml-data-engineer",
+      "status": "complete",
+      "artifacts": [
+        "data/dataset-card.md"
+      ],
+      "consecutive_failures": 0,
+      "spawns": [
+        {
+          "spawned_by": "orchestrator",
+          "at": "2026-09-17T22:28:37.497794+00:00",
+          "result": "complete",
+          "identity": ""
+        }
+      ],
+      "usage": {
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "api_calls": 0,
+        "cost_usd": 0.0,
+        "source": "unrecorded"
+      },
+      "usage_history": []
+    },
+    "verify": {
+      "agent": "ml-data-engineer",
+      "status": "in_progress",
+      "artifacts": [],
+      "consecutive_failures": 0,
+      "spawns": [
+        {
+          "spawned_by": "orchestrator",
+          "at": "2026-09-17T22:39:43.536424+00:00",
+          "result": "in_progress",
+          "identity": ""
+        }
+      ],
+      "usage": {
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "api_calls": 0,
+        "cost_usd": 0.0,
+        "source": "unrecorded"
+      },
+      "usage_history": []
+    },
+    "label": {
+      "agent": "ml-data-engineer",
+      "status": "pending",
+      "artifacts": [],
+      "consecutive_failures": 0,
+      "spawns": [],
+      "usage": {
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "api_calls": 0,
+        "cost_usd": 0.0,
+        "source": "unrecorded"
+      },
+      "usage_history": []
+    },
+    "synth": {
+      "agent": "ml-data-engineer",
+      "status": "pending",
+      "artifacts": [],
+      "consecutive_failures": 0,
+      "spawns": [],
+      "usage": {
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "api_calls": 0,
+        "cost_usd": 0.0,
+        "source": "unrecorded"
+      },
+      "usage_history": []
+    },
+    "model-select": {
+      "agent": "ml-modeler",
+      "status": "pending",
+      "artifacts": [],
+      "consecutive_failures": 0,
+      "spawns": [],
+      "usage": {
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "api_calls": 0,
+        "cost_usd": 0.0,
+        "source": "unrecorded"
+      },
+      "usage_history": []
+    },
+    "model-build": {
+      "agent": "ml-modeler",
+      "status": "pending",
+      "artifacts": [],
+      "consecutive_failures": 0,
+      "spawns": [],
+      "usage": {
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "api_calls": 0,
+        "cost_usd": 0.0,
+        "source": "unrecorded"
+      },
+      "usage_history": []
+    },
+    "train": {
+      "agent": "none (external — laptop GPU / AWS VM / portal; dependency-wait)",
+      "status": "pending",
+      "artifacts": [],
+      "consecutive_failures": 0,
+      "spawns": [],
+      "usage": {
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "api_calls": 0,
+        "cost_usd": 0.0,
+        "source": "unrecorded"
+      },
+      "usage_history": []
+    },
+    "eval": {
+      "agent": "none (orchestrator runs eval.py on the withheld test split)",
+      "status": "pending",
+      "artifacts": [],
+      "consecutive_failures": 0,
+      "spawns": [],
+      "usage": {
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "api_calls": 0,
+        "cost_usd": 0.0,
+        "source": "unrecorded"
+      },
+      "usage_history": []
+    },
+    "return": {
+      "agent": "none (POST upload-return-package to the portal)",
+      "status": "pending",
+      "artifacts": [],
+      "consecutive_failures": 0,
+      "spawns": [],
+      "usage": {
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "api_calls": 0,
+        "cost_usd": 0.0,
+        "source": "unrecorded"
+      },
+      "usage_history": []
+    },
+    "model-card": {
+      "agent": "ml-modeler",
+      "status": "pending",
+      "artifacts": [],
+      "consecutive_failures": 0,
+      "spawns": [],
+      "usage": {
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "api_calls": 0,
+        "cost_usd": 0.0,
+        "source": "unrecorded"
+      },
+      "usage_history": []
+    }
+  }
+}

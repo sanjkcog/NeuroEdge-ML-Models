@@ -1,0 +1,13 @@
+{
+  "split": "test",
+  "group_key": "experiment",
+  "note": "WITHHELD. Never read by anything but eval.py. Not packaged into portal_upload.zip.",
+  "units": [
+    {"unit_id": "IMP-05", "component_type": "Impeller", "label": "normal"},
+    {"unit_id": "IMP-01-A03", "component_type": "Impeller", "label": "anomaly", "anomaly_comment": "Cracks"},
+    {"unit_id": "IM-01R-A03", "component_type": "Injection mold", "label": "anomaly", "anomaly_comment": "Roughing with Toolwear"},
+    {"unit_id": "TF-02", "component_type": "Thermoforming mold", "label": "normal"},
+    {"unit_id": "TF-03-A01", "component_type": "Thermoforming mold", "label": "anomaly", "anomaly_comment": "Overload:  f_z + 30%, v_c + 30%"}
+  ],
+  "count": 5
+}

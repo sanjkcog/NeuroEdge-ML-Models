@@ -1,0 +1,261 @@
+{
+  "_stage": "M2 (verify) â€” ml-data-engineer",
+  "_measured_on": "2026-09-17",
+  "_method": "Streamed HTTP Range requests against the RADAR archive URL to read the outer tar's BagIt headers, then the ZIP64 central directory and individual local-file headers/deflate streams of data/dataset/Data.zip, WITHOUT downloading the full 44.6 GB archive. All facts below were read from the real files (byte-range slices of the actual archive), not from the portal page or the M1 card.",
+  "archive": {
+    "url": "https://radar.kit.edu/radar-backend/archives/hvvwn1kfwf7qt48z/versions/1/content",
+    "filename": "10.35097-hvvwn1kfwf7qt48z.tar",
+    "measured_size_bytes": 44584092672,
+    "measured_size_gb": 44.6,
+    "outer_archive_md5_claimed_by_portal": "fb45b03c268d63d379f345224a18a0c5",
+    "outer_archive_md5_independently_recomputed": "TBD â€” not recomputed; would require a full download to hash the whole 44.6 GB tar. Portal-stated MD5 accepted provisionally.",
+    "structure": "BagIt tar containing metadata (readme.txt, dataset.desc_md.xml, technical-md) plus one payload file: data/dataset/Data.zip (44,584,069,153 bytes, ZIP64, 434 entries)",
+    "note_exceeds_20gb_threshold": "44.6 GB exceeds the 20 GB stop-and-report threshold. Full download NOT performed in this pass. All findings below came from partial byte-range reads (tar header walk + ZIP64 central-directory read + selective file decompression). Orchestrator/user must decide whether to pull the full 44.6 GB before M3+."
+  },
+  "license_check": {
+    "claimed_by_card": "CC BY 4.0",
+    "measured": "CC BY 4.0 â€” confirmed a THIRD time, this time from the archive's own bundled metadata (data/technical-md/dataset.tech_md.xml is machine metadata; the descriptive record data/descriptive-md/dataset.desc_md.xml, read directly from the tar payload we control, contains the string \"CC BY 4.0 Attribution\").",
+    "discrepancy": "None found. No separate LICENSE/LICENSE.txt file ships inside data/dataset/Data.zip's 434-entry listing; the CC BY 4.0 declaration lives only in the descriptive metadata XML, consistent across all three checks (DOI header, portal HTML badge, in-archive XML)."
+  },
+  "experiment_count": {
+    "claimed_by_card": "33 (RADAR record text) vs possible 32 (unresolved rumor from a since-deleted prior pass; Data in Brief paper paywalled)",
+    "measured": 33,
+    "measurement_method": "Counted distinct second-level trial-ID folders under Data/Dataset/<component-type>/ in the real ZIP64 central directory listing (434 total entries, all component/trial/file paths enumerated).",
+    "verdict": "RESOLVED: 33, not 32. The prior pass's discrepancy claim does not reproduce against the actual archive directory structure."
+  },
+  "component_types": {
+    "claimed_by_card": "3 (unnamed, counts TBD)",
+    "measured": {
+      "Impeller": {
+        "experiment_count": 17,
+        "material": "POM-C"
+      },
+      "Injection mold": {
+        "experiment_count": 9,
+        "material": "S235JR"
+      },
+      "Thermoforming mold": {
+        "experiment_count": 7,
+        "material": "Al 2007 T4"
+      }
+    },
+    "total": 33,
+    "measurement_method": "Folder names + DoE.xlsx (Data/Descriptive/DoE/DoE.xlsx, fully downloaded and parsed â€” 3 sheets-in-one-sheet layout, one block per component type, columns include Material)."
+  },
+  "class_balance": {
+    "claimed_by_card": "per-anomaly-type / normal-vs-anomaly counts: TBD pending download",
+    "measured_normal_count": 18,
+    "measured_anomaly_count": 15,
+    "measured_imbalance_ratio_normal_to_anomaly": "1.2 : 1 (mild, not severe)",
+    "measurement_method": "DoE.xlsx 'Comment' column, fully downloaded (25 KB compressed, small enough to pull whole file). Empty Comment = normal/baseline trial; non-empty Comment = anomaly/off-nominal trial.",
+    "per_experiment_labels_source": "data/raw/_metadata_extracts/DoE_dump.tsv (full TSV dump of the 3-block DoE sheet, this session)"
+  },
+  "anomaly_type_count": {
+    "claimed_by_card": "8 anomaly types (RADAR record text, aggregate across all 33)",
+    "measured": "15 anomalous experiments carry 12 DISTINCT free-text 'Comment' strings (Feedrate+20%; Built-up edge f_z-30%/v_c-30%; Overload f_z+30%/v_c+30%; Overload f_z+60%/v_c+60%; Finishing with Chatter; Roughing with Toolwear and Blowholes depth 1mm; Roughing with Toolwear and Blowholes depth 5mm; Roughing with Toolwear [x3 replicate trials]; Finishing with irregular stock allowance; Cavities axial; Cavity radial; Cracks; Chipped Edge).",
+    "discrepancy": "DoE.xlsx has NO categorical 'anomaly_type' column â€” only a free-text 'Comment' field. Reducing 12 distinct comments to the record's claimed '8 anomaly types' requires an editorial grouping scheme (e.g. merging the 3 'Roughing with Toolwear' replicates into one type, and/or grouping the two Overload severities into one 'Overload' type, and/or grouping the 4 geometric-defect comments (Cavities axial/radial, Cracks, Chipped Edge) under one 'Part defect' umbrella) that is NOT documented anywhere in the public package. Flagging as an open finding, not resolving it by picking a grouping myself â€” ml-modeler/label-manifest owner should decide the taxonomy before training.",
+    "label_provenance": "Human-authored DoE (Design of Experiment) plan, not auto-labeled. Every trial's condition was deliberately configured (feed/speed override, seeded tool wear, seeded part defect) and recorded before the cut â€” this is closer to controlled seeding than post-hoc annotation. TBD: whether per-window/per-timestamp anomaly onset labels exist within the anomalous experiments' hfdata.csv itself, or whether the WHOLE anomalous experiment is one positive label â€” resolve at full download by inspecting hfblockevent.csv/combined .mat timelines."
+  },
+  "channels": {
+    "card_required_channels": [
+      "spindle_load",
+      "x_axis_error",
+      "vibration_rms"
+    ],
+    "measured_hfdata_csv_columns": [
+      "CYCLE",
+      "LOAD|1",
+      "LOAD|2",
+      "LOAD|3",
+      "LOAD|6",
+      "ENC_POS|1",
+      "ENC_POS|2",
+      "ENC_POS|3",
+      "ENC_POS|6",
+      "CTRL_DIFF2|1",
+      "CTRL_DIFF2|2",
+      "CTRL_DIFF2|3",
+      "CTRL_DIFF2|6",
+      "TORQUE|1",
+      "TORQUE|2",
+      "TORQUE|3",
+      "TORQUE|6",
+      "DES_POS|1",
+      "DES_POS|2",
+      "DES_POS|3",
+      "DES_POS|6",
+      "CURRENT|1",
+      "CURRENT|2",
+      "CURRENT|3",
+      "CURRENT|6",
+      "CTRL_DIFF|1",
+      "CTRL_DIFF|2",
+      "CTRL_DIFF|3",
+      "CTRL_DIFF|6",
+      "CTRL_POS|1",
+      "CTRL_POS|2",
+      "CTRL_POS|3",
+      "CTRL_POS|6",
+      "VEL_FFW|1",
+      "VEL_FFW|2",
+      "VEL_FFW|3",
+      "VEL_FFW|6",
+      "POWER|1",
+      "POWER|2",
+      "POWER|3",
+      "POWER|6",
+      "CONT_DEV|1",
+      "CONT_DEV|2",
+      "CONT_DEV|3",
+      "CONT_DEV|6",
+      "CMD_SPEED|1",
+      "CMD_SPEED|2",
+      "CMD_SPEED|3",
+      "CMD_SPEED|6",
+      "TORQUE_FFW|1",
+      "TORQUE_FFW|2",
+      "TORQUE_FFW|3",
+      "TORQUE_FFW|6",
+      "ENC1_POS|1",
+      "ENC1_POS|2",
+      "ENC1_POS|3",
+      "ENC1_POS|6",
+      "ENC2_POS|1",
+      "ENC2_POS|2",
+      "ENC2_POS|3",
+      "ENC2_POS|6"
+    ],
+    "measurement_method": "Downloaded and deflate-decompressed the first ~300 KB of the SMALLEST hfdata.csv in the archive (Thermoforming mold/TF-03-A02, 6.3 MB compressed) via a byte-range GET into its ZIP64 local-file entry, enough to read the full header line plus 3 data rows verbatim. Cross-checked column semantics against header.csv (Impeller/IMP-01_header.csv, also fully fetched), which is the SINUMERIK Edge app's own SignalName-to-Address mapping table.",
+    "header_csv_signal_name_mapping": {
+      "ActualAxisPosition": "ENC_POS|n",
+      "CommandedAxisPosition": "DES_POS|n",
+      "Load": "LOAD|n",
+      "Torque": "TORQUE|n",
+      "Current": "CURRENT|n",
+      "ControlDiff": "CTRL_DIFF|n",
+      "ControlDiff2": "CTRL_DIFF2|n",
+      "ControlPos": "CTRL_POS|n",
+      "VelocityFeedForward": "VEL_FFW|n",
+      "Power": "POWER|n",
+      "CountourDeviation": "CONT_DEV|n",
+      "CommandedSpeed": "CMD_SPEED|n",
+      "TorqueFeedForward": "TORQUE_FFW|n",
+      "Encoder1Position": "ENC1_POS|n",
+      "Encoder2Position": "ENC2_POS|n"
+    },
+    "x_axis_error_verdict": {
+      "question": "Does x_axis_error exist (i.e. are commanded and actual X position both exposed as separate columns)?",
+      "answer": "YES â€” CONFIRMED. hfdata.csv carries BOTH 'DES_POS|n' (CommandedAxisPosition, per header.csv) and 'ENC_POS|n' (ActualAxisPosition) as separate columns for every axis index present. x_axis_error = DES_POS|<x-index> - ENC_POS|<x-index> is directly derivable exactly as the card's contract specifies. This resolves the card's single largest open risk item in the card's favor.",
+      "axis_index_to_letter_mapping": "INFERRED, NOT explicitly documented in the public package. header.csv's template defines axis indices 1-6 for every signal type, but the ACTUAL hfdata.csv rows only populate indices |1, |2, |3, |6 (indices 4 and 5 are template slots that never appear in real data). Given the machine is a 3-axis (X/Y/Z) horizontal milling center plus one main spindle, the most parsimonious reading is 1=X, 2=Y, 3=Z, 6=Spindle â€” but this is domain-convention inference, not a labeled fact from KIT. TBD: confirm by cross-correlating DES_POS|1/2/3 trajectories against the known X/Y/Z coordinates in the per-experiment NC G-code files (Data/Descriptive/Part description/<component>/nc_data/*.nc, present in the archive) before ml-modeler commits to which index is X.",
+      "bonus_finding_not_a_substitution": "hfdata.csv ALSO carries a native 'CTRL_DIFF|n' (ControlDiff) column per axis, which by name is very likely the Siemens controller's own precomputed following-error signal (commanded minus actual, or a closely related quantity) â€” a second, native path to the same physical quantity the card asks for. This is reported as an additional option, not proposed as a silent substitute for the card's explicit DES_POS-minus-ENC_POS derivation; ml-modeler should pick one and record which."
+    },
+    "spindle_load_candidates": "Assuming axis index 6 = spindle (see caveat above): LOAD|6, TORQUE|6, CURRENT|6, or POWER|6 are all spindle-channel candidates. The card's original text said 'spindle current/torque' â€” TORQUE|6 or CURRENT|6 are the closest textual matches; LOAD|6 is also plausible ('Load' is a generic SINUMERIK diagnostic percentage, not raw current). Exact column pick deferred to ml-modeler.",
+    "vibration_rms_status": "NOT found in hfdata.csv (that file is controller/Edge-app export only). Per README.txt (re-confirmed in-archive): 'Raw data from the force and acceleration sensors is provided in the form of MATLAB timetable files (.mat)' â€” the PCB Type 356A33 spindle accelerometer and Kistler Type 9255C force platform stream 10 kHz data into separate .mat files (not yet located/opened in this pass â€” the .mat files were not enumerated by filename search in this session's time budget beyond confirming they exist per the file listing pattdern; TBD at full download: open one .mat and confirm channel names before ml-modeler commits to a vibration_rms derivation)."
+  },
+  "sample_rates": {
+    "controller_edge_export_hz": 500,
+    "external_sensor_dac_hz": 10000,
+    "measurement_method": "README.txt text, re-confirmed by re-extracting the README bundled inside the archive itself (not just the portal page) â€” matches exactly."
+  },
+  "row_counts_and_duration": {
+    "status": "TBD â€” not measured this pass. Computing exact row counts requires decompressing full hfdata.csv files (partial decompression only fetched the first ~3 rows per file to read the header); the smallest file alone is 31 MB uncompressed, the largest (IM-01R-A01) is 336 MB uncompressed. Rough scale check: IMP-01_hfdata.csv is 95,754,725 bytes uncompressed CSV text across 61 columns at 500 Hz â€” order-of-magnitude ~10-11 minutes of recording for that one trial, consistent with the record's aggregate '~six hours of milling operations' claim across all 33 experiments, but this is an estimate, not a measured row count."
+  },
+  "missing_values": {
+    "status": "TBD â€” requires full CSV parse per experiment, not done this pass (partial-download policy)."
+  },
+  "portal_upload_zip": {
+    "status": "NOT PRODUCED this pass. Building it requires downloading the actual hfdata.csv payload for all 23 train + 5 val = 28 experiments, which is the bulk of the 44.6 GB archive (test-only holdout is just 5 of 33 experiments by count, and does not proportionally reduce archive size much since train+val still spans nearly all of it). Per the 20 GB stop-and-report rule, this full pull was not performed â€” awaiting the orchestrator/user go-ahead before pulling that volume."
+  },
+  "_channel_contract_finding_M2": {
+    "raised_by": "user, 2026-09-17",
+    "finding": "The three channel names (spindle_load, x_axis_error, vibration_rms) were NOT supplied by the user and are NOT stated by the use case. The user said only \"3 sensors\". The names were inherited by the orchestrator from a deleted prior dataset-card and attributed to the use case without verification.",
+    "use_case_actually_says": "intent.yaml:17 — edge device runs ML on sensor inputs (vibration, temperature, dimensional accuracy, spindle load, etc.); emits composite drift_score (>0.7) and drift_class. It names four-plus inputs and never commits to three.",
+    "reconciliation": {
+      "spindle_load": "matches use case \"spindle load\"",
+      "vibration_rms": "matches use case \"vibration\"",
+      "x_axis_error": "SUBSTITUTION by the orchestrator for use case \"dimensional accuracy\" — defensible (following error is the upstream cause of dimensional error and is measurable at 500 Hz) but not the use case wording",
+      "temperature": "DROPPED silently by the orchestrator; KIT has no temperature channel in any of the 61 hfdata.csv columns, so it cannot be honoured from this dataset regardless"
+    },
+    "status": "OPEN — channel contract is a user decision at M3/M5, not an inheritance. Does not affect the M2 download scope."
+  },
+  "_ctrl_diff_verification_M2": {
+    "claim": "CTRL_DIFF|n equals DES_POS|n minus ENC_POS|n",
+    "verified_on": "real rows of TF-03-A02 hfdata.csv already on disk",
+    "evidence": "row1 axis1: -39.305409 - (-39.305408) = -1e-06 == CTRL_DIFF|1 -1e-06; row3 axis1: -39.305409 - (-39.305418) = +9e-06 == CTRL_DIFF|1 +9e-06",
+    "consequence": "x_axis_error has two independent routes: derive it, or read the native controller column. They cross-check each other. ml-modeler picks one and records which."
+  },
+  "_M2_targeted_download": {
+    "status": "IN PROGRESS -- not complete this pass; see below for what is/is not resolved",
+    "method": "Single HTTP Range GET per approved archive entry, computed as TAR_ZIP_BASE(17920, independently verified this pass by walking the outer BagIt tar USTAR headers and cross-checking the GNU base-256-encoded size field against the ZIP64 central-directory-derived Data.zip size -- exact match) + the entry offset already recorded in archive_file_listing_434_files.txt. Every Range response is asserted HTTP 206 (never trusted as the requested slice otherwise) and asserted to return exactly the requested byte length before use; a running byte counter hard-stops any request that would exceed the ~3.9 GB approved budget.",
+    "approved_scope": {
+      "entries_total": 169,
+      "csv_entries": 99,
+      "raw_data_mat_entries": 33,
+      "small_doc_entries": 37,
+      "estimated_fetch_bytes": 3900052425,
+      "estimated_fetch_gb": 3.9,
+      "estimated_uncompressed_bytes": 7482366639,
+      "excluded_synchronized_mat_entries": 33,
+      "excluded_synchronized_mat_bytes": 39272998355,
+      "excluded_synchronized_mat_gb": 39.27
+    },
+    "server_behavior_finding": "RADAR (radar.kit.edu) enforces a strict per-request cooldown on this archive URL, observed at roughly 100-250 seconds between successful Range responses, returning HTTP 429 on every request issued before that window elapses. This was independently confirmed to be a genuine server-side limit, not a client-side artifact: after ruling out an initial false lead (a normal Windows venv-launcher parent process spawning its real interpreter as a child process, mistaken at first for two concurrent duplicate requests), a single clean process making one Range request per file still needed 3-4 retries (60-140s of backoff) per file to succeed. At this measured pace, fetching all 169 approved entries sequentially is estimated at several hours of continuous background running, not minutes.",
+    "bytes_fetched_this_pass": "partial -- see files_landed_this_pass; the process was left running as a detached background OS task rather than blocking this session for hours",
+    "files_landed_this_pass": [
+      "Dataset/Impeller/IMP-01/processed_data/IMP-01_header.csv"
+    ],
+    "background_process_note": "A verified-correct downloader (single Range request per approved entry, exact byte-length and HTTP-206 assertions, cumulative 3.9GB budget guard) was left running as a detached OS process outside this agent session at C:/Users/sanje/AppData/Local/Temp/claude/c--SanjeevE-NeuroEdge-Agentic-AI-Studio/988c107d-3d88-438e-9209-ea1e4a79e9f3/scratchpad/download_targeted.py, logging to download_log.txt in that same folder, writing files under data/raw/ preserving archive-relative paths. It will continue fetching the remaining approved entries unattended; re-run or inspect that folder to resume/verify. It does not exceed the 3.9GB scope (hard-coded budget guard) and never fetches the excluded *_synchronized.mat entries (not in its approved-entry filter).",
+    "consequence_for_open_TBDs": "Because only 1 of 169 approved files had landed by the time this pass had to conclude, the following TBDs from the M2 brief remain UNRESOLVED this pass, blocked strictly on bytes not yet on disk (not on missing logic -- the extraction method itself is verified byte-exact): verbatim raw_data/*.mat channel names and vibration_rms derivation; the X-axis-index NC G-code cross-correlation; CTRL_DIFF-at-scale verification (only the 3-row check from the prior pass exists); row counts/durations per experiment; label-granularity inspection of hfblockevent.csv; portal_upload.zip (needs full train+val hfdata.csv payload, none of which has landed yet). Re-run this stage once the background process (or a fresh one) has completed to resolve them -- do not answer them from inference."
+  },
+  "_anomaly_composition_finding_M2": {
+    "source": "DoE_dump.tsv, all 33 experiments, read in full (no download needed)",
+    "headline": "The 15 anomalous experiments are THREE different phenomena. Only one is this use case.",
+    "categories": {
+      "machine_tool_condition_GENUINE_DRIFT": {
+        "units": [
+          "IM-01R-A01",
+          "IM-01R-A02",
+          "IM-01R-A03",
+          "IM-01R-A04",
+          "IM-01R-A05"
+        ],
+        "count": 5,
+        "note": "Cutting parameters IDENTICAL to the IM-01R baseline; the difference is real tool wear (A01/A02 also carry blowholes at 1mm/5mm). Maps to use-case drift_class: tool_wear.",
+        "baselines_available": [
+          "IM-01R",
+          "IM-01F"
+        ],
+        "component_types": 1,
+        "materials": [
+          "S235JR"
+        ]
+      },
+      "commanded_parameter_change_LEAKAGE_RISK": {
+        "units": [
+          "TF-01-A01",
+          "TF-02-A01",
+          "TF-03-A01",
+          "TF-03-A02",
+          "IM-02F-A01",
+          "IM-01F-A01"
+        ],
+        "count": 6,
+        "note": "The machine was TOLD to run differently (Feedrate+20%, Overload +30%/+60%, Built-up edge f_z-30%/v_c-30%, Chatter via f_z 0.02246->0.04492, irregular stock allowance).",
+        "leakage": "The changed setting is ALSO an input column: hfdata.csv carries CMD_SPEED|n and the feedrate is encoded in the DES_POS trajectory. A model can score near-perfectly by reading commanded feedrate -- learning \"this program was configured differently\", not \"this machine is drifting\". On a real line the commanded feedrate is normal, so such a model detects nothing: excellent in eval, worthless on PWT-LINE-3."
+      },
+      "workpiece_defect_DIFFERENT_USE_CASE": {
+        "units": [
+          "IMP-01-A01",
+          "IMP-01-A02",
+          "IMP-01-A03",
+          "IMP-01-A04"
+        ],
+        "count": 4,
+        "note": "Cavities axial, Cavity radial, Cracks, Chipped Edge. Cutting parameters byte-identical to the IMP-01 baseline (overlap 2.5, depth 8, fz 0.03, 8000 rpm, feed 480) -- the PART was defective, not the machine.",
+        "belongs_to": "a material/quality-escape objective (cf. the separate quality-escape-shipment-containment use case), not machine-performance drift"
+      }
+    },
+    "consequence": "Restricted to genuine machine drift, the usable signal is 5 anomalous experiments on ONE component type and ONE material against 2 normal baselines. Thin for a 1D-CNN. Drives the M3 taxonomy decision and very likely makes M4 /synth-data necessary rather than optional.",
+    "status": "OPEN -- user decision at M3."
+  }
+}

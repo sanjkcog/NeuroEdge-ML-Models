@@ -9,3 +9,10 @@
 !.env.example
 agentic-assets/RELEASE_VERSION.json
 agentic-assets/INSTALLED_MANIFEST.json
+
+# ML dataset blobs — raw downloads never enter git (ml-artifact-destination: "No blobs")
+neuroedge-ml-projects/*/data/raw/
+
+# Python bytecode
+__pycache__/
+*.pyc

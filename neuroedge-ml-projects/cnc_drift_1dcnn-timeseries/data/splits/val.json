@@ -1,0 +1,12 @@
+{
+  "split": "val",
+  "group_key": "experiment",
+  "units": [
+    {"unit_id": "IMP-09", "component_type": "Impeller", "label": "normal"},
+    {"unit_id": "IMP-12", "component_type": "Impeller", "label": "normal"},
+    {"unit_id": "IMP-01-A04", "component_type": "Impeller", "label": "anomaly", "anomaly_comment": "Chipped Edge"},
+    {"unit_id": "IM-01F", "component_type": "Injection mold", "label": "normal"},
+    {"unit_id": "TF-01-A01", "component_type": "Thermoforming mold", "label": "anomaly", "anomaly_comment": "Feedrate+ 20%"}
+  ],
+  "count": 5
+}
