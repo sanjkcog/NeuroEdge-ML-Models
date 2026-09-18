@@ -337,6 +337,78 @@ is moving:
 | `IM-01R-A01` | 5.148 | 134.0 | **2.492** | worn + blowholes |
 | `IM-01R-A02` | 5.132 | 134.1 | **2.565** | worn + blowholes |
 
+### How those numbers are calculated
+
+Each row of the table is four operations on one trial's `hfdata.csv`.
+
+**1. Take the raw column.** `CTRL_DIFF|1` is in **millimetres** and is **signed** — the axis can
+lag in either direction:
+
+```
+0   -0.000008
+1    0.000002
+2   -0.000008
+```
+
+**2. Mask to rows where the X axis is actually being driven.** An experiment includes idle
+time, tool changes and pauses; following error is meaningless when nothing is moving.
+
+```python
+moving = df[df["DES_POS|1"].diff().abs() > 1e-6]     # 475,510 of 610,343 rows = 77.9%
+```
+
+**3. Take the absolute value.** The signed mean is `+0.078 µm` — the positive and negative lags
+very nearly cancel, so it measures almost nothing. The absolute mean is `5.042 µm`.
+
+**4. Convert mm → microns (×1000)** and reduce:
+
+| Table column | Operation |
+|---|---|
+| mean \|CTRL_DIFF\| | `(moving["CTRL_DIFF\|1"].abs() * 1000).mean()` |
+| p99 | the 99th percentile of that same series |
+| mean \|TORQUE\|6\| | `moving["TORQUE\|6"].abs().mean()` — no unit conversion |
+
+### Why a p99 as well as a mean
+
+The distribution is not remotely bell-shaped:
+
+| | p50 | p75 | p90 | p95 | **p99** | p99.9 | max |
+|---|---|---|---|---|---|---|---|
+| \|following error\| µm | 0.39 | 0.92 | 2.31 | 3.99 | **117.81** | 664.15 | 738.70 |
+
+A **30× jump between p95 and p99**. The axis tracks its command to under a micron for 95% of
+the time, then occasionally lags by more than half a millimetre. The mean of 5.04 µm describes
+neither state — it is an average of "almost perfect" and "briefly terrible". The p99 is there
+to measure the excursions, because that is where the variation actually is.
+
+### ⚠️ What the excursions are — and why this matters more than the table
+
+The spikes are **not** cutting load. They track axis motion:
+
+| | mean \|velocity\| | mean \|acceleration\| |
+|---|---|---|
+| rows with error > 100 µm | 135.4 mm/s | 1614.5 mm/s² |
+| rows with error < 5 µm | 4.7 mm/s | 3.4 mm/s² |
+
+```
+correlation( |following error| , |velocity|     ) = 0.70
+correlation( |following error| , |acceleration| ) = 0.83
+```
+
+**Following error is dominated by how hard the servo is being accelerated, not by how blunt the
+tool is.** The axis lags when asked to change direction quickly — that is ordinary servo
+dynamics, present in a perfect machine.
+
+This is a **confound**, and it is the single most important thing on this page. Two trials can
+differ in mean following error purely because their motion profiles differ. Any comparison has
+to control for it — by normalising against acceleration, by comparing matched toolpath
+segments, or by leaning on **spindle torque**, which responds to cutting force directly and has
+no equivalent motion artefact.
+
+It also explains the table: mean following error barely separates worn from normal (5.04 vs
+5.00–5.21) because servo dynamics swamp the wear signal, while torque separates consistently
+(2.35 vs 2.49–2.71) because it is measuring the cut itself.
+
 Read this honestly:
 
 - **Spindle torque separates consistently but modestly** — every worn trial is 6–15% above

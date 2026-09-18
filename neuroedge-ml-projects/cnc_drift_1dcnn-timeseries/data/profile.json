@@ -323,5 +323,25 @@
       "read": "Spindle torque separates consistently but modestly (+6 to +15% for every worn trial). Mean following error barely separates (5.04 vs 5.00-5.21); the p99 tail is better for four of five but A03 is indistinguishable from normal. There is exactly ONE normal roughing baseline, so run-to-run variance cannot be estimated — this is the central limitation and no modelling removes it. Synthetic data at M6 is not optional."
     },
     "status": "MEASURED — supersedes the channel mapping in dataset-card.md. See DATA_README.md sections 7-9."
+  },
+  "_is_there_actually_drift_M4": {
+    "question": "The use case calls the target \"drift\". Does this dataset contain drift in the temporal sense — a quantity worsening progressively as a tool degrades?",
+    "answer": "NO. It contains worn-vs-not STATES, not a progression.",
+    "why": "Every anomalous trial had its condition established before the cut began — a worn tool was fitted, or a parameter was overridden. No trial records a tool going from sharp to blunt.",
+    "test_run": {
+      "hypothesis": "IMP-01..IMP-12 are twelve consecutive repeats of one program on one part; if a tool wore gradually across them, spindle torque should trend upward.",
+      "raw_headline": "torque +27% first-to-last, following error +41.7% — looks like wear",
+      "statistics": {
+        "pearson_r": 0.589,
+        "pearson_p": 0.044,
+        "spearman_rho": 0.385,
+        "spearman_p": 0.217,
+        "pearson_excluding_IMP-01": 0.391,
+        "p_excluding_IMP-01": 0.234
+      },
+      "verdict": "NOT SIGNIFICANT. IMP-01 torque is 0.575 against 0.689 for the other eleven; that single low first run drives the whole apparent trend. Spearman never agreed with Pearson. n=12."
+    },
+    "consequence": "A model trained here learns \"is this tool worn\" (binary state), not \"how far has this tool drifted\" (progression). The use case emits drift_score 0..1 against a 0.7 threshold, which such a detector can populate — but the score is a wear PROBABILITY, not a measured degree of wear, and it cannot be validated as a progression because nothing in the data progresses. Say so in the model card rather than letting the name imply more.",
+    "status": "MEASURED 2026-09-17"
   }
 }
