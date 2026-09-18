@@ -1,0 +1,18 @@
+# agentforge/src/sensor_align -- Python dependencies (M4 verify: align a DAQ .mat to the controller).
+#
+# Ships to <project>/agentforge/src/requirements-sensor.txt and is reached from the single entry
+# point agentic-assets/requirements-agentforge.txt.
+#
+# Kept apart from requirements.txt because it cannot share an environment with the voice stack:
+# every mat-io release needs numpy>=2.2.2, and chatterbox-tts (requirements-voice.txt) pins
+# numpy<2 on Python < 3.13. Run sensor_align in its own throwaway environment instead:
+#
+#   uv run --no-project --with-requirements agentforge/src/requirements-sensor.txt #       python -m agentforge.src.sensor_align.align ...
+
+# Decodes MATLAB `timetable` (MCOS) objects. scipy.io.loadmat and pymatreader return no
+# signal data for them, and neither raises an error.
+mat-io
+numpy>=2.2.2
+pandas
+# Writes the per-tick Parquet output.
+pyarrow

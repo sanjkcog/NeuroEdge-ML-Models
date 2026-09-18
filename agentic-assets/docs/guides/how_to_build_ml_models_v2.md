@@ -260,7 +260,9 @@ disk, never copied from the card; the two are shown side by side and a discrepan
 (the KIT dataset says 33 experiments on the record page and 32 in the paper — you find out here, not
 during training). The split is per physical unit (experiment / cutter / machine), or chronological with
 a one-window gap; a split that leaves any set single-class fails. `portal_upload.zip` contains train +
-val only.
+val only. When the channels you need come from two recorders (controller + DAQ), align them here with
+`sensor_align` (see [Joining a second recorder](#joining-a-second-recorder--sensor_align-used-at-m4))
+before profiling. A channel you cannot align is a missing channel.
 **Gate — three outcomes:** *approve*; *reject with a reason* (the reason picks the next move: a missing
 channel re-scouts with it as a hard constraint; "too small" tries the next candidate — at most two real
 candidates before synthetic is offered); *accept as hold-out* (real but insufficient: keep it as
@@ -333,6 +335,47 @@ a guess.
 
 > `requests` is the one new dependency, and only for the *caller* — the modules keep it out of their
 > imports so they remain testable offline.
+
+### Joining a second recorder — `sensor_align` (used at M4)
+
+Industrial datasets often come from **two recorders**: the machine controller (e.g. a SINUMERIK Edge
+export at 500 Hz, keyed by a cycle counter) and a bolted-on DAQ (accelerometer, force platform at
+10 kHz, keyed by its own sample number). The channels you want are split across them. On the KIT CNC
+dataset, spindle load and following error are in `hfdata.csv`, but vibration exists **only** in
+`raw_data/*.mat`. The two start at different moments and their clocks drift apart. `sensor_align`
+(shipped to `agentforge/src/sensor_align/`) puts the DAQ stream on the controller's clock and writes
+one feature row per controller tick.
+
+| Trap | What happens | What `sensor_align` does |
+|---|---|---|
+| The `.mat` is a MATLAB `timetable` (an MCOS object) | `scipy.io.loadmat` returns an opaque handle. `pymatreader` returns only `_TypeSystem`/`_Class`/`_ObjectMetadata`, with no signal data. Neither raises an error | Reads it with `mat-io`, which decodes it to a DataFrame (MAT v5 and v7.3). Octave has no `timetable` class, so it isn't an option |
+| The decoded time index is truncated to whole seconds (`timedelta64[s]`) | A 10 kHz recording collapses to one index value per second | Rebuilds time from sample number ÷ rate and ignores the index |
+| "Row 0 = row 0" | Wrong by seconds: KIT offsets run from −9 s to +6 s | Anchors on the NC program's **dwell**. The sync-pulse channel (`Sync_Signal`, driven by `TAKTGEBER`) pauses for exactly one `G04 F2`, and `hfblockevent.csv` logs that block against the controller counter. The gap must match the logged dwell, or the trial is refused |
+| A fixed offset | Wrong by up to 98 ms by the end of a 20-minute run: the DAQ clock runs 75–81 ppm fast | Measures the rate from the sync edges (each half-period = 8 controller ticks), with a straight-line fit and a spike debounce. At shutdown (`M5`/`M30`) the generator stretches one phase, so the fit stops there and the fitted rate covers the last few seconds |
+| Cross-correlating vibration against spindle power | No usable peak (r ≤ 0.25 on real trials) | Not used |
+
+```bash
+# its own throwaway env: mat-io needs numpy>=2.2, the voice stack pins numpy<2 on Python < 3.13
+uv run --no-project --with-requirements agentforge/src/requirements-sensor.txt \
+  python -m agentforge.src.sensor_align.align --root <dest>/data/raw/Dataset \
+    --mat-glob "*/*/raw_data/*.mat" \
+    --events-template "{mat_dir}/../processed_data/{trial}_hfblockevent.csv" \
+    --out-template "<dest>/data/interim/{trial}_sensor.parquet" \
+    --diagnostics "<dest>/data/interim/alignment.json"
+```
+
+The output has a `tick` column (the same values as `hfdata.csv`'s `CYCLE`, so you join on it) plus the
+per-axis RMS and the `vibration_rms` / `force_rms` magnitudes. Each channel's whole-run mean is removed
+first, so DC offset and preload don't count as vibration. The defaults are the KIT rig: 10 kHz / 500 Hz
+/ 8 ticks per half-period / `^G04`. Override every one of them for another rig.
+
+**Accuracy (KIT, 33/33 aligned):** clock drift is fully removed. The anchor is good to about one sync
+half-period, because the generator restarts on its own phase grid: vibration leaves baseline a median
+8 ms before spindle current, range −14 to +8 ms. That's fine for RMS features over windows of 0.2 s or
+more. It's too coarse for timing events shorter than ~20 ms.
+
+> A vibration channel that comes from a bolted-on sensor is only a valid **model input** if the edge
+> device will have that sensor. Settle that in the channel contract at M4, not after training.
 
 ---
 
