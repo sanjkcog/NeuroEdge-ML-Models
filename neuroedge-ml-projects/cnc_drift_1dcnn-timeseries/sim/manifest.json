@@ -1,0 +1,79 @@
+{
+  "lock_sha256": "8c2a044d0e335b803ac5c0e811161ae854bd1b8ebbc823730e3c3d25a861d030",
+  "use_case_id": "cnc-drift-on-powertrain-shop-for-car-prduction",
+  "split_hash": "47871db08ccc16d34f4947407ec731a9988afdfb00ac890baf645df45f07baad",
+  "sample_rate_hz": 10.0,
+  "feature_order": [
+    "spindle_load",
+    "x_axis_error",
+    "vibration_rms"
+  ],
+  "units": {
+    "spindle_load": "Nm",
+    "x_axis_error": "um",
+    "vibration_rms": "g"
+  },
+  "definitions": {
+    "spindle_load": "100 ms mean of spindle torque (SINUMERIK TORQUE|6)",
+    "x_axis_error": "100 ms mean of X-axis following error (SINUMERIK CTRL_DIFF|1), in micrometres",
+    "vibration_rms": "exact 100 ms RMS of the mean-removed 3-axis spindle acceleration magnitude (unit g assumed, unconfirmed)"
+  },
+  "window_samples": 64,
+  "stride_samples": 10,
+  "replay": {
+    "target_fps": 10.0,
+    "note": "rows are 1/sample_rate_hz apart; the device counts rows"
+  },
+  "files": [
+    {
+      "path": "sim/val/IM-01F.csv",
+      "split": "val",
+      "unit": "IM-01F",
+      "rows": 6077,
+      "purpose": "debug_and_parity",
+      "labels": {
+        "normal": 6077
+      }
+    },
+    {
+      "path": "sim/val/IM-01R-A04.csv",
+      "split": "val",
+      "unit": "IM-01R-A04",
+      "rows": 12098,
+      "purpose": "debug_and_parity",
+      "labels": {
+        "tool_wear": 12098
+      }
+    },
+    {
+      "path": "sim/val/IM-01R_val-segment.csv",
+      "split": "val",
+      "unit": "IM-01R",
+      "rows": 2312,
+      "purpose": "debug_and_parity",
+      "labels": {
+        "normal": 2312
+      }
+    },
+    {
+      "path": "sim/val/IMP-09.csv",
+      "split": "val",
+      "unit": "IMP-09",
+      "rows": 2400,
+      "purpose": "debug_and_parity",
+      "labels": {
+        "normal": 2400
+      }
+    },
+    {
+      "path": "sim/val/IMP-12.csv",
+      "split": "val",
+      "unit": "IMP-12",
+      "rows": 1892,
+      "purpose": "debug_and_parity",
+      "labels": {
+        "normal": 1892
+      }
+    }
+  ]
+}
