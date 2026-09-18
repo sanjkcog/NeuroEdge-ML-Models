@@ -61,3 +61,29 @@ test").
   not a measured degree of wear.
 - **Thin positive class.** This probably makes M6 `/synth-data` necessary. It also argues for
   deciding at M7 on a model trained on `normal` only, with `tool_wear` used for validation and test.
+
+## Requirements carried into M7/M8 (ml-eval-reviewer, 2026-09-18)
+
+These are binding on `/model-build` and are checked by `ml-eval-reviewer` at M8:
+
+1. **Window guard, hard fail.** `config.yaml` must refuse a window over 2500 ticks (5 s at
+   500 Hz), or over the gap at whatever rate the use-case contract settles on. Re-derive the gap
+   if the rate changes.
+   The portal use case's current 512 samples at 100 Hz = 5.12 s already exceeds it (see
+   `profile.json._channel_contract_M4`).
+2. **Windows come from the split files.** Build windows inside each unit's
+   `[cycle_start, cycle_end_exclusive)` bounds from `splits/*.json`, keyed on `CYCLE`/`tick`,
+   never by row position, and never window first and split afterwards. Assert at load time that
+   no window crosses a split boundary. The portal's `ts_preprocessor.py` does the opposite, so
+   it must not be used for this dataset.
+3. **Centring is already train-only.** IM-01R's channel means come from its train segment
+   (`interim/alignment.json` records `centre_ticks` and `channel_means`). Any later scaling in
+   `train.py` must also be fitted on the train split only and exported in-graph.
+4. **An honest evaluation protocol.**
+   - Report metrics per experiment (or per segment for IM-01R): one score per unit, such as the
+     maximum or mean `drift_score`. Don't report per window: overlapping windows from one trial
+     are near-duplicates.
+   - Report recall at a stated FPR, not only AUC, and a MiniRocket baseline on the same splits.
+   - There are 5 independent positive units. Test holds one worn trial (A03), so the test recall
+     is a single-trial pass/fail; say that plainly.
+   - Report A01/A02 (tool wear plus blowholes) separately from A03/A04/A05 (pure tool wear).

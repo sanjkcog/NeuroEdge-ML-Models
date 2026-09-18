@@ -164,10 +164,10 @@
     "status": "RESOLVED at M4 -- 0 missing in the 3 chosen channels on all 25 unit/segment entries; see _M4_measured_3ch"
   },
   "portal_upload_zip": {
-    "status": "BUILT 2026-09-17",
+    "status": "REBUILT 2026-09-18 (IM-01R re-centred on its train segment)",
     "path": "data/portal_upload.zip",
-    "bytes": 53065032,
-    "sha256": "64d1371f7f42ccc61df6a2ebe28b6468ee66b562f1102814ed40e88a9e735479",
+    "bytes": 53064611,
+    "sha256": "8bad6c1fe677a69ec55f81fdb60fd482f57727e5d977a96b44340ce8770b25f4",
     "contents": "train + val only (test withheld). One CSV per experiment (IM-01R: one per time segment) + manifest.tsv + README.txt",
     "layout": "columns timestamp (=CYCLE), spindle_load, x_axis_error, vibration_rms, label; unit id in the file name (a text unit_id column would make the portal parser skip every row)",
     "class_names": [
@@ -747,12 +747,12 @@
         "mean": {
           "spindle_load": -2.3754065443673427,
           "x_axis_error": -2.618567395808719e-06,
-          "vibration_rms": 5.695980927734863
+          "vibration_rms": 5.6959812699281205
         },
         "std": {
           "spindle_load": 1.7455041515666168,
           "x_axis_error": 0.03133517452121261,
-          "vibration_rms": 1.3079453864561803
+          "vibration_rms": 1.3079432817059806
         }
       },
       {
@@ -922,12 +922,12 @@
         "mean": {
           "spindle_load": -1.7813344032745277,
           "x_axis_error": -1.7138638575114466e-06,
-          "vibration_rms": 5.662258780510702
+          "vibration_rms": 5.66226012959675
         },
         "std": {
           "spindle_load": 0.8727425079948039,
           "x_axis_error": 0.05078219192865845,
-          "vibration_rms": 1.056989549557183
+          "vibration_rms": 1.0569893035394362
         }
       },
       {
@@ -1022,12 +1022,12 @@
         "mean": {
           "spindle_load": -1.724159830427722,
           "x_axis_error": 6.1362958421026815e-06,
-          "vibration_rms": 5.297965254063515
+          "vibration_rms": 5.2979708401807235
         },
         "std": {
           "spindle_load": 2.2601426756755183,
           "x_axis_error": 0.044107262811203765,
-          "vibration_rms": 1.5429831547485495
+          "vibration_rms": 1.5429623153303114
         }
       },
       {
@@ -1056,7 +1056,8 @@
         }
       }
     ],
-    "row_counts_and_duration_status": "RESOLVED: measured per unit above (supersedes row_counts_and_duration TBD)"
+    "row_counts_and_duration_status": "RESOLVED: measured per unit above (supersedes row_counts_and_duration TBD)",
+    "centring": "vibration_rms is computed after removing each channel mean. For IM-01R, the one run split across train/val/test, the means come from its TRAIN segment only (ticks [3210956, 3570511)); every other trial uses its own whole recording, which lies in a single split. Fixed 2026-09-18 after ml-eval-reviewer (HIGH)."
   },
   "_channel_contract_M4": {
     "decided_by": "sanjkcog",

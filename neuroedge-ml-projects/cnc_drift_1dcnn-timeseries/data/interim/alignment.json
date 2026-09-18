@@ -1292,6 +1292,18 @@
       3814381
     ],
     "rows_out": 608001,
+    "centre_ticks": [
+      3210956,
+      3570511
+    ],
+    "channel_means": {
+      "xAcceleration": 0.085174,
+      "yAcceleration": -0.09723,
+      "zAcceleration": 0.081327,
+      "xForce": -7.277091,
+      "yForce": 28.401495,
+      "zForce": -84.845091
+    },
     "config": {
       "sensor_hz": 10000.0,
       "tick_hz": 500.0,
