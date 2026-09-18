@@ -1,7 +1,7 @@
 {
   "schema": "use-case-lock/1",
   "use_case_id": "cnc-drift-on-powertrain-shop-for-car-prduction",
-  "use_case_sha256": "057d0c2ee5b1765dca32b27b27791fa357f2e91a2942cf54adad67e7065c4316",
+  "use_case_sha256": "d6f7c4329cfde0bc83b2201dac26502ee965387e1a6a497f725f4385bd9ab2b3",
   "modality": "timeseries",
   "class_names": [
     "normal",
@@ -23,17 +23,20 @@
       {
         "name": "spindle_load",
         "unit": "Nm",
-        "definition": "100 ms mean of spindle torque (SINUMERIK TORQUE|6)"
+        "definition": "100 ms mean of spindle torque (SINUMERIK TORQUE|6)",
+        "reduce": "mean"
       },
       {
         "name": "x_axis_error",
         "unit": "um",
-        "definition": "100 ms mean of X-axis following error (SINUMERIK CTRL_DIFF|1), in micrometres"
+        "definition": "100 ms mean of X-axis following error (SINUMERIK CTRL_DIFF|1), in micrometres",
+        "reduce": "mean"
       },
       {
         "name": "vibration_rms",
         "unit": "g",
-        "definition": "exact 100 ms RMS of the mean-removed 3-axis spindle acceleration magnitude (unit g assumed, unconfirmed)"
+        "definition": "exact 100 ms RMS of the mean-removed 3-axis spindle acceleration magnitude (unit g assumed, unconfirmed)",
+        "reduce": "rms"
       }
     ],
     "sample_rate_hz": 10.0,
@@ -43,5 +46,5 @@
     "layout": "[1,features,window]",
     "scaling": "in_graph"
   },
-  "lock_sha256": "8c2a044d0e335b803ac5c0e811161ae854bd1b8ebbc823730e3c3d25a861d030"
+  "lock_sha256": "3edb2d2021b001042c42cbfdf7c42461989bb25f0a07bf7c27c2baf655180648"
 }

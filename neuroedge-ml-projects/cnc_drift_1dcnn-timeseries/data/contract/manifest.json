@@ -1,5 +1,5 @@
 {
-  "lock_sha256": "8c2a044d0e335b803ac5c0e811161ae854bd1b8ebbc823730e3c3d25a861d030",
+  "lock_sha256": "3edb2d2021b001042c42cbfdf7c42461989bb25f0a07bf7c27c2baf655180648",
   "split_hash": "47871db08ccc16d34f4947407ec731a9988afdfb00ac890baf645df45f07baad",
   "sources_sha256": "98f3f1d27ae1ab9f86338af88505b32d9a3b643b2ab3ab05f1ced20a7af49c7c",
   "sample_rate_hz": 10.0,
@@ -9,17 +9,20 @@
     {
       "name": "spindle_load",
       "unit": "Nm",
-      "definition": "100 ms mean of spindle torque (SINUMERIK TORQUE|6)"
+      "definition": "100 ms mean of spindle torque (SINUMERIK TORQUE|6)",
+      "reduce": "mean"
     },
     {
       "name": "x_axis_error",
       "unit": "um",
-      "definition": "100 ms mean of X-axis following error (SINUMERIK CTRL_DIFF|1), in micrometres"
+      "definition": "100 ms mean of X-axis following error (SINUMERIK CTRL_DIFF|1), in micrometres",
+      "reduce": "mean"
     },
     {
       "name": "vibration_rms",
       "unit": "g",
-      "definition": "exact 100 ms RMS of the mean-removed 3-axis spindle acceleration magnitude (unit g assumed, unconfirmed)"
+      "definition": "exact 100 ms RMS of the mean-removed 3-axis spindle acceleration magnitude (unit g assumed, unconfirmed)",
+      "reduce": "rms"
     }
   ],
   "units": {
