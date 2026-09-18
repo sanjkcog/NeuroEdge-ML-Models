@@ -2,14 +2,17 @@
   "schema_version": "1.0",
   "objective": "cnc drift 1D CNN model with 3 sensors",
   "created": "2026-09-17T22:28:24.692128+00:00",
-  "updated": "2026-09-18T14:13:55.787331+00:00",
-  "current_stage": "label",
+  "updated": "2026-09-18T14:54:07.235689+00:00",
+  "current_stage": "model-select",
   "completed_stages": [
     "destination",
     "scout",
     "plan",
     "download",
-    "verify"
+    "verify",
+    "label",
+    "synth",
+    "model-select"
   ],
   "escalation": null,
   "sprint_id": null,
@@ -110,10 +113,19 @@
     },
     "label": {
       "agent": "ml-data-engineer",
-      "status": "pending",
-      "artifacts": [],
+      "status": "complete",
+      "artifacts": [
+        "data/label-manifest.md"
+      ],
       "consecutive_failures": 0,
-      "spawns": [],
+      "spawns": [
+        {
+          "spawned_by": "orchestrator",
+          "at": "2026-09-18T14:24:44.159176+00:00",
+          "result": "complete",
+          "identity": ""
+        }
+      ],
       "usage": {
         "tokens_in": 0,
         "tokens_out": 0,
@@ -125,10 +137,21 @@
     },
     "synth": {
       "agent": "ml-data-engineer",
-      "status": "pending",
-      "artifacts": [],
+      "status": "complete",
+      "artifacts": [
+        "data/synthetic-recipe.md",
+        "data/synth/gen_synth.py",
+        "data/synthetic/manifest.json"
+      ],
       "consecutive_failures": 0,
-      "spawns": [],
+      "spawns": [
+        {
+          "spawned_by": "orchestrator",
+          "at": "2026-09-18T14:38:59.014742+00:00",
+          "result": "complete",
+          "identity": ""
+        }
+      ],
       "usage": {
         "tokens_in": 0,
         "tokens_out": 0,
@@ -140,10 +163,19 @@
     },
     "model-select": {
       "agent": "ml-modeler",
-      "status": "pending",
-      "artifacts": [],
+      "status": "complete",
+      "artifacts": [
+        "model-select.md"
+      ],
       "consecutive_failures": 0,
-      "spawns": [],
+      "spawns": [
+        {
+          "spawned_by": "orchestrator",
+          "at": "2026-09-18T14:50:38.623780+00:00",
+          "result": "complete",
+          "identity": ""
+        }
+      ],
       "usage": {
         "tokens_in": 0,
         "tokens_out": 0,

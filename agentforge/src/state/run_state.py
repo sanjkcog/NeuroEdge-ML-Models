@@ -144,10 +144,30 @@ ML_STAGE_AGENTS: dict[str, str] = {
     "model-build": "ml-modeler",
     "train": "none (external — laptop GPU / AWS VM / portal; dependency-wait)",
     "eval": "none (orchestrator runs eval.py on the withheld test split)",
-    "return": "none (POST upload-return-package to the portal)",
+    "return": "none (orchestrator builds + validates the upload zip; the human uploads it, ADR-0025 D-1)",
     "data-simulator": "none (orchestrator exports simulator data from the split data, ADR-0008)",
     "model-card": "ml-modeler",
 }
+
+# Gates each ml stage must have APPROVED in <dest>/gates.json before it may complete, and
+# before any later stage may start (ADR-0025 D-4). Keys are gates.json artifact ids. A stage
+# with no entry still may not complete over a hard gate of its own that is unresolved (the
+# open-on-failure gates: scout licence, eval KPI). Only the "ml" sequence is gate-bound.
+ML_STAGE_GATES: dict[str, tuple[str, ...]] = {
+    "destination": ("inputs/use_case.yaml", "inputs/capability_manifest.json", "audit/M0"),
+    "plan": ("data/fetch-plan.json",),
+    "verify": ("data/profile.json", "audit/M4"),
+    "label": ("data/split-review.md",),
+    "synth": ("data/synth-review.md",),
+    "model-select": ("model_proposed.md",),
+    "model-build": ("inputs/scaffold", "audit/M8", "eval-methodology"),
+    "return": ("audit/M11", "return-upload"),
+}
+STAGE_GATES_BY_SEQUENCE: dict[str, dict[str, tuple[str, ...]]] = {"ml": ML_STAGE_GATES}
+
+# The note create_run's --start-stage backfill records. A stage carrying it was supplied
+# outside this run, so the gates it would have had were outside this run too (ADR-0025 D-4).
+SUPPLIED_OUTSIDE_NOTE = "(supplied outside this run — not produced by /agentforge)"
 
 # Registry of named stage sequences (ADR-0022 D-3): `run.json`'s "sequence" field
 # selects one entry. "sdlc" is /agentforge's own STAGE_SEQUENCE/STAGE_AGENTS above,
@@ -750,7 +770,7 @@ def create_run(
             # backfill to fabricate a convergence result that never happened.
             complete_stage(
                 state, sid,
-                AgentOutcome("complete", ["(supplied outside this run — not produced by /agentforge)"]),
+                AgentOutcome("complete", [SUPPLIED_OUTSIDE_NOTE]),
                 enforce_verdict=False,
             )
         state.current_stage = start_stage
@@ -1217,6 +1237,14 @@ def _print_status(state: RunState, gates_path: Path) -> None:
     else:
         pending = []
 
+    next_open = next((s for s in _seq(state.sequence) if state.stages[s].status != "complete"), None)
+    if state.sequence in STAGE_GATES_BY_SEQUENCE and next_open:
+        # What the next stage to run is owed: `current_stage` still names the last one
+        # completed, whose own gates are exactly what a reader needs to see here.
+        owed = start_gate_problems(state, next_open, gstate.gates if gates_path.exists() else {})
+        for problem in owed:
+            print(f"Owed:    {problem}")
+
     if not pending:
         print("Blocked: nothing")
     else:
@@ -1255,6 +1283,69 @@ def _print_status(state: RunState, gates_path: Path) -> None:
         )
 
 
+_UNRESOLVED_GATE_STATUSES = ("pending", "changes_requested", "rejected")
+
+
+def stage_gate_problems(state: RunState, stage: str, gates: dict) -> list[str]:
+    """Why `stage` may not count as gated-through, or [] when it may (ADR-0025 D-4).
+
+    `gates` is a gates.json ``gates`` mapping of artifact id -> an object with ``status``,
+    ``stage`` and ``type`` (a gate_state.Gate). Duck-typed so this module never imports
+    gate_state: the two stay independently loadable (see _print_status).
+
+    Two rules, both only for gate-bound sequences: every gate the stage requires is
+    ``approved``, and no hard gate opened for the stage is left unresolved. A stage
+    backfilled by --start-stage is exempt; its gates were outside this run.
+    """
+    required_by_stage = STAGE_GATES_BY_SEQUENCE.get(state.sequence)
+    if required_by_stage is None:
+        return []
+    st = state.stages[stage]
+    if st.status == "complete" and SUPPLIED_OUTSIDE_NOTE in st.artifacts:
+        return []
+    problems: list[str] = []
+    for gate_id in required_by_stage.get(stage, ()):
+        gate = gates.get(gate_id)
+        if gate is None:
+            problems.append(f"{stage}: required gate {gate_id!r} was never opened")
+        elif gate.status != "approved":
+            problems.append(f"{stage}: required gate {gate_id!r} is {gate.status}, not approved")
+    for gate_id, gate in gates.items():
+        if (
+            gate.stage == stage
+            and gate.type != "soft"
+            and gate.status in _UNRESOLVED_GATE_STATUSES
+            and gate_id not in required_by_stage.get(stage, ())
+        ):
+            problems.append(f"{stage}: gate {gate_id!r} is {gate.status}")
+    return problems
+
+
+def start_gate_problems(state: RunState, stage: str, gates: dict) -> list[str]:
+    """Why `stage` may not start: an earlier stage is open, or its gates are not through."""
+    if state.sequence not in STAGE_GATES_BY_SEQUENCE:
+        return []
+    problems: list[str] = []
+    for earlier in _seq(state.sequence)[: _seq(state.sequence).index(stage)]:
+        if state.stages[earlier].status != "complete":
+            problems.append(f"{earlier}: not complete ({state.stages[earlier].status})")
+        else:
+            problems.extend(stage_gate_problems(state, earlier, gates))
+    return problems
+
+
+def _load_gates_for_check(gates_path: Path) -> tuple[dict | None, str | None]:
+    """The gates mapping for the ADR-0025 checks, or (None, error) when it cannot be read."""
+    import gate_state  # local import: run_state must stay loadable with no gate_state present
+
+    if not gates_path.exists():
+        return {}, None
+    try:
+        return gate_state.GateState.load(gates_path).gates, None
+    except gate_state.InvalidGateState as exc:
+        return None, str(exc)
+
+
 # Exit code for "resume succeeded, but a gate blocks advancing" — distinct from 1
 # (load/validation error) so a caller can tell "state is fine, a human is needed" apart
 # from "something is actually broken."
@@ -1275,12 +1366,12 @@ def _resume(state: RunState, gates_path: Path) -> int:
 
     print(f"Resuming at stage: {state.current_stage or '(none — run complete)'}")
 
-    if not gates_path.exists():
+    if not gates_path.exists() and state.sequence not in STAGE_GATES_BY_SEQUENCE:
         print("Ready to advance — no gates recorded.")
         return 0
 
     try:
-        gstate = gate_state.GateState.load(gates_path)
+        gstate = gate_state.GateState.load(gates_path) if gates_path.exists() else gate_state.GateState.new()
     except gate_state.InvalidGateState as exc:
         print(exc)
         return 1
@@ -1295,6 +1386,15 @@ def _resume(state: RunState, gates_path: Path) -> int:
             "session (D1) before continuing."
         )
         return RESUME_BLOCKED_BY_GATE
+
+    next_open = next((s for s in _seq(state.sequence) if state.stages[s].status != "complete"), None)
+    if next_open:
+        owed = start_gate_problems(state, next_open, gstate.gates)
+        if owed:
+            print(f"Cannot advance to {next_open}: gates owed by earlier stages (ADR-0025 D-4):")
+            for problem in owed:
+                print(f"  - {problem}")
+            return RESUME_BLOCKED_BY_GATE
 
     print("Ready to advance — no gate blocks this run.")
     return 0
@@ -1489,6 +1589,20 @@ def main(argv: list[str] | None = None) -> int:
         state.save(path)
         print(f"lock {lock['lock_sha256'][:12]} recorded ({lock.get('use_case_id')})")
         return 0
+
+    if args.cmd in ("start", "complete") and state.sequence in STAGE_GATES_BY_SEQUENCE:
+        # ADR-0025 D-4: gates are enforced here, not left to the orchestrator's prose.
+        gates, error = _load_gates_for_check(Path(args.gates_path))
+        if gates is None:
+            print(f"REFUSED: cannot read gates to check {args.stage!r}: {error}")
+            return 1
+        check = start_gate_problems if args.cmd == "start" else stage_gate_problems
+        problems = check(state, args.stage, gates)
+        if problems:
+            print(f"REFUSED: {args.cmd} {args.stage} — gates are not through (ADR-0025 D-4):")
+            for problem in problems:
+                print(f"  - {problem}")
+            return 1
 
     if args.cmd == "start":
         enter_stage(state, args.stage, spawned_by=args.spawned_by)

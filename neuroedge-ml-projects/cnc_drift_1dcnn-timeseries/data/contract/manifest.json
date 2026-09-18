@@ -97,5 +97,201 @@
     "TF-03": {
       "train": 2566
     }
+  },
+  "unit_labels": {
+    "IM-01F": {
+      "val": "normal"
+    },
+    "IM-01R": {
+      "train": "normal",
+      "val": "normal",
+      "test": "normal"
+    },
+    "IM-01R-A01": {
+      "train": "tool_wear"
+    },
+    "IM-01R-A02": {
+      "train": "tool_wear"
+    },
+    "IM-01R-A03": {
+      "test": "tool_wear"
+    },
+    "IM-01R-A04": {
+      "val": "tool_wear"
+    },
+    "IM-01R-A05": {
+      "train": "tool_wear"
+    },
+    "IMP-01": {
+      "train": "normal"
+    },
+    "IMP-02": {
+      "train": "normal"
+    },
+    "IMP-03": {
+      "train": "normal"
+    },
+    "IMP-04": {
+      "train": "normal"
+    },
+    "IMP-05": {
+      "test": "normal"
+    },
+    "IMP-06": {
+      "train": "normal"
+    },
+    "IMP-07": {
+      "train": "normal"
+    },
+    "IMP-08": {
+      "train": "normal"
+    },
+    "IMP-09": {
+      "val": "normal"
+    },
+    "IMP-10": {
+      "train": "normal"
+    },
+    "IMP-11": {
+      "train": "normal"
+    },
+    "IMP-12": {
+      "val": "normal"
+    },
+    "IMP-BASE": {
+      "train": "normal"
+    },
+    "TF-01": {
+      "train": "normal"
+    },
+    "TF-02": {
+      "test": "normal"
+    },
+    "TF-03": {
+      "train": "normal"
+    }
+  },
+  "segment_rows": {
+    "IM-01F": {
+      "val": [
+        6077
+      ]
+    },
+    "IM-01R": {
+      "test": [
+        2413
+      ],
+      "train": [
+        7140
+      ],
+      "val": [
+        2312
+      ]
+    },
+    "IM-01R-A01": {
+      "train": [
+        12013
+      ]
+    },
+    "IM-01R-A02": {
+      "train": [
+        12037
+      ]
+    },
+    "IM-01R-A03": {
+      "test": [
+        11991
+      ]
+    },
+    "IM-01R-A04": {
+      "val": [
+        12098
+      ]
+    },
+    "IM-01R-A05": {
+      "train": [
+        12006
+      ]
+    },
+    "IMP-01": {
+      "train": [
+        3335
+      ]
+    },
+    "IMP-02": {
+      "train": [
+        3426
+      ]
+    },
+    "IMP-03": {
+      "train": [
+        2862
+      ]
+    },
+    "IMP-04": {
+      "train": [
+        2531
+      ]
+    },
+    "IMP-05": {
+      "test": [
+        2998
+      ]
+    },
+    "IMP-06": {
+      "train": [
+        2603
+      ]
+    },
+    "IMP-07": {
+      "train": [
+        2242
+      ]
+    },
+    "IMP-08": {
+      "train": [
+        3365
+      ]
+    },
+    "IMP-09": {
+      "val": [
+        2400
+      ]
+    },
+    "IMP-10": {
+      "train": [
+        2410
+      ]
+    },
+    "IMP-11": {
+      "train": [
+        3255
+      ]
+    },
+    "IMP-12": {
+      "val": [
+        1892
+      ]
+    },
+    "IMP-BASE": {
+      "train": [
+        7458
+      ]
+    },
+    "TF-01": {
+      "train": [
+        2480
+      ]
+    },
+    "TF-02": {
+      "test": [
+        2517
+      ]
+    },
+    "TF-03": {
+      "train": [
+        2566
+      ]
+    }
   }
 }

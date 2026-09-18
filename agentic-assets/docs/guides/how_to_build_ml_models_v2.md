@@ -39,18 +39,18 @@ portal side).
 
 | # | Stage id | What runs | Produces (under the model folder) | Gate |
 |---|---|---|---|---|
-| M0 | `destination` | the orchestrator — resolves the folder **and locks the use case** | `README.md`, `run.json`, `gates.json`, `use_case.lock.json` | **hard, automatic: the use case must lock** |
+| M0 | `destination` | the orchestrator — resolves the folder, **records the downloaded use case and capability manifest**, locks the use case, audits use case ↔ device | `README.md`, `run.json`, `gates.json`, `inputs/`, `use_case.lock.json`, `audit/M0.md` | **human: each offline input** · **automatic: the lock builds, `audit/M0`** |
 | M1 | `scout` | `/dataset-scout` → `ml-data-engineer` | `data/dataset-card.md` | **hard, automatic: licence** |
 | M2 | `plan` | `/dataset-download` phase 1 → `ml-data-engineer` | `data/archive-manifest.tsv`, `data/fetch-plan.json` | **hard, human: scope** |
 | M3 | `download` | `/dataset-download` phase 2 | `data/raw/**` (gitignored) | waits — resumable |
-| M4 | `verify` | `/dataset-verify` → `ml-data-engineer` | `data/profile.json`, `data/splits/{train,val,test}.json`, `data/contract/` (TS), `data/portal_upload.zip` | **hard, human: data verified** |
-| M5 | `label` | `/auto-label` (vision zero-shot → review · TS window rule) | `data/label-manifest.md` | hard for vision, soft for TS |
-| M6 | `synth` | `/synth-data` — only when needed | `data/synthetic-recipe.md` | — |
-| M7 | `model-select` | `/model-select` → `ml-modeler` | `model-select.md` | — |
-| M8 | `model-build` | `/model-build` → `ml-modeler`, then `ml-eval-reviewer` | `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md` | **hard: eval methodology** |
+| M4 | `verify` | `/dataset-verify` → `ml-data-engineer` | `data/profile.json`, `data/splits/{train,val,test}.json`, `data/contract/` (TS), `data/portal_upload.zip`, `audit/M4.md` | **automatic: `audit/M4`** · **hard, human: data verified** |
+| M5 | `label` | `/auto-label` (vision zero-shot → review · TS window rule), then `review split` | `data/label-manifest.md`, `data/split-review.md` | **hard, human: split review** |
+| M6 | `synth` | `/synth-data` when chosen, then `review synth` (or a recorded skip) | `data/synthetic-recipe.md`, `data/synth-review.md` | **hard, human: synthetic review (a skip too)** |
+| M7 | `model-select` | `/model-select` → `ml-modeler`, then `review model` | `model_proposed.md` (+ `model_proposed/v<N>.md`) | **hard, human: model proposal — re-run with an alternative on request** |
+| M8 | `model-build` | record the downloaded scaffold, `audit M8`, `/model-build` → `ml-modeler`, then `ml-eval-reviewer` | `inputs/scaffold/`, `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md` | **human: scaffold** · **automatic: `audit/M8`** · **hard: eval methodology** |
 | M9 | `train` | **you**, on your GPU (laptop / AWS VM) or the portal's trainer | `<arch>/runs/<run_id>/model-package/` | waits for you |
 | M10 | `eval` | the orchestrator runs `eval.py` on the **withheld test split** | `metrics.json` (`eval_split: held_out_test`) | **hard: KPIs + beats the baseline** |
-| M11 | `return` | `POST /models/{id}/upload-return-package` | `return.json` | — |
+| M11 | `return` | `audit M11`, build + validate the upload zip; **you upload it in the portal** | `return/upload.zip`, `return.json` | **automatic: `audit/M11`** · **human: upload confirmed** |
 | M12 | `data-simulator` | `/data-simulator` | `sim/<split>/…`, `sim/manifest.json` | — |
 | M13 | `model-card` | `ml-modeler` | `model-card.md` | — |
 
@@ -156,7 +156,7 @@ You rarely start at scouting. Pick the entry point that matches what you already
 | A dataset already downloaded | `--stage verify` (it profiles and splits what you have; `--data-dir` points at it) |
 | A dataset **and** labels, decided splits | `--stage model-select` (it writes `dataset-card.md` from what you state) |
 | A generated package, training done | `--stage eval` (put the package at `<arch>/runs/<run_id>/model-package/`) |
-| A model the portal trained | `--stage eval` with `runner: portal` recorded in `model-select.md` |
+| A model the portal trained | `--stage eval` with `runner: portal` recorded in `model_proposed.md` |
 
 Stages before the entry point are marked *supplied outside this run* — never fabricated.
 
@@ -203,8 +203,11 @@ delegate it to a subagent.
     contract/               M4 — the data at the lock's rate, names and units; everything below reads it (TS)
     portal_upload.zip       M4 — train + val only, in the portal's upload layout
     label-manifest.md       M5
+    split-review.md         M5 — the review pack the split gate approves
     synthetic-recipe.md     M6
-  model-select.md           M7 — family, backbone, baseline, runner, export path
+    synth-review.md         M6 — the review pack (or the recorded skip)
+  model_proposed.md         M7 — architecture (with reasoning), framing, baseline, runner, export, alternatives
+  model_proposed/v<N>.md    M7 — superseded proposals when M7 is re-run with an alternative
   <architecture>/           M8 — one folder per architecture, e.g. 1DCNN/, MiniRocket/
     train.py eval.py config.yaml requirements.txt RUN_ON_GPU.md HANDOFF.md
     runs/<run_id>/model-package/    M9 — model.onnx · meta.json · model_artifact.json · metrics.json · calibration/
@@ -295,7 +298,8 @@ Decides family, backbone, transfer recipe, **baseline** (MiniRocket for TS, grad
 tabular, a linear probe for vision), **runner** (`package` = your GPU; `portal` = the portal's own trainer,
 only for families it supports **and** whose split integrity is proven — for NeuroEdge time series that is
 disallowed until Web ADR-0002 V-1/V-2 land), and the export path (ONNX; TensorRT/QNN derived later).
-**Verify:** `model-select.md` names the baseline and the runner.
+**Verify:** `model_proposed.md` names the baseline and the runner, explains every size choice, and lists the
+alternatives considered. You approve it at the M7 gate, or ask for an alternative and M7 re-runs (ADR-0025 D-3).
 
 ### M8 — `model-build`
 `ml-modeler` reads the portal's scaffold **context** for your use case (classes, resolution, target
@@ -467,8 +471,8 @@ transcript. `--status` tells you where you are.
 | Portal step | What agentforge-ml gives it | Direction |
 |---|---|---|
 | 3 · Dataset — *Upload labelled dataset* | `data/portal_upload.zip` — train + val only, YOLO layout with `data.yaml` (vision) or CSV/JSON with `label` + unit columns (TS); class names identical to the use case | you upload |
-| 3 · Model Strategy — *Custom development* | M6 reads the scaffold **context** (`GET /models/scaffold`) — use-case id, classes, resolution, device, KPIs — and writes the package through `neuroedge_return` | portal → run |
-| 3 · Model Strategy — *Finished training return package* | M9 posts to `POST /models/{use_case_id}/upload-return-package` | run → portal |
+| 3 · Model Strategy — *Custom development* | **you download** the training scaffold; M8 records it (`intake --kind scaffold`), uses its **context** and its `neuroedge_return` writer, and never its training body (ADR-0025 D-5) | you download |
+| 3 · Model Strategy — *Finished training return package* | M11 builds and validates `return/upload.zip`; **you upload it** and confirm the registration id at the `return-upload` gate | you upload |
 | 3 · Optimize | `extras.source = custom_return` ⇒ the export step becomes **validate** (checker, ORT load, opset, shapes); *Re-export ONNX* reads *Re-validate*; FP16/INT8 and runtime-EP projection unchanged | portal |
 | 4–6 · Prepare Device → Virtual Run → Deploy | unchanged — the package entered the same manifests location the portal's own trainer writes | portal |
 | `POST /models/{id}/evaluate` | optional: ONNX + a test zip → held-out metrics on the portal side (also how you check a **portal-trained** model against *your* withheld split) | either |
@@ -484,7 +488,7 @@ and stored for provenance and **never opened**.
 only the JSON files; the portal resolves the URI (S3-compatible endpoints via `AWS_ENDPOINT_URL`) when
 Optimize runs. Validation is deferred until then and is marked as such.
 
-**Portal-trained models.** When `model-select.md` records `runner: portal`, train in the portal as usual;
+**Portal-trained models.** When `model_proposed.md` records `runner: portal`, train in the portal as usual;
 M8 still evaluates on your withheld split — the portal's numbers are the trainer's self-report, M8's are
 independent.
 
@@ -504,10 +508,54 @@ python agentforge\src\state\gate_state.py --path $GATES audit
 Everything the orchestrator asks can be answered outside it:
 
 - **Verified the data by hand?** Drop your `profile.json` and `splits/` in place and record the decision:
-  `gate_state.py --path $GATES decide dataset-card --outcome approved --note "…"` (`rejected` with the
-  reason; *accept as hold-out* is `approved` with the note `hold-out only — synth required`, which makes
-  M4 mandatory on resume).
+  `gate_state.py --path $GATES decide data/profile.json approved --identity <you> --reason "…"` (`rejected`
+  with the reason; *accept as hold-out* is `approved` with the reason `hold-out only — synth required`, which
+  makes M6 `synth` mandatory on resume).
 - **Re-do a stage:** `run_state.py --path $RUN reopen <stage>` then `--resume`.
+- **Gates are enforced (ADR-0025 D-4).** `complete <stage>` is refused until that stage's gates are approved,
+  and `start <stage>` is refused while an earlier stage owes one. `status` prints every gate owed as `Owed:`.
+
+| Stage | Gate id | Who answers | Pack you read |
+|---|---|---|---|
+| M0 | `inputs/use_case.yaml`, `inputs/capability_manifest.json` | you | the intake summary (hash, generated-at, findings) |
+| M0 · M4 · M8 · M11 | `audit/M0` · `audit/M4` · `audit/M8` · `audit/M11` | automatic when no FAIL; otherwise you | `audit/<checkpoint>.md` |
+| M2 | `data/fetch-plan.json` | you | the priced scopes |
+| M4 | `data/profile.json` | you | claimed vs measured, split summary |
+| M5 | `data/split-review.md` | you | per split × class: units, rows, windows, hours; split rationale |
+| M6 | `data/synth-review.md` | you | real + synthetic per class, the cap, fidelity, per-split use (or the skip) |
+| M7 | `model_proposed.md` | you | the proposal; *changes requested* archives it and re-runs M7 |
+| M8 | `inputs/scaffold`, `eval-methodology` | you | scaffold findings; the eval-methodology review |
+| M11 | `return-upload` | you | what to upload; paste the registration id |
+
+### Offline inputs from the portal (ADR-0025 D-1)
+
+The model project never calls the portal. Download what it needs and **drop it into `<folder>\inputs\incoming\`**
+(its README lists what goes there). `/agentforge-ml` runs `intake check`, records each file by content and stops
+until every file the stage needs is there:
+
+| Drop | Needed from | Where it comes from |
+|---|---|---|
+| `<use-case-id>.yaml` | M0 | portal Step 1 · Edge Use Case Design → validate → **Download use_case.yaml** |
+| `capability_manifest.json` | M0 | the device's `ne-device-agent assess` output (uploaded in portal Step 2 · Target Device) |
+| `neuroedge_train_<id>.py` | M8 | portal Step 3 · Model Strategy → **Build my own** → **Script (.py)** |
+
+Or record a file directly by path:
+
+```powershell
+python -m agentforge.src.ml_contract.intake record --dest <folder> --kind use_case            --file <use-case.yaml>
+python -m agentforge.src.ml_contract.intake record --dest <folder> --kind capability_manifest --file <capability_manifest.json>
+python -m agentforge.src.ml_contract.intake record --dest <folder> --kind scaffold            --file <neuroedge_train_<id>.py>
+python -m agentforge.src.ml_contract.intake show   --dest <folder>
+```
+
+Re-downloading and re-recording a changed file re-opens its gate. A changed use case also means a re-lock.
+
+### `/usecase-audit` — is everything still aligned?
+
+`python -m agentforge.src.ml_contract.audit --dest <folder>` compares the use case, the device's capability
+manifest, the contract dataset and splits, the synthetic set, the scaffold, the simulator export and (after
+M9) the model package. It reports PASS / WARN / FAIL / NOT_YET per check. Run it standalone whenever a source
+changes. The orchestrator runs it with `--checkpoint` at M0, M4, M8 and M11.
 - **Wrong stage id?** The CLI names the run's sequence in the error (`ml`) — an SDLC stage id against an
   ML run is rejected before anything is written.
 
@@ -542,7 +590,7 @@ cd …\cnc_drift-timeseries\1DCNN ; python train.py --config config.yaml      # 
 /agentforge-ml --resume
 # 10. eval   → eval.py on the withheld experiments: pr_auc, recall@fpr=0.01, event_f1 … beats_baseline
 #              gate: approve
-# 11. return → upload-return-package → 200, source=custom_return
+# 11. return → audit M11, return/upload.zip built + validated → you upload it in the portal → 200, source=custom_return
 # 12. sim    → sim/train, sim/val CSVs at 10 Hz + manifest (lock-stamped)
 # 13. card   → model-card.md
 

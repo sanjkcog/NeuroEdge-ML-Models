@@ -50,10 +50,26 @@ Chooses **what model to build** before code is generated (ADR-0014). Spawns `ml-
    - **Runner** — `package` (the generated `train.py` on the user's GPU / VM) or `portal` (the consuming
      platform's own trainer, only when the family is one it supports **and** its split integrity is proven —
      for NeuroEdge time series that is disallowed until Web ADR-0002 V-1/V-2 land; ADR-0022 Q-2).
-2. Present the recommendation; confirm framework (`.py` vs `.tf`) and target with the user if not given.
-3. Record it as the `model-select` spec at `<dest>/model-select.md`, naming the dataset facts it was
-   based on and where they came from.
+   - **Framing** — for a scalar anomaly head: supervised two-class vs normal-only (one-class /
+     reconstruction), with the loss, class weighting, optimiser, schedule, early-stopping metric (on real val,
+     per unit) and seed.
+   - **Synthetic use** — whether and how the M6 set enters training (cap, the real-only vs real+synthetic
+     ablation), or why it does not.
+2. **Write the proposal to `<dest>/model_proposed.md`** (ADR-0025 D-3). This is the page the human approves, so
+   it explains as well as decides. It must have a heading for each of: **Architecture** (a layer table with
+   channels, kernel, dilation, receptive field and parameter count, and **the reasoning for each size choice**),
+   **Framing**, **Synthetic** data use, **Augmentation**, **Baseline**, **Evaluation** protocol, **Export**,
+   **Runner**, and **Alternatives considered** (at least one real alternative per major choice, and why it lost).
+   Name the dataset facts it is based on and the file each came from. `review model` refuses a proposal missing
+   any of these headings.
+3. **A re-run with an alternative** (the human asked for changes at the M7 gate): the orchestrator has archived
+   the previous proposal to `<dest>/model_proposed/v<N>.md` and passes the human's reason. Treat that reason as a
+   **binding constraint**. Read the archived versions so the new proposal says what changed from each and why,
+   and does not silently repeat a rejected choice.
+4. Present the proposal; confirm framework (`.py` vs `.tf`) and target with the user if not given. Inside
+   `/agentforge-ml` the orchestrator then runs `python -m agentforge.src.ml_contract.review model --dest <dest>`
+   and asks the gate. Nothing moves to `/model-build` until it is approved.
 
 ## Next step
 
-`/model-build` — generate the `.py`/`.tf` model + training script from this spec.
+`/model-build` — generate the `.py`/`.tf` model + training script from the approved `model_proposed.md`.

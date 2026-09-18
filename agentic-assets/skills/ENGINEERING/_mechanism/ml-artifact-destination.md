@@ -103,11 +103,23 @@ gets its own subfolder instead.
 ```
 <intent>-<modality>/
   README.md                  objective, modality, and a stage log (command · date · artifact)
+  inputs/                    offline portal inputs, never fetched (ADR-0025 D-1)
+    incoming/                the drop folder: put downloads here; README says what and from where (D-1a)
+      recorded/              dropped files already recorded, timestamped
+    inputs.json              kind · path · sha256 · generated_at · findings, per input
+    use_case.yaml            M0 — the lock is built from this copy
+    capability_manifest.json M0 — the target device
+    scaffold/<file>          M8 — the portal training scaffold (context + return writer only)
+  use_case.lock.json         M0
+  audit/<checkpoint>.md|json /usecase-audit at M0, M4, M8, M11
   data/
     dataset-card.md          /dataset-scout
     label-manifest.md        /auto-label
+    split-review.md          M5 review pack (human gate)
     synthetic-recipe.md      /synth-data
-  model-select.md            /model-select
+    synth-review.md          M6 review pack (human gate; also records a skip)
+  model_proposed.md          /model-select — the proposal the M7 gate approves
+  model_proposed/v<N>.md     superseded proposals, kept when M7 is re-run with an alternative
   <architecture>/            /model-build — one handoff package per architecture
                                (e.g. MiniRocket/, 1DCNN/, EfficientNetLite0/)
   gan-harness/               /gan-build

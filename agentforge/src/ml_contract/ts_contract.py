@@ -242,17 +242,27 @@ def build(dest: str, only_units: list[str] | None = None) -> dict[str, Any]:
     out_dir = os.path.join(dest, "data", "contract")
     os.makedirs(out_dir, exist_ok=True)
     rows: dict[str, dict[str, int]] = {}
+    segments: dict[str, dict[str, list[int]]] = {}
     for unit, entries in sorted(units.items()):
         if only_units and unit not in only_units:
             continue
         frame = build_unit(dest, lock, sources, unit, entries)
         frame.to_parquet(os.path.join(out_dir, f"{unit}.parquet"), index=False)
         rows[unit] = {str(k): int(v) for k, v in frame.groupby("split").size().items()}
+        segments[unit] = segment_rows(frame, block_ticks)
         short = [s for s, n in rows[unit].items() if n < int(ts["window_samples"])]
         if short:
             print(f"{unit}: WARNING split(s) {short} hold fewer timesteps than one window", file=sys.stderr)
         print(f"{unit}: {len(frame)} timesteps {rows[unit]}")
 
+    manifest_path = os.path.join(out_dir, "manifest.json")
+    if only_units and os.path.exists(manifest_path):
+        # A partial rebuild keeps every other unit's counts; rewriting `units` with only the
+        # rebuilt ones silently dropped the rest from the manifest.
+        with open(manifest_path, encoding="utf-8") as fh:
+            old = json.load(fh)
+        rows = {**old.get("units", {}), **rows}
+        segments = {**old.get("segment_rows", {}), **segments}
     with open(src_path, "rb") as fh:
         sources_sha = hashlib.sha256(fh.read()).hexdigest()
     manifest = {
@@ -264,9 +274,77 @@ def build(dest: str, only_units: list[str] | None = None) -> dict[str, Any]:
         "stride_samples": ts["stride_samples"],
         "channels": ts["channels"],
         "units": rows,
+        "unit_labels": unit_labels(units),
+        "segment_rows": segments,
     }
-    with open(os.path.join(out_dir, "manifest.json"), "w", encoding="utf-8") as fh:
+    with open(manifest_path, "w", encoding="utf-8") as fh:
         json.dump(manifest, fh, indent=2, ensure_ascii=False)
+    # A rebuilt contract dataset invalidates every audit that compared the previous one (ADR-0025 D-4).
+    from . import gates as gt
+
+    reopened = gt.reopen_if_present(dest, ("audit/M4", "audit/M8", "audit/M11"))
+    if reopened:
+        print(f"re-opened {reopened}: re-run /usecase-audit at those checkpoints", file=sys.stderr)
+    return manifest
+
+
+def unit_labels(units: dict[str, list[dict[str, Any]]]) -> dict[str, dict[str, str]]:
+    """``{unit: {split: label}}``. Recorded at M4 so the M5 split review can count classes per
+    split from the manifest alone, without any later stage opening ``splits/test.json`` (ADR-0025 D-3)."""
+    return {u: {e["split"]: e["label"] for e in entries} for u, entries in sorted(units.items())}
+
+
+def segment_rows(frame, block_ticks: int) -> dict[str, list[int]]:
+    """``{split: [rows of each contiguous run]}`` for one unit's contract frame.
+
+    A unit may hold several time segments in one split. Windows never cross the gap between
+    them, so a window count taken from the summed rows overstates it; the M5 split review sums
+    windows per run instead (ADR-0025 D-3, ml-eval review).
+    """
+    out: dict[str, list[int]] = {}
+    for split, part in frame.groupby("split"):
+        starts = part["block_start"].sort_values().to_numpy()
+        breaks = [i + 1 for i in range(len(starts) - 1) if starts[i + 1] - starts[i] != block_ticks]
+        bounds = [0, *breaks, len(starts)]
+        out[str(split)] = [int(b - a) for a, b in zip(bounds, bounds[1:]) if b > a]
+    return out
+
+
+def refresh_labels(dest: str) -> dict[str, Any]:
+    """Add ``unit_labels`` and ``segment_rows`` to a contract manifest built before ADR-0025, without
+    rebuilding data. Refuses when the splits changed since the build: the manifest would then mix old
+    counts with new labels. Re-arms the audits that compared the manifest (ADR-0025 D-4)."""
+    import pandas as pd
+
+    from . import gates as gt
+
+    path = os.path.join(dest, "data", "contract", "manifest.json")
+    with open(path, encoding="utf-8") as fh:
+        manifest = json.load(fh)
+    units = load_units(dest)
+    problems = []
+    if manifest.get("split_hash") != split_hash(dest):
+        problems.append(f"the splits changed since the contract was built (manifest split_hash "
+                        f"{str(manifest.get('split_hash'))[:12]}, splits {str(split_hash(dest))[:12]}); rebuild it")
+    if set(units) != set(manifest.get("units", {})):
+        problems.append("the units in the splits differ from the units in the contract manifest; rebuild it")
+    if problems:
+        raise ContractError(problems)
+    with open(os.path.join(dest, "data", "contract_sources.json"), encoding="utf-8") as fh:
+        tick_hz = float(json.load(fh)["tick_hz"])
+    block_ticks = int(round(tick_hz / float(manifest["sample_rate_hz"])))
+    out_dir = os.path.dirname(path)
+    manifest["unit_labels"] = unit_labels(units)
+    manifest["segment_rows"] = {
+        u: segment_rows(pd.read_parquet(os.path.join(out_dir, f"{u}.parquet"), columns=["block_start", "split"]),
+                        block_ticks)
+        for u in sorted(manifest["units"])
+    }
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(manifest, fh, indent=2, ensure_ascii=False)
+    reopened = gt.reopen_if_present(dest, ("audit/M4", "audit/M8", "audit/M11"))
+    if reopened:
+        print(f"re-opened {reopened}: re-run /usecase-audit at those checkpoints", file=sys.stderr)
     return manifest
 
 
@@ -274,7 +352,19 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     p.add_argument("--dest", required=True, help="the model folder (holds use_case.lock.json)")
     p.add_argument("--units", help="comma-separated unit ids to (re)build; default all")
+    p.add_argument("--labels-only", action="store_true",
+                   help="only add unit_labels to an existing manifest (folders built before ADR-0025)")
     a = p.parse_args(argv)
+    if a.labels_only:
+        try:
+            refresh_labels(a.dest)
+        except ContractError as exc:
+            print("refused:", file=sys.stderr)
+            for problem in exc.problems:
+                print(f"  - {problem}", file=sys.stderr)
+            return 2
+        print("unit_labels and segment_rows refreshed in data/contract/manifest.json")
+        return 0
     try:
         build(a.dest, [u.strip() for u in a.units.split(",")] if a.units else None)
         return 0

@@ -1,0 +1,3040 @@
+{
+  "seed": 20260918,
+  "startup_transient_rows": [
+    42,
+    58
+  ],
+  "units": [
+    {
+      "unit_id": "SYN-tool_wear-001",
+      "label": "tool_wear",
+      "rows": 12523,
+      "params": {
+        "n_rows": 12523,
+        "block_len": 390,
+        "gains": {
+          "spindle_load": 1.0460978376888632,
+          "x_axis_error": 0.9571729303103825,
+          "vibration_rms": 1.0414881269390608
+        },
+        "baselines": {
+          "spindle_load": 0.010310907750569804,
+          "x_axis_error": 0.05287407284767269,
+          "vibration_rms": -0.042609361441454385
+        },
+        "noise_stds": {
+          "spindle_load": 0.1674055589080401,
+          "x_axis_error": 0.8565426862216652,
+          "vibration_rms": 0.07478275782633302
+        },
+        "severity_start": 0.6965437030816894,
+        "ramp_frac": 0.23347285301523518,
+        "shape": "ramp",
+        "std_ratio": {
+          "spindle_load": 1.0836305649959548,
+          "x_axis_error": 1.2840649957368,
+          "vibration_rms": 0.8456542675075095
+        },
+        "mean_shift": {
+          "spindle_load": -0.023016781298893813,
+          "x_axis_error": 5.601924849986902e-05,
+          "vibration_rms": -0.04109764787014797
+        },
+        "corr_boost": 0.005992101369876446,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 7.985307035055498e-05,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-002",
+      "label": "tool_wear",
+      "rows": 11475,
+      "params": {
+        "n_rows": 11475,
+        "block_len": 347,
+        "gains": {
+          "spindle_load": 0.9947728182287079,
+          "x_axis_error": 0.9588928793636429,
+          "vibration_rms": 0.9822033879163319
+        },
+        "baselines": {
+          "spindle_load": -0.044554733544995714,
+          "x_axis_error": -1.1235542846391064,
+          "vibration_rms": 0.0015952066171967313
+        },
+        "noise_stds": {
+          "spindle_load": 0.14394268923634757,
+          "x_axis_error": 2.2081829011741605,
+          "vibration_rms": 0.03926047764340614
+        },
+        "severity_start": 0.44402082612723953,
+        "ramp_frac": 0.37556041673394464,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.0391198872664824,
+          "x_axis_error": 1.2026599692564095,
+          "vibration_rms": 0.8420992143950191
+        },
+        "mean_shift": {
+          "spindle_load": 0.016104296076017294,
+          "x_axis_error": -0.00018892852440168212,
+          "vibration_rms": -0.025512212160296366
+        },
+        "corr_boost": 0.09557815269997677,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-003",
+      "label": "tool_wear",
+      "rows": 12174,
+      "params": {
+        "n_rows": 12174,
+        "block_len": 352,
+        "gains": {
+          "spindle_load": 1.0126164124346497,
+          "x_axis_error": 1.0141546196279017,
+          "vibration_rms": 0.9789872874980091
+        },
+        "baselines": {
+          "spindle_load": 0.025408132157213967,
+          "x_axis_error": 0.0624431510641662,
+          "vibration_rms": 0.02095133308590314
+        },
+        "noise_stds": {
+          "spindle_load": 0.12236228614593318,
+          "x_axis_error": 2.602700397879293,
+          "vibration_rms": 0.009648865713137571
+        },
+        "severity_start": 0.619381350991212,
+        "ramp_frac": 0.1804789283790741,
+        "shape": "ramp",
+        "std_ratio": {
+          "spindle_load": 1.0492899776174887,
+          "x_axis_error": 1.2169260917246152,
+          "vibration_rms": 0.7998529772688163
+        },
+        "mean_shift": {
+          "spindle_load": 0.07323712891799317,
+          "x_axis_error": -9.558003850638417e-05,
+          "vibration_rms": -0.14347550884468546
+        },
+        "corr_boost": 0.10222056745825238,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-004",
+      "label": "tool_wear",
+      "rows": 12925,
+      "params": {
+        "n_rows": 12925,
+        "block_len": 212,
+        "gains": {
+          "spindle_load": 1.0193381911666897,
+          "x_axis_error": 1.0338351605751908,
+          "vibration_rms": 1.0236453955504456
+        },
+        "baselines": {
+          "spindle_load": -0.024436066471589638,
+          "x_axis_error": 0.704841735122543,
+          "vibration_rms": -0.017568599781998432
+        },
+        "noise_stds": {
+          "spindle_load": 0.1506729269292849,
+          "x_axis_error": 0.08230702774078343,
+          "vibration_rms": 0.07839523948481014
+        },
+        "severity_start": 0.6344419660931392,
+        "ramp_frac": 0.3432855220452818,
+        "shape": "ramp",
+        "std_ratio": {
+          "spindle_load": 1.0860389114076856,
+          "x_axis_error": 1.274253468872384,
+          "vibration_rms": 0.7951481987577353
+        },
+        "mean_shift": {
+          "spindle_load": 0.009191131759325108,
+          "x_axis_error": -8.635725763229875e-05,
+          "vibration_rms": -0.30819237715590186
+        },
+        "corr_boost": 0.03698255298863209,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 7.736943907156673e-05,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-005",
+      "label": "tool_wear",
+      "rows": 11575,
+      "params": {
+        "n_rows": 11575,
+        "block_len": 246,
+        "gains": {
+          "spindle_load": 0.9976572802335367,
+          "x_axis_error": 0.9933955120360605,
+          "vibration_rms": 0.9825073711241281
+        },
+        "baselines": {
+          "spindle_load": 0.07216491503962473,
+          "x_axis_error": -0.4610832162734602,
+          "vibration_rms": -0.0034024472059983922
+        },
+        "noise_stds": {
+          "spindle_load": 0.05548649015101461,
+          "x_axis_error": 1.5234122057938375,
+          "vibration_rms": 0.028854294389336305
+        },
+        "severity_start": 0.6328346620168357,
+        "ramp_frac": 0.2616740391645062,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.093635972742641,
+          "x_axis_error": 1.20628214943637,
+          "vibration_rms": 0.8157121964560419
+        },
+        "mean_shift": {
+          "spindle_load": 0.007064799204505937,
+          "x_axis_error": -0.00018102460888126616,
+          "vibration_rms": -0.051797594399461466
+        },
+        "corr_boost": 0.056886805389953284,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-006",
+      "label": "tool_wear",
+      "rows": 11118,
+      "params": {
+        "n_rows": 11118,
+        "block_len": 168,
+        "gains": {
+          "spindle_load": 0.9699402357042148,
+          "x_axis_error": 0.9940535189169855,
+          "vibration_rms": 0.9696528699915573
+        },
+        "baselines": {
+          "spindle_load": 0.07402741430598513,
+          "x_axis_error": 0.5043612712195367,
+          "vibration_rms": -0.010183384852852315
+        },
+        "noise_stds": {
+          "spindle_load": 0.11319969797544514,
+          "x_axis_error": 0.09439518125963504,
+          "vibration_rms": 0.03612113979485298
+        },
+        "severity_start": 0.6069404918877366,
+        "ramp_frac": 0.38680916605820215,
+        "shape": "ramp",
+        "std_ratio": {
+          "spindle_load": 1.0953020041395076,
+          "x_axis_error": 1.264629738982561,
+          "vibration_rms": 0.7989617654813178
+        },
+        "mean_shift": {
+          "spindle_load": 0.033445286241089014,
+          "x_axis_error": -0.00018572564043856793,
+          "vibration_rms": -0.0113453754702042
+        },
+        "corr_boost": 0.03598553425803008,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0002698327037236913,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-007",
+      "label": "tool_wear",
+      "rows": 11592,
+      "params": {
+        "n_rows": 11592,
+        "block_len": 324,
+        "gains": {
+          "spindle_load": 1.017416412554805,
+          "x_axis_error": 0.9621541543341952,
+          "vibration_rms": 1.0014779122344721
+        },
+        "baselines": {
+          "spindle_load": 0.07749310427606562,
+          "x_axis_error": 0.1713079622172719,
+          "vibration_rms": 0.009305094703857231
+        },
+        "noise_stds": {
+          "spindle_load": 0.16651233478682248,
+          "x_axis_error": 1.0738293197115512,
+          "vibration_rms": 0.0026452973777745803
+        },
+        "severity_start": 0.5773198491334461,
+        "ramp_frac": 0.15305572578834015,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.040582590121519,
+          "x_axis_error": 1.2114092272811952,
+          "vibration_rms": 0.8247596396339869
+        },
+        "mean_shift": {
+          "spindle_load": -0.059551851329371186,
+          "x_axis_error": -0.00012139043917865564,
+          "vibration_rms": -0.15083679195957347
+        },
+        "corr_boost": 0.04837478544451065,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-008",
+      "label": "tool_wear",
+      "rows": 12145,
+      "params": {
+        "n_rows": 12145,
+        "block_len": 305,
+        "gains": {
+          "spindle_load": 1.0315438165070074,
+          "x_axis_error": 1.0353526254025889,
+          "vibration_rms": 0.9577238696680657
+        },
+        "baselines": {
+          "spindle_load": 0.053002421771932096,
+          "x_axis_error": -0.026430979708454906,
+          "vibration_rms": 0.03241923286269995
+        },
+        "noise_stds": {
+          "spindle_load": 0.1321848361168594,
+          "x_axis_error": 1.1813485868819966,
+          "vibration_rms": 0.08966905937564365
+        },
+        "severity_start": 0.6559405888206109,
+        "ramp_frac": 0.3312429934830228,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.0860701176584175,
+          "x_axis_error": 1.230381420681379,
+          "vibration_rms": 0.8400611175268773
+        },
+        "mean_shift": {
+          "spindle_load": 0.06079816256115958,
+          "x_axis_error": -7.523008548242913e-05,
+          "vibration_rms": 0.002002748432719248
+        },
+        "corr_boost": 0.04456728342537703,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0004116920543433512,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-009",
+      "label": "tool_wear",
+      "rows": 12961,
+      "params": {
+        "n_rows": 12961,
+        "block_len": 259,
+        "gains": {
+          "spindle_load": 1.0374458695132183,
+          "x_axis_error": 1.0384158586562273,
+          "vibration_rms": 1.0272322171478039
+        },
+        "baselines": {
+          "spindle_load": 0.0441407315371239,
+          "x_axis_error": -0.23749701037073567,
+          "vibration_rms": 0.041997446876177985
+        },
+        "noise_stds": {
+          "spindle_load": 0.03362801916734497,
+          "x_axis_error": 2.6848766344714834,
+          "vibration_rms": 0.07538834270832453
+        },
+        "severity_start": 0.5734992947104269,
+        "ramp_frac": 0.16513068165169592,
+        "shape": "ramp",
+        "std_ratio": {
+          "spindle_load": 1.0319398090743226,
+          "x_axis_error": 1.264821091106535,
+          "vibration_rms": 0.8196321694144302
+        },
+        "mean_shift": {
+          "spindle_load": 0.058630082345589335,
+          "x_axis_error": 7.566344317011533e-05,
+          "vibration_rms": -0.2634093040736033
+        },
+        "corr_boost": 0.022157350049893783,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0003857727027235553,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-010",
+      "label": "tool_wear",
+      "rows": 11602,
+      "params": {
+        "n_rows": 11602,
+        "block_len": 155,
+        "gains": {
+          "spindle_load": 1.00682671293217,
+          "x_axis_error": 0.9942425381468963,
+          "vibration_rms": 0.9527566234095532
+        },
+        "baselines": {
+          "spindle_load": 0.028455963075518675,
+          "x_axis_error": -0.962325121014054,
+          "vibration_rms": -0.02477257807112225
+        },
+        "noise_stds": {
+          "spindle_load": 0.02753879884187113,
+          "x_axis_error": 2.679644323158352,
+          "vibration_rms": 0.025516112046165645
+        },
+        "severity_start": 0.4197172836677494,
+        "ramp_frac": 0.11797813665713922,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.0305019683580836,
+          "x_axis_error": 1.2865422904018289,
+          "vibration_rms": 0.8395602861120433
+        },
+        "mean_shift": {
+          "spindle_load": 0.10799140239141858,
+          "x_axis_error": -0.0001903628867872417,
+          "vibration_rms": -0.035734515761265684
+        },
+        "corr_boost": 0.020178507111806455,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0004309601792794346,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-011",
+      "label": "tool_wear",
+      "rows": 11933,
+      "params": {
+        "n_rows": 11933,
+        "block_len": 251,
+        "gains": {
+          "spindle_load": 1.0235349848628,
+          "x_axis_error": 1.0134723850611171,
+          "vibration_rms": 1.0388643053826478
+        },
+        "baselines": {
+          "spindle_load": 0.03811700776496667,
+          "x_axis_error": -0.13894933716964677,
+          "vibration_rms": 0.03097823247695766
+        },
+        "noise_stds": {
+          "spindle_load": 0.02298976433025279,
+          "x_axis_error": 0.6906635364719743,
+          "vibration_rms": 0.0015244911383798703
+        },
+        "severity_start": 0.4534290130538718,
+        "ramp_frac": 0.15689570150727783,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.0412812465719707,
+          "x_axis_error": 1.2127839212713847,
+          "vibration_rms": 0.7970345067402729
+        },
+        "mean_shift": {
+          "spindle_load": 0.02739567058288013,
+          "x_axis_error": 0.00016733382485863236,
+          "vibration_rms": -0.3083488660423525
+        },
+        "corr_boost": 0.11895691538666185,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-012",
+      "label": "tool_wear",
+      "rows": 12395,
+      "params": {
+        "n_rows": 12395,
+        "block_len": 308,
+        "gains": {
+          "spindle_load": 0.9979916333520725,
+          "x_axis_error": 0.9585361756834206,
+          "vibration_rms": 0.9983904796085321
+        },
+        "baselines": {
+          "spindle_load": 0.07556038042026249,
+          "x_axis_error": 0.4927240842490874,
+          "vibration_rms": -0.03618327537356157
+        },
+        "noise_stds": {
+          "spindle_load": 0.032208422738519336,
+          "x_axis_error": 2.2989309624018945,
+          "vibration_rms": 0.012822871557470323
+        },
+        "severity_start": 0.3003978783268762,
+        "ramp_frac": 0.12716869237023007,
+        "shape": "ramp",
+        "std_ratio": {
+          "spindle_load": 1.0612245707332126,
+          "x_axis_error": 1.3034551281740965,
+          "vibration_rms": 0.7858451840737767
+        },
+        "mean_shift": {
+          "spindle_load": 0.121086280947301,
+          "x_axis_error": 9.292945141446346e-05,
+          "vibration_rms": -0.11983591169941565
+        },
+        "corr_boost": 0.018350032865027944,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-013",
+      "label": "tool_wear",
+      "rows": 11889,
+      "params": {
+        "n_rows": 11889,
+        "block_len": 183,
+        "gains": {
+          "spindle_load": 0.98575729833023,
+          "x_axis_error": 0.9855795047385876,
+          "vibration_rms": 0.9867793348559113
+        },
+        "baselines": {
+          "spindle_load": -0.03524413666126279,
+          "x_axis_error": -0.15195351993747275,
+          "vibration_rms": 0.03774075308013971
+        },
+        "noise_stds": {
+          "spindle_load": 0.034286387882780836,
+          "x_axis_error": 2.1423179986216656,
+          "vibration_rms": 0.07904127647557008
+        },
+        "severity_start": 0.620582534217937,
+        "ramp_frac": 0.06298706025730744,
+        "shape": "ramp",
+        "std_ratio": {
+          "spindle_load": 1.0884354984862548,
+          "x_axis_error": 1.2485046949308292,
+          "vibration_rms": 0.8428468972927216
+        },
+        "mean_shift": {
+          "spindle_load": 0.09325656550302136,
+          "x_axis_error": -0.00014663303986830193,
+          "vibration_rms": -0.052341086596672526
+        },
+        "corr_boost": 0.02427939290703039,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-014",
+      "label": "tool_wear",
+      "rows": 11745,
+      "params": {
+        "n_rows": 11745,
+        "block_len": 192,
+        "gains": {
+          "spindle_load": 1.0205561757901025,
+          "x_axis_error": 1.0425595376746841,
+          "vibration_rms": 0.9991713478783963
+        },
+        "baselines": {
+          "spindle_load": -0.03578044410025911,
+          "x_axis_error": -0.2603917342703984,
+          "vibration_rms": -0.029985799182724888
+        },
+        "noise_stds": {
+          "spindle_load": 0.15586614554223976,
+          "x_axis_error": 1.486724857069675,
+          "vibration_rms": 0.07172272379429866
+        },
+        "severity_start": 0.6580657402049588,
+        "ramp_frac": 0.34505919374271704,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.0740229296921993,
+          "x_axis_error": 1.318850500047359,
+          "vibration_rms": 0.8237787339641849
+        },
+        "mean_shift": {
+          "spindle_load": 0.07332746236450763,
+          "x_axis_error": 0.00017932444975609054,
+          "vibration_rms": -0.26231669311530886
+        },
+        "corr_boost": 0.1030609614585506,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.00017028522775649213,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-015",
+      "label": "tool_wear",
+      "rows": 12226,
+      "params": {
+        "n_rows": 12226,
+        "block_len": 199,
+        "gains": {
+          "spindle_load": 0.9822464152649678,
+          "x_axis_error": 1.0447433011622407,
+          "vibration_rms": 1.0497174773696099
+        },
+        "baselines": {
+          "spindle_load": -0.013430670332836252,
+          "x_axis_error": -1.116637672562389,
+          "vibration_rms": -0.03501849396321914
+        },
+        "noise_stds": {
+          "spindle_load": 0.06611652790216069,
+          "x_axis_error": 2.300687950853041,
+          "vibration_rms": 0.0783340842096198
+        },
+        "severity_start": 0.4522313993573095,
+        "ramp_frac": 0.09981529211607296,
+        "shape": "ramp",
+        "std_ratio": {
+          "spindle_load": 1.0657824330906491,
+          "x_axis_error": 1.3002061969682153,
+          "vibration_rms": 0.7969581542997496
+        },
+        "mean_shift": {
+          "spindle_load": -0.00606116018507484,
+          "x_axis_error": -0.00019640456489201377,
+          "vibration_rms": -0.15331233956724594
+        },
+        "corr_boost": 0.022213053524488147,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0004089645018812367,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-016",
+      "label": "tool_wear",
+      "rows": 11163,
+      "params": {
+        "n_rows": 11163,
+        "block_len": 198,
+        "gains": {
+          "spindle_load": 0.9787687372480166,
+          "x_axis_error": 1.007296311394599,
+          "vibration_rms": 0.9843888135671282
+        },
+        "baselines": {
+          "spindle_load": 0.02937144356344586,
+          "x_axis_error": 0.5774964506973828,
+          "vibration_rms": 0.03841054438634117
+        },
+        "noise_stds": {
+          "spindle_load": 0.07598530843540723,
+          "x_axis_error": 0.6199009064159041,
+          "vibration_rms": 0.0041129382881051136
+        },
+        "severity_start": 0.3235454439870649,
+        "ramp_frac": 0.122578304389398,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.0528236317120072,
+          "x_axis_error": 1.2388183246478517,
+          "vibration_rms": 0.7879124308694321
+        },
+        "mean_shift": {
+          "spindle_load": 0.022724207017980086,
+          "x_axis_error": 0.00014993313356697,
+          "vibration_rms": -0.06795334711506579
+        },
+        "corr_boost": 0.11473595516605804,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0002687449610319806,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-017",
+      "label": "tool_wear",
+      "rows": 12378,
+      "params": {
+        "n_rows": 12378,
+        "block_len": 395,
+        "gains": {
+          "spindle_load": 1.0376873214763496,
+          "x_axis_error": 0.9991615068605603,
+          "vibration_rms": 0.9962110602814648
+        },
+        "baselines": {
+          "spindle_load": -0.07338317042225771,
+          "x_axis_error": 0.8280434463263088,
+          "vibration_rms": -0.0046778320110347354
+        },
+        "noise_stds": {
+          "spindle_load": 0.12605988991978692,
+          "x_axis_error": 2.38691663237575,
+          "vibration_rms": 0.0401025609757843
+        },
+        "severity_start": 0.4528632706194221,
+        "ramp_frac": 0.10026079483006844,
+        "shape": "ramp",
+        "std_ratio": {
+          "spindle_load": 1.0439559541537309,
+          "x_axis_error": 1.2151270151318325,
+          "vibration_rms": 0.7830795480029626
+        },
+        "mean_shift": {
+          "spindle_load": 0.06326156924656606,
+          "x_axis_error": -0.0001406344754055117,
+          "vibration_rms": -0.17315442533080463
+        },
+        "corr_boost": 0.11341030853865114,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-018",
+      "label": "tool_wear",
+      "rows": 12976,
+      "params": {
+        "n_rows": 12976,
+        "block_len": 241,
+        "gains": {
+          "spindle_load": 1.0382481457102277,
+          "x_axis_error": 1.0302861078827579,
+          "vibration_rms": 0.9515618687949505
+        },
+        "baselines": {
+          "spindle_load": 0.024913621176973086,
+          "x_axis_error": -0.18856537064462855,
+          "vibration_rms": -0.04270908897685142
+        },
+        "noise_stds": {
+          "spindle_load": 0.03238729238367505,
+          "x_axis_error": 1.1141756857096414,
+          "vibration_rms": 0.04190264999842071
+        },
+        "severity_start": 0.4751668793072853,
+        "ramp_frac": 0.26853680473169356,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.0401680197502303,
+          "x_axis_error": 1.2839273500503576,
+          "vibration_rms": 0.843946940076165
+        },
+        "mean_shift": {
+          "spindle_load": 0.03467407261860975,
+          "x_axis_error": -0.00010424694830627256,
+          "vibration_rms": -0.1634470233713664
+        },
+        "corr_boost": 0.020724325931844017,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0002311960542540074,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-019",
+      "label": "tool_wear",
+      "rows": 11589,
+      "params": {
+        "n_rows": 11589,
+        "block_len": 281,
+        "gains": {
+          "spindle_load": 1.0049763312533597,
+          "x_axis_error": 0.9559692909714244,
+          "vibration_rms": 0.9552096617449378
+        },
+        "baselines": {
+          "spindle_load": 0.0676175950955649,
+          "x_axis_error": 1.315551721914364,
+          "vibration_rms": -0.004550524172845198
+        },
+        "noise_stds": {
+          "spindle_load": 0.08152557302464941,
+          "x_axis_error": 1.6982870088734785,
+          "vibration_rms": 0.07580223798002707
+        },
+        "severity_start": 0.625144314907037,
+        "ramp_frac": 0.39419316438329155,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.049036836363184,
+          "x_axis_error": 1.3120479946771806,
+          "vibration_rms": 0.7927549302858655
+        },
+        "mean_shift": {
+          "spindle_load": 0.02044652632931189,
+          "x_axis_error": 9.574648310147564e-05,
+          "vibration_rms": -0.18382102350720722
+        },
+        "corr_boost": 0.08231497180278267,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-020",
+      "label": "tool_wear",
+      "rows": 12036,
+      "params": {
+        "n_rows": 12036,
+        "block_len": 224,
+        "gains": {
+          "spindle_load": 1.019565270394179,
+          "x_axis_error": 1.0498240907571186,
+          "vibration_rms": 0.9880980907054151
+        },
+        "baselines": {
+          "spindle_load": 0.058633833222039515,
+          "x_axis_error": 1.3388980395384884,
+          "vibration_rms": 0.024884168474858744
+        },
+        "noise_stds": {
+          "spindle_load": 0.11268136175159786,
+          "x_axis_error": 1.3800315235457346,
+          "vibration_rms": 0.08602689725167018
+        },
+        "severity_start": 0.5251421340694817,
+        "ramp_frac": 0.18517187910391014,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.0346951787753862,
+          "x_axis_error": 1.207594930582531,
+          "vibration_rms": 0.83340975685907
+        },
+        "mean_shift": {
+          "spindle_load": 0.09393945376252538,
+          "x_axis_error": -0.00017458334820119958,
+          "vibration_rms": -0.27118550608515174
+        },
+        "corr_boost": 0.0374389969976313,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 8.308408109006314e-05,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-021",
+      "label": "tool_wear",
+      "rows": 12883,
+      "params": {
+        "n_rows": 12883,
+        "block_len": 256,
+        "gains": {
+          "spindle_load": 0.9960096282295063,
+          "x_axis_error": 0.9967895148782828,
+          "vibration_rms": 0.9684654636917612
+        },
+        "baselines": {
+          "spindle_load": 0.06851873521602933,
+          "x_axis_error": 0.6133126756880142,
+          "vibration_rms": -0.005222538005836618
+        },
+        "noise_stds": {
+          "spindle_load": 0.050591140825379834,
+          "x_axis_error": 0.550954180151042,
+          "vibration_rms": 0.04272483246971694
+        },
+        "severity_start": 0.4639700547154229,
+        "ramp_frac": 0.23525037166275925,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.0445061248764005,
+          "x_axis_error": 1.2127910751103517,
+          "vibration_rms": 0.8261446590944331
+        },
+        "mean_shift": {
+          "spindle_load": 0.10765796265452579,
+          "x_axis_error": 6.315821819802061e-05,
+          "vibration_rms": -0.0359943834598328
+        },
+        "corr_boost": 0.043064954570535684,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-022",
+      "label": "tool_wear",
+      "rows": 11527,
+      "params": {
+        "n_rows": 11527,
+        "block_len": 357,
+        "gains": {
+          "spindle_load": 1.0039939585733662,
+          "x_axis_error": 0.9949680039009767,
+          "vibration_rms": 1.0072753206300216
+        },
+        "baselines": {
+          "spindle_load": 0.02454724966989617,
+          "x_axis_error": -0.7129704726944389,
+          "vibration_rms": 0.018269370380781285
+        },
+        "noise_stds": {
+          "spindle_load": 0.07354763275037271,
+          "x_axis_error": 1.5700315908187175,
+          "vibration_rms": 0.007796274047014577
+        },
+        "severity_start": 0.4865011565753873,
+        "ramp_frac": 0.27247064693057776,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.0463799771346634,
+          "x_axis_error": 1.2834866901667807,
+          "vibration_rms": 0.8082084221019661
+        },
+        "mean_shift": {
+          "spindle_load": -0.05556241453331311,
+          "x_axis_error": 7.033363974171602e-05,
+          "vibration_rms": -0.23148441735976444
+        },
+        "corr_boost": 0.04405674096505795,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.00026025852346664354,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-023",
+      "label": "tool_wear",
+      "rows": 11100,
+      "params": {
+        "n_rows": 11100,
+        "block_len": 191,
+        "gains": {
+          "spindle_load": 0.9626341620663248,
+          "x_axis_error": 0.9731292491432081,
+          "vibration_rms": 1.011055506028802
+        },
+        "baselines": {
+          "spindle_load": -0.022647271862206476,
+          "x_axis_error": -0.5010036915645233,
+          "vibration_rms": -0.0010601571727588094
+        },
+        "noise_stds": {
+          "spindle_load": 0.07679315077506602,
+          "x_axis_error": 1.0859583470079934,
+          "vibration_rms": 0.047262346568939184
+        },
+        "severity_start": 0.4348526044891529,
+        "ramp_frac": 0.323976422460031,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.0921917023309902,
+          "x_axis_error": 1.2897050374301224,
+          "vibration_rms": 0.8254317030707301
+        },
+        "mean_shift": {
+          "spindle_load": 0.06945249831328695,
+          "x_axis_error": -7.370236902860296e-05,
+          "vibration_rms": -0.27416037933810417
+        },
+        "corr_boost": 0.008659277259880705,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0002702702702702703,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-024",
+      "label": "tool_wear",
+      "rows": 12633,
+      "params": {
+        "n_rows": 12633,
+        "block_len": 213,
+        "gains": {
+          "spindle_load": 0.9909739508968602,
+          "x_axis_error": 1.00008458991932,
+          "vibration_rms": 0.9838178854418339
+        },
+        "baselines": {
+          "spindle_load": 0.06467748373257251,
+          "x_axis_error": -1.0021959710395112,
+          "vibration_rms": 0.02596151492576528
+        },
+        "noise_stds": {
+          "spindle_load": 0.04089421076942425,
+          "x_axis_error": 0.598053294201746,
+          "vibration_rms": 0.024311708350686904
+        },
+        "severity_start": 0.5497934379825218,
+        "ramp_frac": 0.28439864554650557,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.0785541459837513,
+          "x_axis_error": 1.3078590415951905,
+          "vibration_rms": 0.784893736830721
+        },
+        "mean_shift": {
+          "spindle_load": 0.06920748286116857,
+          "x_axis_error": 0.00019056234515245045,
+          "vibration_rms": -0.1077779796639653
+        },
+        "corr_boost": 0.022781650241297354,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 7.915776141850709e-05,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-025",
+      "label": "tool_wear",
+      "rows": 11600,
+      "params": {
+        "n_rows": 11600,
+        "block_len": 320,
+        "gains": {
+          "spindle_load": 1.0244226381426464,
+          "x_axis_error": 0.9956357354753215,
+          "vibration_rms": 0.9610406724797663
+        },
+        "baselines": {
+          "spindle_load": 0.07329952460757663,
+          "x_axis_error": 0.7767086300255606,
+          "vibration_rms": -0.009976725416741392
+        },
+        "noise_stds": {
+          "spindle_load": 0.010801133341759212,
+          "x_axis_error": 1.2178252309374888,
+          "vibration_rms": 0.010833757085194263
+        },
+        "severity_start": 0.654183138127695,
+        "ramp_frac": 0.09022997990553128,
+        "shape": "ramp",
+        "std_ratio": {
+          "spindle_load": 1.0984018811932936,
+          "x_axis_error": 1.2061059965541383,
+          "vibration_rms": 0.8484774269380471
+        },
+        "mean_shift": {
+          "spindle_load": 0.1260094854557711,
+          "x_axis_error": 5.16456574626512e-05,
+          "vibration_rms": -0.07482026403685882
+        },
+        "corr_boost": 0.05548225989168647,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-026",
+      "label": "tool_wear",
+      "rows": 11980,
+      "params": {
+        "n_rows": 11980,
+        "block_len": 157,
+        "gains": {
+          "spindle_load": 0.9899431626424706,
+          "x_axis_error": 1.0269800101967832,
+          "vibration_rms": 0.9625490413622104
+        },
+        "baselines": {
+          "spindle_load": -0.005786341412220491,
+          "x_axis_error": 0.516091307837778,
+          "vibration_rms": 0.03358984219121462
+        },
+        "noise_stds": {
+          "spindle_load": 0.054080601794119956,
+          "x_axis_error": 0.6985007284894604,
+          "vibration_rms": 0.07360037859939751
+        },
+        "severity_start": 0.40355319089168856,
+        "ramp_frac": 0.26784945370411306,
+        "shape": "ramp",
+        "std_ratio": {
+          "spindle_load": 1.075082041134497,
+          "x_axis_error": 1.2990964755246315,
+          "vibration_rms": 0.83742959075255
+        },
+        "mean_shift": {
+          "spindle_load": 0.03796345801478507,
+          "x_axis_error": -0.00017625895547701377,
+          "vibration_rms": -0.15235282290853625
+        },
+        "corr_boost": 0.09865692342930127,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.000333889816360601,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-027",
+      "label": "tool_wear",
+      "rows": 11539,
+      "params": {
+        "n_rows": 11539,
+        "block_len": 212,
+        "gains": {
+          "spindle_load": 0.9724795785999346,
+          "x_axis_error": 0.9538203360036913,
+          "vibration_rms": 1.0007660041223758
+        },
+        "baselines": {
+          "spindle_load": -0.004889589070712271,
+          "x_axis_error": -0.8105685324525848,
+          "vibration_rms": 0.04324749877695807
+        },
+        "noise_stds": {
+          "spindle_load": 0.05557808726779881,
+          "x_axis_error": 0.6303673379099828,
+          "vibration_rms": 0.009834079884860443
+        },
+        "severity_start": 0.40120712837220623,
+        "ramp_frac": 0.3345880528688307,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.0827924402274571,
+          "x_axis_error": 1.3191268994719811,
+          "vibration_rms": 0.8361525280336489
+        },
+        "mean_shift": {
+          "spindle_load": -0.02791955527768504,
+          "x_axis_error": 0.0001922911737544119,
+          "vibration_rms": -0.2480344099619746
+        },
+        "corr_boost": 0.11028713762253771,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.00017332524482190832,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-028",
+      "label": "tool_wear",
+      "rows": 12651,
+      "params": {
+        "n_rows": 12651,
+        "block_len": 195,
+        "gains": {
+          "spindle_load": 1.02852704539271,
+          "x_axis_error": 1.0420845400764807,
+          "vibration_rms": 0.9534840210812586
+        },
+        "baselines": {
+          "spindle_load": -0.0033718806876412814,
+          "x_axis_error": 0.2045219463338293,
+          "vibration_rms": 0.029326194669071746
+        },
+        "noise_stds": {
+          "spindle_load": 0.05228687158881539,
+          "x_axis_error": 0.6074501759905863,
+          "vibration_rms": 0.037036690762337184
+        },
+        "severity_start": 0.5805418032623857,
+        "ramp_frac": 0.2996425721404496,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.080458371168834,
+          "x_axis_error": 1.2422678383177717,
+          "vibration_rms": 0.7883244086421777
+        },
+        "mean_shift": {
+          "spindle_load": -0.05980880462637176,
+          "x_axis_error": -1.7704066083011627e-05,
+          "vibration_rms": 0.00152490201159311
+        },
+        "corr_boost": 0.037776943123951676,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.00015809026954390957,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-029",
+      "label": "tool_wear",
+      "rows": 11515,
+      "params": {
+        "n_rows": 11515,
+        "block_len": 237,
+        "gains": {
+          "spindle_load": 1.0260424061310136,
+          "x_axis_error": 1.0279862412800547,
+          "vibration_rms": 1.0274609310461724
+        },
+        "baselines": {
+          "spindle_load": -0.0346590242129254,
+          "x_axis_error": 0.9526069225846671,
+          "vibration_rms": 0.0023274300113466143
+        },
+        "noise_stds": {
+          "spindle_load": 0.007255018376794306,
+          "x_axis_error": 0.2598615288546588,
+          "vibration_rms": 0.04233103241998557
+        },
+        "severity_start": 0.34453717481318363,
+        "ramp_frac": 0.14852334242759047,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.0301028617800712,
+          "x_axis_error": 1.31818788145118,
+          "vibration_rms": 0.8064331810925537
+        },
+        "mean_shift": {
+          "spindle_load": -0.0541178948378158,
+          "x_axis_error": -0.00013158460424626527,
+          "vibration_rms": -0.23092575421947462
+        },
+        "corr_boost": 0.03478382703350185,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.00026052974381241857,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-tool_wear-030",
+      "label": "tool_wear",
+      "rows": 11095,
+      "params": {
+        "n_rows": 11095,
+        "block_len": 155,
+        "gains": {
+          "spindle_load": 0.9894592185449231,
+          "x_axis_error": 1.0131975450740094,
+          "vibration_rms": 0.9774401001494649
+        },
+        "baselines": {
+          "spindle_load": -0.013903529606043621,
+          "x_axis_error": -0.20910819786987395,
+          "vibration_rms": -0.035992436982643365
+        },
+        "noise_stds": {
+          "spindle_load": 0.04936408657856025,
+          "x_axis_error": 1.0215303018408644,
+          "vibration_rms": 0.040827315173688386
+        },
+        "severity_start": 0.5560104525691164,
+        "ramp_frac": 0.12669444872824323,
+        "shape": "step",
+        "std_ratio": {
+          "spindle_load": 1.05576084587202,
+          "x_axis_error": 1.2163950080000376,
+          "vibration_rms": 0.8189857201803351
+        },
+        "mean_shift": {
+          "spindle_load": 0.026014407051145425,
+          "x_axis_error": -8.558937795591626e-05,
+          "vibration_rms": -0.08523080701256577
+        },
+        "corr_boost": 0.06555294545868386,
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-001",
+      "label": "normal",
+      "rows": 12405,
+      "params": {
+        "n_rows": 12405,
+        "block_len": 302,
+        "gains": {
+          "spindle_load": 0.9538163180165897,
+          "x_axis_error": 1.036206199900846,
+          "vibration_rms": 0.9696442739550915
+        },
+        "baselines": {
+          "spindle_load": 0.011939072337467757,
+          "x_axis_error": 1.0887922567581476,
+          "vibration_rms": -0.0454252305919629
+        },
+        "noise_stds": {
+          "spindle_load": 0.04607889334403763,
+          "x_axis_error": 0.939127899045396,
+          "vibration_rms": 0.07137574730406905
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-002",
+      "label": "normal",
+      "rows": 12353,
+      "params": {
+        "n_rows": 12353,
+        "block_len": 160,
+        "gains": {
+          "spindle_load": 1.0130054598786455,
+          "x_axis_error": 1.0459719359007864,
+          "vibration_rms": 0.954067128815633
+        },
+        "baselines": {
+          "spindle_load": 0.01376545290530177,
+          "x_axis_error": 0.1421656356751164,
+          "vibration_rms": 0.04118605611379966
+        },
+        "noise_stds": {
+          "spindle_load": 0.024613785257593973,
+          "x_axis_error": 0.6717810445479354,
+          "vibration_rms": 0.03628539581572089
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-003",
+      "label": "normal",
+      "rows": 12916,
+      "params": {
+        "n_rows": 12916,
+        "block_len": 355,
+        "gains": {
+          "spindle_load": 0.9503210152680581,
+          "x_axis_error": 1.0421370282146702,
+          "vibration_rms": 0.9728913803278542
+        },
+        "baselines": {
+          "spindle_load": -0.048094695639958523,
+          "x_axis_error": 0.8480672723993774,
+          "vibration_rms": -0.017107690039667285
+        },
+        "noise_stds": {
+          "spindle_load": 0.05916775562278139,
+          "x_axis_error": 2.2284649715606717,
+          "vibration_rms": 0.08683230528184861
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-004",
+      "label": "normal",
+      "rows": 12647,
+      "params": {
+        "n_rows": 12647,
+        "block_len": 196,
+        "gains": {
+          "spindle_load": 1.0221590841782395,
+          "x_axis_error": 0.966466076614222,
+          "vibration_rms": 1.0265833285827346
+        },
+        "baselines": {
+          "spindle_load": 0.040372231907845633,
+          "x_axis_error": -0.7392362299314112,
+          "vibration_rms": 0.008171743480927219
+        },
+        "noise_stds": {
+          "spindle_load": 0.0880740433942418,
+          "x_axis_error": 1.9125612188887164,
+          "vibration_rms": 0.07993361699802265
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0007116312168893809
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-005",
+      "label": "normal",
+      "rows": 12628,
+      "params": {
+        "n_rows": 12628,
+        "block_len": 348,
+        "gains": {
+          "spindle_load": 1.0229332043164188,
+          "x_axis_error": 0.9521723530540837,
+          "vibration_rms": 0.9538898468279712
+        },
+        "baselines": {
+          "spindle_load": -0.060885724591088125,
+          "x_axis_error": -0.07780204597665318,
+          "vibration_rms": 0.011977978715354665
+        },
+        "noise_stds": {
+          "spindle_load": 0.11920844223537527,
+          "x_axis_error": 0.5847096646157266,
+          "vibration_rms": 0.0251136502308814
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-006",
+      "label": "normal",
+      "rows": 11410,
+      "params": {
+        "n_rows": 11410,
+        "block_len": 247,
+        "gains": {
+          "spindle_load": 0.9899770360765394,
+          "x_axis_error": 0.9623223781158036,
+          "vibration_rms": 0.9634661932382005
+        },
+        "baselines": {
+          "spindle_load": 0.04979297265206148,
+          "x_axis_error": 0.18202011407595992,
+          "vibration_rms": -0.006408132953435321
+        },
+        "noise_stds": {
+          "spindle_load": 0.15285657849704246,
+          "x_axis_error": 1.7257090636388392,
+          "vibration_rms": 0.023316616477027454
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-007",
+      "label": "normal",
+      "rows": 11922,
+      "params": {
+        "n_rows": 11922,
+        "block_len": 172,
+        "gains": {
+          "spindle_load": 0.9974678575437399,
+          "x_axis_error": 0.9785355443786978,
+          "vibration_rms": 0.9807191299965986
+        },
+        "baselines": {
+          "spindle_load": -0.023171410962272765,
+          "x_axis_error": -1.058258323278201,
+          "vibration_rms": -0.006859002090887914
+        },
+        "noise_stds": {
+          "spindle_load": 0.05645083686001464,
+          "x_axis_error": 0.028419474802728696,
+          "vibration_rms": 0.08709903896178449
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-008",
+      "label": "normal",
+      "rows": 11441,
+      "params": {
+        "n_rows": 11441,
+        "block_len": 367,
+        "gains": {
+          "spindle_load": 1.0073732925203052,
+          "x_axis_error": 0.9669436835376297,
+          "vibration_rms": 1.0279205152099407
+        },
+        "baselines": {
+          "spindle_load": 0.04537348866741807,
+          "x_axis_error": 1.172592250276901,
+          "vibration_rms": -0.0041406416243154505
+        },
+        "noise_stds": {
+          "spindle_load": 0.08556249591883773,
+          "x_axis_error": 0.1466230097126649,
+          "vibration_rms": 0.045439876309446785
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-009",
+      "label": "normal",
+      "rows": 11412,
+      "params": {
+        "n_rows": 11412,
+        "block_len": 373,
+        "gains": {
+          "spindle_load": 1.036488951089861,
+          "x_axis_error": 0.9708220493393902,
+          "vibration_rms": 1.040284331306324
+        },
+        "baselines": {
+          "spindle_load": -0.08241842036104323,
+          "x_axis_error": -0.9177909495136289,
+          "vibration_rms": 0.039659534831199966
+        },
+        "noise_stds": {
+          "spindle_load": 0.12352519243052193,
+          "x_axis_error": 1.3431455900795557,
+          "vibration_rms": 0.002394913727738198
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-010",
+      "label": "normal",
+      "rows": 12677,
+      "params": {
+        "n_rows": 12677,
+        "block_len": 226,
+        "gains": {
+          "spindle_load": 1.043587022616472,
+          "x_axis_error": 0.9789069486281475,
+          "vibration_rms": 1.0014155825736628
+        },
+        "baselines": {
+          "spindle_load": -0.0783461564758998,
+          "x_axis_error": 0.6361939427046206,
+          "vibration_rms": -0.001650885193490944
+        },
+        "noise_stds": {
+          "spindle_load": 0.15363074105832167,
+          "x_axis_error": 1.9812197085108227,
+          "vibration_rms": 1.8809369190319885e-06
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-011",
+      "label": "normal",
+      "rows": 11948,
+      "params": {
+        "n_rows": 11948,
+        "block_len": 231,
+        "gains": {
+          "spindle_load": 1.0064378183049407,
+          "x_axis_error": 1.049426417015868,
+          "vibration_rms": 1.0097200777840578
+        },
+        "baselines": {
+          "spindle_load": -0.030877801487141185,
+          "x_axis_error": -0.029478310468756878,
+          "vibration_rms": 0.015321264939070399
+        },
+        "noise_stds": {
+          "spindle_load": 0.03958106472577913,
+          "x_axis_error": 2.6454488977506636,
+          "vibration_rms": 0.09173705240658915
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-012",
+      "label": "normal",
+      "rows": 11462,
+      "params": {
+        "n_rows": 11462,
+        "block_len": 358,
+        "gains": {
+          "spindle_load": 1.0377757617855612,
+          "x_axis_error": 0.9907536721230698,
+          "vibration_rms": 1.0123158698948567
+        },
+        "baselines": {
+          "spindle_load": 0.039397942853540154,
+          "x_axis_error": 0.4307412989848658,
+          "vibration_rms": -0.000512947645709539
+        },
+        "noise_stds": {
+          "spindle_load": 0.11779461308768559,
+          "x_axis_error": 0.7882399783621918,
+          "vibration_rms": 0.04234569668023692
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-013",
+      "label": "normal",
+      "rows": 11522,
+      "params": {
+        "n_rows": 11522,
+        "block_len": 296,
+        "gains": {
+          "spindle_load": 1.0206047782788543,
+          "x_axis_error": 0.9966735118024542,
+          "vibration_rms": 0.9993351319234537
+        },
+        "baselines": {
+          "spindle_load": -0.07886452935825859,
+          "x_axis_error": -0.7617579147912741,
+          "vibration_rms": 0.009535245336633103
+        },
+        "noise_stds": {
+          "spindle_load": 0.09683740235854697,
+          "x_axis_error": 2.391965702825168,
+          "vibration_rms": 0.07284348144336733
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-014",
+      "label": "normal",
+      "rows": 11999,
+      "params": {
+        "n_rows": 11999,
+        "block_len": 374,
+        "gains": {
+          "spindle_load": 1.0490717923563742,
+          "x_axis_error": 1.038575856938686,
+          "vibration_rms": 0.9818373799665023
+        },
+        "baselines": {
+          "spindle_load": -0.06341224916391465,
+          "x_axis_error": -0.7789880728054296,
+          "vibration_rms": 0.030373370073925536
+        },
+        "noise_stds": {
+          "spindle_load": 0.011794013242515248,
+          "x_axis_error": 0.5939686839418451,
+          "vibration_rms": 0.07427917853260398
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-015",
+      "label": "normal",
+      "rows": 12979,
+      "params": {
+        "n_rows": 12979,
+        "block_len": 156,
+        "gains": {
+          "spindle_load": 0.9949102524825965,
+          "x_axis_error": 0.9811187647685581,
+          "vibration_rms": 1.0314938471059918
+        },
+        "baselines": {
+          "spindle_load": -0.042608190724873166,
+          "x_axis_error": -0.1627959075376256,
+          "vibration_rms": 0.02905448651704773
+        },
+        "noise_stds": {
+          "spindle_load": 0.10310490711002998,
+          "x_axis_error": 0.9709611691170925,
+          "vibration_rms": 0.07742475907697655
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0006163803066492026
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-016",
+      "label": "normal",
+      "rows": 12922,
+      "params": {
+        "n_rows": 12922,
+        "block_len": 191,
+        "gains": {
+          "spindle_load": 0.9533614408844737,
+          "x_axis_error": 0.9646015532984297,
+          "vibration_rms": 1.024576671783032
+        },
+        "baselines": {
+          "spindle_load": -0.026400181760403544,
+          "x_axis_error": -0.10131850378408161,
+          "vibration_rms": 0.031645000637309635
+        },
+        "noise_stds": {
+          "spindle_load": 0.08989132923422707,
+          "x_axis_error": 0.939687515044164,
+          "vibration_rms": 0.044031468184480484
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-017",
+      "label": "normal",
+      "rows": 12437,
+      "params": {
+        "n_rows": 12437,
+        "block_len": 163,
+        "gains": {
+          "spindle_load": 0.9873702847992273,
+          "x_axis_error": 0.9656309898758745,
+          "vibration_rms": 1.0273259381713493
+        },
+        "baselines": {
+          "spindle_load": 0.03623694323672216,
+          "x_axis_error": -0.2879646182850731,
+          "vibration_rms": 0.046225478306662925
+        },
+        "noise_stds": {
+          "spindle_load": 0.14788659878919316,
+          "x_axis_error": 0.34079349767756445,
+          "vibration_rms": 0.014594883828820182
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-018",
+      "label": "normal",
+      "rows": 12432,
+      "params": {
+        "n_rows": 12432,
+        "block_len": 200,
+        "gains": {
+          "spindle_load": 1.0153827492337746,
+          "x_axis_error": 0.9753031266389596,
+          "vibration_rms": 1.0399002459181774
+        },
+        "baselines": {
+          "spindle_load": -0.039903311332599084,
+          "x_axis_error": 0.38485921232255393,
+          "vibration_rms": 0.016003939873662193
+        },
+        "noise_stds": {
+          "spindle_load": 0.029190663310898264,
+          "x_axis_error": 0.9384369205590061,
+          "vibration_rms": 0.08759065445142739
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0006435006435006435
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-019",
+      "label": "normal",
+      "rows": 11344,
+      "params": {
+        "n_rows": 11344,
+        "block_len": 163,
+        "gains": {
+          "spindle_load": 1.0397088651307262,
+          "x_axis_error": 1.0109093362922685,
+          "vibration_rms": 1.046317774695307
+        },
+        "baselines": {
+          "spindle_load": -0.03381264952461667,
+          "x_axis_error": 1.1421091835868555,
+          "vibration_rms": -0.006893836774033033
+        },
+        "noise_stds": {
+          "spindle_load": 0.1193264062112185,
+          "x_axis_error": 0.5725463494201144,
+          "vibration_rms": 0.08023049978199863
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.00044076163610719325
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-020",
+      "label": "normal",
+      "rows": 11095,
+      "params": {
+        "n_rows": 11095,
+        "block_len": 267,
+        "gains": {
+          "spindle_load": 0.98934439827294,
+          "x_axis_error": 0.9643150883707634,
+          "vibration_rms": 0.9823299894201696
+        },
+        "baselines": {
+          "spindle_load": -0.03733079268000512,
+          "x_axis_error": 0.07587841842617467,
+          "vibration_rms": -0.022881965798376352
+        },
+        "noise_stds": {
+          "spindle_load": 0.012094874906054074,
+          "x_axis_error": 2.1629163899832626,
+          "vibration_rms": 0.01852658106159705
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-021",
+      "label": "normal",
+      "rows": 11229,
+      "params": {
+        "n_rows": 11229,
+        "block_len": 294,
+        "gains": {
+          "spindle_load": 0.9734530899822708,
+          "x_axis_error": 1.0307615586318224,
+          "vibration_rms": 0.9791808190996381
+        },
+        "baselines": {
+          "spindle_load": -0.0082742781871551,
+          "x_axis_error": 0.5461080249185828,
+          "vibration_rms": 0.00920825623627618
+        },
+        "noise_stds": {
+          "spindle_load": 0.16461423994992444,
+          "x_axis_error": 1.2642519045805927,
+          "vibration_rms": 0.0398181401238823
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-022",
+      "label": "normal",
+      "rows": 12248,
+      "params": {
+        "n_rows": 12248,
+        "block_len": 265,
+        "gains": {
+          "spindle_load": 0.9712730103468614,
+          "x_axis_error": 1.0447452176591168,
+          "vibration_rms": 1.0160513277320893
+        },
+        "baselines": {
+          "spindle_load": 0.03723187669785813,
+          "x_axis_error": -0.5788768650996114,
+          "vibration_rms": -0.018186858438136694
+        },
+        "noise_stds": {
+          "spindle_load": 0.13822677102894415,
+          "x_axis_error": 2.688419504606055,
+          "vibration_rms": 0.04402878109334925
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 8.164598301763554e-05
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-023",
+      "label": "normal",
+      "rows": 11926,
+      "params": {
+        "n_rows": 11926,
+        "block_len": 219,
+        "gains": {
+          "spindle_load": 1.0045209618308693,
+          "x_axis_error": 0.9574033912465931,
+          "vibration_rms": 0.9679882192691834
+        },
+        "baselines": {
+          "spindle_load": -0.03876618748377935,
+          "x_axis_error": 0.4098785396473594,
+          "vibration_rms": -0.031739034203911255
+        },
+        "noise_stds": {
+          "spindle_load": 0.05400231268487694,
+          "x_axis_error": 1.1035949063322226,
+          "vibration_rms": 0.0808895213008952
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-024",
+      "label": "normal",
+      "rows": 11107,
+      "params": {
+        "n_rows": 11107,
+        "block_len": 235,
+        "gains": {
+          "spindle_load": 0.9955439827501043,
+          "x_axis_error": 1.0288978112542282,
+          "vibration_rms": 1.016457822164435
+        },
+        "baselines": {
+          "spindle_load": 0.006391351374446523,
+          "x_axis_error": -0.9906002774293484,
+          "vibration_rms": -0.015470995472618952
+        },
+        "noise_stds": {
+          "spindle_load": 0.0047732783537122086,
+          "x_axis_error": 0.08503187757931568,
+          "vibration_rms": 0.09193192245122013
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.00018006662465112092
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-025",
+      "label": "normal",
+      "rows": 11169,
+      "params": {
+        "n_rows": 11169,
+        "block_len": 363,
+        "gains": {
+          "spindle_load": 0.981194022626945,
+          "x_axis_error": 1.0074146244820954,
+          "vibration_rms": 0.9808989427851631
+        },
+        "baselines": {
+          "spindle_load": 0.02565154251876031,
+          "x_axis_error": 0.1651504724903889,
+          "vibration_rms": -0.03251177536596406
+        },
+        "noise_stds": {
+          "spindle_load": 0.035024358869473374,
+          "x_axis_error": 2.282487410224655,
+          "vibration_rms": 0.07214261306016723
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-026",
+      "label": "normal",
+      "rows": 12033,
+      "params": {
+        "n_rows": 12033,
+        "block_len": 364,
+        "gains": {
+          "spindle_load": 0.9687918587982086,
+          "x_axis_error": 0.9739556498245657,
+          "vibration_rms": 1.0140318055175443
+        },
+        "baselines": {
+          "spindle_load": 0.028314864438874418,
+          "x_axis_error": 0.5267610657195729,
+          "vibration_rms": -0.0195579739477789
+        },
+        "noise_stds": {
+          "spindle_load": 0.1121180075539285,
+          "x_axis_error": 2.313807592337879,
+          "vibration_rms": 0.0819777388456676
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-027",
+      "label": "normal",
+      "rows": 12790,
+      "params": {
+        "n_rows": 12790,
+        "block_len": 201,
+        "gains": {
+          "spindle_load": 0.9972702174022584,
+          "x_axis_error": 0.9899237844967893,
+          "vibration_rms": 0.9858218731984184
+        },
+        "baselines": {
+          "spindle_load": 0.04758708786210928,
+          "x_axis_error": -0.21544393331327774,
+          "vibration_rms": -0.03915595573145576
+        },
+        "noise_stds": {
+          "spindle_load": 0.014695570172734297,
+          "x_axis_error": 1.9662481189585537,
+          "vibration_rms": 0.062353605062756744
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-028",
+      "label": "normal",
+      "rows": 11053,
+      "params": {
+        "n_rows": 11053,
+        "block_len": 209,
+        "gains": {
+          "spindle_load": 0.9595443061129746,
+          "x_axis_error": 0.9532974540828747,
+          "vibration_rms": 0.9564345448655914
+        },
+        "baselines": {
+          "spindle_load": -0.048490394956306644,
+          "x_axis_error": 0.06774527625405315,
+          "vibration_rms": 0.04136780417305599
+        },
+        "noise_stds": {
+          "spindle_load": 0.1559250505190804,
+          "x_axis_error": 0.05266063490885683,
+          "vibration_rms": 0.028386348859619208
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-029",
+      "label": "normal",
+      "rows": 12734,
+      "params": {
+        "n_rows": 12734,
+        "block_len": 266,
+        "gains": {
+          "spindle_load": 1.0142827230094886,
+          "x_axis_error": 0.9747698540707186,
+          "vibration_rms": 1.0171954842684185
+        },
+        "baselines": {
+          "spindle_load": -0.027405075083376806,
+          "x_axis_error": -0.3244241603319128,
+          "vibration_rms": -0.027454428261069752
+        },
+        "noise_stds": {
+          "spindle_load": 0.08942059224281641,
+          "x_axis_error": 1.980019966403654,
+          "vibration_rms": 0.05708580557393479
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.0
+        }
+      }
+    },
+    {
+      "unit_id": "SYN-normal-030",
+      "label": "normal",
+      "rows": 12201,
+      "params": {
+        "n_rows": 12201,
+        "block_len": 175,
+        "gains": {
+          "spindle_load": 0.9940008808606913,
+          "x_axis_error": 0.9853699160676531,
+          "vibration_rms": 1.048667308350608
+        },
+        "baselines": {
+          "spindle_load": 0.0712412628492527,
+          "x_axis_error": 1.0756308455122534,
+          "vibration_rms": -0.006312580580596498
+        },
+        "noise_stds": {
+          "spindle_load": 0.0007749238083462528,
+          "x_axis_error": 1.7236141584713252,
+          "vibration_rms": 0.07324532520216673
+        },
+        "clip_bounds": {
+          "spindle_load": [
+            -91.374027537,
+            72.982633877
+          ],
+          "x_axis_error": [
+            -699.878333,
+            701.9351130000001
+          ],
+          "vibration_rms": [
+            0.0,
+            9.669041444685494
+          ]
+        },
+        "clipped_fraction": {
+          "spindle_load": 0.0,
+          "x_axis_error": 0.0,
+          "vibration_rms": 0.00040980247520695025
+        }
+      }
+    }
+  ],
+  "fitted_stats": {
+    "normal_range": {
+      "spindle_load": [
+        -83.40652486,
+        0.0
+      ],
+      "x_axis_error": [
+        -504.55928000000006,
+        564.49514
+      ],
+      "vibration_rms": [
+        0.18162316479056723,
+        9.217259621833355
+      ]
+    },
+    "worn_range": {
+      "spindle_load": [
+        -83.90327020000001,
+        65.51187654
+      ],
+      "x_axis_error": [
+        -636.15954,
+        638.2163200000001
+      ],
+      "vibration_rms": [
+        0.18489699560392991,
+        8.177882879194039
+      ]
+    },
+    "corr_normal_spindle_vibration": 0.10341894122934665
+  }
+}

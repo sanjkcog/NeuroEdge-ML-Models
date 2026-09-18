@@ -23,3 +23,6 @@ neuroedge-ml-projects/*/data/portal_upload.zip
 # Contract dataset + simulator exports (ADR-0008): regenerable from data/raw + the lock; manifests stay tracked
 neuroedge-ml-projects/*/data/contract/*.parquet
 neuroedge-ml-projects/*/sim/*/
+# Synthetic data blobs (M6 synth, signal mode): regenerable from data/synth/gen_synth.py + --seed;
+# the generator script and synthetic-recipe.md stay tracked, manifest.json stays tracked
+neuroedge-ml-projects/*/data/synthetic/*.parquet

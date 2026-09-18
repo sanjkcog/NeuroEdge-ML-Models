@@ -52,6 +52,9 @@ commands:
   - {name: synth-data,    path: commands/ENGINEERING/ai-ml/synth-data.md}
   - {name: model-select,  path: commands/ENGINEERING/ai-ml/model-select.md}
   - {name: model-build,   path: commands/ENGINEERING/ai-ml/model-build.md}
+  - {name: dataset-download, path: commands/ENGINEERING/ai-ml/dataset-download.md}   # ADR-0024
+  - {name: data-simulator, path: commands/ENGINEERING/ai-ml/data-simulator.md}       # NeuroEdge-Web ADR-0008
+  - {name: usecase-audit, path: commands/ENGINEERING/ai-ml/usecase-audit.md}         # ADR-0025 D-6
 agents_extra:
   - {path: agents/ENGINEERING/ai-ml/ml-data-engineer.md}
   - {path: agents/ENGINEERING/ai-ml/ml-modeler.md}

@@ -16,7 +16,9 @@ what the model *is*, not where it came from.
 - `/model-build` generating the training and evaluation code (the package is what `train.py` must end by writing)
 - `/agentforge-ml` at the `eval` and `return` stages
 - `ml-eval-reviewer` checking a package before it is handed to a platform
-- Any platform integration that receives external models (NeuroEdge-Web: `upload-return-package`)
+- Any platform integration that receives external models (NeuroEdge-Web: the *Finished training return package*
+  upload, done by a human with the zip `/agentforge-ml` M11 builds; the model project never calls the platform's
+  API, ADR-0025 D-1)
 
 ## The folder
 

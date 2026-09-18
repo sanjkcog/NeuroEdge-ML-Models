@@ -65,19 +65,26 @@ Nothing downstream is allowed to re-shuffle what this step decides.
      - any time-split segment gap shorter than one window. Re-split with a gap ≥ the window; don't shorten the window.
    - This is the **only** place data is resampled or converted. The trainer package (6), `train.py`/`eval.py`
      and the M12 simulator data all read `data/contract/`.
+   - Its `manifest.json` records every unit's label per split (`unit_labels`), so the M5 split review counts
+     classes per split without opening `splits/test.json` (ADR-0025 D-3). A folder built before that runs
+     `ts_contract --dest <dest> --labels-only` once.
+4b. **Audit checkpoint M4 (ADR-0025 D-6).** `python -m agentforge.src.ml_contract.audit --dest <dest> --checkpoint
+   M4` checks the contract dataset and splits against the lock, and the use case against the device. Its findings
+   go into the gate presentation (7). A FAIL is fixed here, before the human is asked to approve the data.
 5. **Withhold test.** The test split stays under `<dest>/data/` and is never packaged for a trainer.
 6. **Platform-ready upload** → `<dest>/data/portal_upload.zip` from **train + val only** (time series: built from
    `data/contract/`, so it carries the contract's rate, names and units): vision → YOLO layout
    with `data.yaml`, class names identical to the use case; time series → the platform's CSV/JSON layout with a
    `label` column and unit id. Record the layout and the class list in `profile.json`.
-7. **Gate (human).** Present claimed vs measured, the split summary, and any licence discrepancy. Outcomes,
+7. **Gate (human).** Present claimed vs measured, the split summary, the M4 audit findings, and any licence
+   discrepancy. Outcomes,
    recorded via `gate_state.py` into `<dest>/gates.json`: **approve**; **reject with reason** — the reason chooses
    the next move (a missing channel is fatal to same-family candidates → re-scout with it as a hard constraint; a
    size/quality reason → next candidate); **accept as hold-out** — real but insufficient → keep as val/test and
    route to `/synth-data` for the rare class. At most **two** real candidates are verified per objective before
    synthetic is offered (ADR-0022 D-5). Recorded with `gate_state.py decide` as: approve → `approved`; reject →
    `rejected` with the reason; accept-as-hold-out → `approved` with the note `hold-out only — synth required`, which
-   `/agentforge-ml` reads to make M4 mandatory.
+   `/agentforge-ml` reads to make M6 `synth` mandatory.
 8. Update the card's front matter with `local_path`, `split_hash`, `profile: data/profile.json`; add a stage-log
    row to `<dest>/README.md`; print the paths.
 

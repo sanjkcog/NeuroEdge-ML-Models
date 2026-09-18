@@ -32,9 +32,10 @@ does NOT run training** and assumes no local GPU. Spawns `ml-modeler` (applies `
 
 0. **Resolve the destination** — apply `ml-artifact-destination`: use `--dest`, or propose `<ML_ROOT>/<intent>-<modality>` and **ask the user to confirm before writing anything**. Call the confirmed absolute path `<dest>` and pass it to every spawned agent. Inside an `/agentforge-ml` run `--dest` is always passed — **do not ask**; the orchestrator already confirmed it (ADR-0022 D-2).
 1. Spawn **`ml-modeler`** to generate the handoff package into `<dest>/<architecture>/` — one subfolder per
-   architecture, e.g. `1DCNN/`. Take the architecture from `<dest>/model-select.md` when it exists;
-   **otherwise** take it from `$ARGUMENTS` or ask the user, and record the choice in `<dest>/model-select.md`
-   as you go (never require a `/model-select` run that did not happen):
+   architecture, e.g. `1DCNN/`. Take the architecture, framing, synthetic use and evaluation protocol from the
+   **approved** `<dest>/model_proposed.md` when it exists (inside `/agentforge-ml` it always does, and its gate is
+   approved). **Otherwise** take them from `$ARGUMENTS` or ask the user, and record the choice in
+   `<dest>/model_proposed.md` as you go (never require a `/model-select` run that did not happen):
    ```
    model.py|model_tf.py · train.py|train_tf.py · eval.py · config.yaml ·
    requirements.txt/environment.yml · data/README.md · RUN_ON_GPU.md
@@ -50,9 +51,16 @@ does NOT run training** and assumes no local GPU. Spawns `ml-modeler` (applies `
    the Web schema — and records the `fpr` it actually measured at in `metrics.json`. The platform compares
    that `fpr` with the use case's `at_fpr` as **information** (a `not_comparable` row), never as a gate.
    `eval.py --package <pkg> --split <dest>/data/splits/test.json` produces the held-out `metrics.json`.
-   When the consuming platform publishes a scaffold (NeuroEdge: `GET /models/scaffold`), **read its context**
-   (use case id, classes, resolution, target device, KPIs) and write the package through its return helper
-   (`neuroedge_return`) rather than re-typing the contract; the training body is yours, the contract is theirs.
+   **The platform's scaffold is an offline input (ADR-0025 D-1, D-5).** When the platform publishes one
+   (NeuroEdge: portal Step 3 · Model Strategy → *Build my own* → Script (.py)), the human downloads it and it is recorded as
+   `<dest>/inputs/scaffold/<file>` (`python -m agentforge.src.ml_contract.intake record --kind scaffold`, with a
+   human gate). Never fetch it. Use exactly two things from it: its `NEUROEDGE_CONTEXT` (ids, target device, KPIs,
+   contract version, carried into `model_artifact.json` extras) and its return helper
+   (`neuroedge_return.write_return_package`), installed from a local path or wheel and never fetched during
+   training. **Its training body is never used.** Data loading, windowing, split, model, loss, metrics and
+   export come from the lock and `model_proposed.md`. Where the scaffold context disagrees with the lock
+   (vision defaults on a time-series use case, `at_fpr` only in notes), the lock wins; the intake findings list
+   each case.
    **The lock drives the build (NeuroEdge-Web ADR-0008).** Inside `/agentforge-ml`:
    - Read `<dest>/use_case.lock.json` and take from it the channel order, window, stride, rate, head and class
      order. For time series, `train.py` reads **`<dest>/data/contract/`** (already at the lock's rate and units)
@@ -71,8 +79,8 @@ does NOT run training** and assumes no local GPU. Spawns `ml-modeler` (applies `
    blocker — loop back to `ml-modeler` to fix before handoff.
 4. Present the package path + `RUN_ON_GPU.md` summary. **This command stops here** — the user runs `train.py`
    on their GPU (laptop / VM) and collects `<arch>/runs/<run_id>/model-package/`. Inside `/agentforge-ml` the
-   orchestrator then waits at `train`, runs `eval.py` on the withheld test split at `eval`, and posts the package
-   to the platform at `return`.
+   orchestrator then waits at `train`, runs `eval.py` on the withheld test split at `eval`, and at `return` builds
+   the upload zip for **the human** to upload in the portal (ADR-0025 D-1).
 
 ## Boundary (explicit)
 

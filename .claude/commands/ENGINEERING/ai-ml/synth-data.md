@@ -47,7 +47,17 @@ skill. Rendered data comes with perfect free labels — exactly where manual lab
    synthetic only.
 4. Emit a reproducible **`synthetic-recipe`** (generator+version, assets, randomization ranges, counts,
    real:synthetic mix) to `<dest>/data/synthetic-recipe.md`. Store the recipe, not the pixels — generated
-   samples go to a gitignored data dir (blobs are hook-blocked).
+   samples go to a gitignored data dir (blobs are hook-blocked). The recipe has a **`## Fidelity`** section
+   (real vs synthetic statistics per class) and a **`## Known limits`** section. The M6 review pack quotes both.
+5. **Stamp the set (ADR-0025 D-3, D-6).** Inside `/agentforge-ml`, write `<dest>/data/synthetic/manifest.json`
+   with `lock_sha256` (from `use_case.lock.json`), `split_hash` (from `data/splits/train.json`), `seed`, and one
+   `units[]` entry per synthetic unit (`unit_id`, `label`, `rows`). Fit every statistic the generator uses on the
+   **train split only**. An unstamped set is refused by `review synth` and fails `/usecase-audit`, because nothing
+   would tie it to the lock and split it was fitted on.
+6. The orchestrator then runs `python -m agentforge.src.ml_contract.review synth --dest <dest>` and asks the M6
+   gate (`data/synth-review.md`). The pack shows real train and synthetic per class, the ratio before and after the
+   cap, the fidelity table, and how each split uses the set. When the human decides **not** to synthesise, the skip
+   is recorded with `review synth --skip-reason "<reason>"` and approved the same way.
 
 ## Next step
 

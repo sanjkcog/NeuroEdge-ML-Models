@@ -19,6 +19,17 @@ IM-01R-A01 and A02 also carry seeded blowholes (1 mm / 5 mm). They stay `tool_we
 tool is the worn one. But the blowholes are a workpiece effect layered on top, so a per-trial
 metric on A01/A02 is not pure tool wear. A03, A04 and A05 are pure tool wear.
 
+## Window rule (M5, recorded 2026-09-18 against lock `b7a3765f`)
+
+- **Window:** 64 samples at 10 Hz (6.4 s) from `data/contract/`, stride 10, as the lock sets them.
+- **Label:** a window takes its unit's label (`normal` or `tool_wear`). Labels are per unit, so
+  every sample in a window carries the same label. Majority vote and any-anomaly therefore give the
+  same answer, and no mixed-label window can exist.
+- **Placement:** a window lies entirely inside one unit's `[cycle_start, cycle_end_exclusive)`
+  split bounds. A window that would cross a bound is dropped, not truncated or padded.
+- No gate: time-series labels come from the dataset's ground truth (`time-series-ml`), not from
+  human review.
+
 ## Excluded (10 experiments), and why
 
 | Units | What they are | Why excluded |
