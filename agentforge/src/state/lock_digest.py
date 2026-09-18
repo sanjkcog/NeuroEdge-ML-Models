@@ -25,4 +25,6 @@ def source_digest(raw: bytes) -> str:
     lock to the same hash; otherwise an identical use case looks "changed" across the
     Windows/WSL boundary this project works across.
     """
-    return hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()
+    # A UTF-8 BOM (added by some Windows editors on save) is not content either.
+    body = raw[3:] if raw.startswith(b"\xef\xbb\xbf") else raw
+    return hashlib.sha256(body.replace(b"\r\n", b"\n")).hexdigest()
