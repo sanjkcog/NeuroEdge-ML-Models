@@ -257,5 +257,71 @@
     },
     "consequence": "Restricted to genuine machine drift, the usable signal is 5 anomalous experiments on ONE component type and ONE material against 2 normal baselines. Thin for a 1D-CNN. Drives the M3 taxonomy decision and very likely makes M4 /synth-data necessary rather than optional.",
     "status": "OPEN -- user decision at M3."
+  },
+  "_channel_availability_finding_M4": {
+    "measured_on": "2026-09-17, against all 33 downloaded hfdata.csv files",
+    "headline": "The obvious channel mapping silently drops 2 of the 5 genuine tool-wear trials.",
+    "missing_columns": {
+      "trials": [
+        "IM-01R-A03",
+        "IM-01R-A04"
+      ],
+      "columns": [
+        "ENC_POS|1",
+        "ENC_POS|2",
+        "ENC_POS|3",
+        "ENC_POS|6",
+        "ENC2_POS|1",
+        "ENC2_POS|2",
+        "ENC2_POS|3",
+        "ENC2_POS|6",
+        "LOAD|1",
+        "LOAD|2",
+        "LOAD|3",
+        "LOAD|6"
+      ],
+      "note": "Entirely NaN, not partially. Both trials are \"Roughing with Toolwear\" — i.e. 2 of the 5 experiments that carry the only genuine drift signal in the dataset."
+    },
+    "coverage": {
+      "CTRL_DIFF|1": "33/33",
+      "DES_POS|1": "33/33",
+      "TORQUE|6": "33/33",
+      "CURRENT|6": "33/33",
+      "ENC_POS|1": "31/33",
+      "LOAD|6": "31/33"
+    },
+    "decision_required": {
+      "spindle_load": "use TORQUE|6 or CURRENT|6, NOT LOAD|6 (31/33). LOAD is a derived SINUMERIK percentage anyway; torque/current are the fundamental quantities.",
+      "x_axis_error": "use CTRL_DIFF|1 directly, NOT DES_POS|1 - ENC_POS|1. Arithmetically identical where both exist (verified to 1e-06 at rest and under load), but CTRL_DIFF survives in the two trials where the encoder feed does not."
+    },
+    "signal_strength": {
+      "method": "rows where the X axis is being driven (DES_POS|1 diff > 1e-6, ~78% of rows). A |TORQUE|6| > 5 mask is WRONG — spindle torque is 2-3.5 during work and 85 is a spin-up transient, so that filter selects ~310 acceleration spikes out of 610k rows.",
+      "mean_abs_ctrl_diff_um": {
+        "IM-01R_normal": 5.042,
+        "A03": 5.005,
+        "A04": 5.113,
+        "A05": 5.206,
+        "A01": 5.148,
+        "A02": 5.132
+      },
+      "p99_abs_ctrl_diff_um": {
+        "IM-01R_normal": 117.8,
+        "A03": 117.8,
+        "A04": 133.5,
+        "A05": 129.7,
+        "A01": 134.0,
+        "A02": 134.1
+      },
+      "mean_abs_torque6": {
+        "IM-01R_normal": 2.35,
+        "A03": 2.64,
+        "A04": 2.709,
+        "A05": 2.711,
+        "A01": 2.492,
+        "A02": 2.565
+      },
+      "read": "Spindle torque separates consistently but modestly (+6 to +15% for every worn trial). Mean following error barely separates (5.04 vs 5.00-5.21); the p99 tail is better for four of five but A03 is indistinguishable from normal. There is exactly ONE normal roughing baseline, so run-to-run variance cannot be estimated — this is the central limitation and no modelling removes it. Synthetic data at M6 is not optional."
+    },
+    "status": "MEASURED — supersedes the channel mapping in dataset-card.md. See DATA_README.md sections 7-9."
   }
 }
