@@ -25,7 +25,7 @@ import os
 import sys
 from typing import Any
 
-from ..state.lock_digest import lock_digest, source_digest
+from ..state.lock_digest import lock_digest, source_digest, source_matches
 
 LOCK_SCHEMA = "use-case-lock/1"
 LOCK_FILE = "use_case.lock.json"
@@ -308,7 +308,7 @@ def main(argv: list[str] | None = None) -> int:
         lock = read_lock(a.dest)
         if a.use_case:
             _, raw = _load_yaml(a.use_case)
-            if source_digest(raw) != lock["use_case_sha256"]:
+            if not source_matches(raw, lock["use_case_sha256"]):
                 print("the use case changed since the lock was built: re-lock, and re-run every stage after M0",
                       file=sys.stderr)
                 return 1

@@ -21,7 +21,7 @@ import sys
 from datetime import datetime, timezone
 from typing import Any
 
-from ..state.lock_digest import source_digest
+from ..state.lock_digest import source_matches
 from . import gates as gt
 from . import intake
 from .lock import LockError, normalise_unit, read_lock
@@ -91,8 +91,9 @@ def check_use_case(a: Audit, dest: str, lock: dict[str, Any]) -> dict[str, Any] 
 
     with open(path, "rb") as fh:
         raw = fh.read()
-    a.equal("use case", "input is the use case the lock was built from", source_digest(raw)[:12],
-            str(lock.get("use_case_sha256"))[:12])
+    same = source_matches(raw, lock.get("use_case_sha256"))
+    a.add(PASS if same else FAIL, "use case", "input is the use case the lock was built from",
+          f"lock {str(lock.get('use_case_sha256'))[:12]}" + ("" if same else ": the input differs; re-lock"))
     uc = yaml.safe_load(raw.decode("utf-8"))
     order = None
     for sensor in _get(uc, "ingress.sensors") or []:
@@ -234,9 +235,15 @@ def check_simulator(a: Audit, dest: str, lock: dict[str, Any], split_hash: str |
 
 
 def check_scaffold(a: Audit, dest: str, lock: dict[str, Any]) -> None:
+    waived = intake.waiver(dest, "scaffold")
+    if waived:
+        a.add(PASS, "use case <-> scaffold", "scaffold", f"waived: {waived['reason']}; M8 uses the default "
+                                                       "template, which writes the package itself (ADR-0026 D-3)")
+        return
     path = intake.stored_path(dest, "scaffold")
     if path is None or not os.path.exists(path):
-        a.missing("use case <-> scaffold", "inputs/scaffold (record it with ml_contract.intake)", "M8")
+        a.missing("use case <-> scaffold", "inputs/scaffold: drop it, or waive it to use the default template "
+                                          "(ml_contract.intake)", "M8")
         return
     with open(path, "rb") as fh:
         text = intake.scaffold_text(fh.read(), path)

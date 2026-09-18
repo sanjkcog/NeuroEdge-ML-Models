@@ -46,7 +46,7 @@ drop there and where each file comes from:
 |---|---|---|
 | `<use-case-id>.yaml` | M0 | portal Step 1 · Edge Use Case Design → validate → **Download use_case.yaml** |
 | `capability_manifest.json` | M0 | the device's `ne-device-agent assess` output (uploaded in portal Step 2 · Target Device) |
-| `neuroedge_train_<id>.py` | M8 | portal Step 3 · Model Strategy → **Build my own** → **Script (.py)** |
+| `neuroedge_train_<id>.py` (**optional**) | M8 | portal Step 3 · Model Strategy → **Build my own** → **Script (.py)**. Without it, M8 uses the default template (ADR-0026 D-3) |
 
 `python -m agentforge.src.ml_contract.intake check --dest <dest> --need <kinds>` records what was dropped (by
 content, not by name), opens each file's gate, and **exits 3 naming every file still missing**. On exit 3, print
@@ -65,7 +65,7 @@ its lines (the folder and where each file comes from) and **stop the session**. 
 | M5 | `label` | `/auto-label --dest <dest>` (vision) / TS window rule, then **`review split`** | `data/label-manifest.md`, **`data/split-review.md`** | **human: split review** `data/split-review.md` |
 | M6 | `synth` | `/synth-data --dest <dest>` when chosen, then **`review synth`** (or `review synth --skip-reason`) | `data/synthetic-recipe.md` + `data/synthetic/manifest.json`, **`data/synth-review.md`** | **human: synthetic review** `data/synth-review.md` (a skip is approved too) |
 | M7 | `model-select` | `/model-select --dest <dest>` → `ml-modeler`, then **`review model`** | **`model_proposed.md`** (+ `model_proposed/v<N>.md` for superseded proposals) | **human: model proposal** `model_proposed.md` |
-| M8 | `model-build` | intake the **scaffold**, `audit M8`, then `/model-build --dest <dest>` → `ml-modeler`, then `ml-eval-reviewer` | `inputs/scaffold/<file>`, `audit/M8.md`, `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md` | **human:** `inputs/scaffold` · **automatic:** `audit/M8` · **hard:** `eval-methodology` |
+| M8 | `model-build` | intake the **scaffold**, `audit M8`, then `/model-build --dest <dest>` → `ml-modeler`, then `ml-eval-reviewer` | `inputs/scaffold/<file>` (optional), `audit/M8.md`, `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md` | **human:** `inputs/scaffold` when one is provided, else a recorded waiver · **automatic:** `audit/M8` · **hard:** `eval-methodology` |
 | M9 | `train` | **external** — laptop GPU / AWS VM / platform trainer | `<arch>/runs/<run_id>/model-package/` | dependency-wait |
 | M10 | `eval` | this command runs `<arch>/eval.py` on `data/splits/test.json` | `metrics.json` (`eval_split: held_out_test`) | **hard: KPIs + `beats_baseline`** (opened on a miss) |
 | M11 | `return` | `audit M11`, then build + validate the upload zip; **the human uploads it** | `audit/M11.md`, `<arch>/runs/<run_id>/return/upload.zip`, `return.json` | **automatic:** `audit/M11` · **human:** `return-upload` |
@@ -171,9 +171,16 @@ Gate handling, in stage order:
   architecture or recipe) → `review model --dest <dest> --archive "<the human's reason>"` (moves the proposal to
   `model_proposed/v<N>.md`), `run_state.py reopen model-select`, and re-run `/model-select` with the reason as a
   **binding constraint**. Repeat until approved.
-- **M8 scaffold intake (human):** before generating anything, `intake check --dest <dest> --need scaffold`.
-  **Exit 3 → stop the session**, telling the human to download the training scaffold (portal **Step 3 · Model
-  Strategy → Build my own → Script (.py)**) into `<dest>/inputs/incoming/`; `--resume` picks it up. Present the findings: a FAIL means it was generated from another use case (re-download it). The
+- **M8 scaffold intake (human, optional input — ADR-0026 D-3):** before generating anything, `intake check --dest
+  <dest> --need scaffold`. On **exit 3**, ask the human with `AskUserQuestion`:
+  - **Provide the portal scaffold.** They download it (portal **Step 3 · Model Strategy → Build my own → Script
+    (.py)**) into `<dest>/inputs/incoming/`; stop, and `--resume` picks it up.
+  - **Build with the default template.** Record their choice with `intake waive --dest <dest> --kind scaffold
+    --reason "<their words>" --identity <user>`. That is their decision on the `inputs/scaffold` gate, so it also
+    closes a gate a previously dropped scaffold opened.
+
+  Recommend the scaffold when the model returns to the NeuroEdge portal. Either way the choice is recorded, never
+  implied. Present the findings: a FAIL means it was generated from another use case (re-download it). The
   WARNs list what the lock overrides. Ask, and record.
 - **M8 audit checkpoint:** `audit --dest <dest> --checkpoint M8` (+ scaffold).
 - **M8 eval-methodology:** `ml-eval-reviewer`'s report is the gate (`gate_state.py open eval-methodology --stage
@@ -245,9 +252,11 @@ approved a deviation. Add the stage-log row to `README.md`. The run is complete;
 - Do not mark `train` complete without a package on disk; do not run training here.
 - Do not present a metric without its `eval_split`; do not skip the baseline.
 - Do not start a run past M0 without the use case and capability manifest recorded (`intake check` exit 0), and do
-  not continue past a lock refusal. Do not start M8 without the scaffold recorded.
+  not continue past a lock refusal. Do not start M8 without the scaffold recorded **or** a recorded waiver
+  (ADR-0026 D-3).
 - Do not resample, rescale or convert units anywhere except the contract dataset (ADR-0008 L-3).
-- Do not use the scaffold's training body. Only its context and its return writer are used (ADR-0025 D-5).
+- Do not use the scaffold's training body. Only its context, its return writer and its MLflow tracking
+  conventions are used (ADR-0025 D-5, ADR-0026 D-3).
 
 ## NeuroEdge Assets
 

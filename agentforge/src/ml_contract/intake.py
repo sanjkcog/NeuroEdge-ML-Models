@@ -32,9 +32,9 @@ import sys
 from datetime import datetime, timezone
 from typing import Any
 
-from ..state.lock_digest import source_digest
+from ..state.lock_digest import source_matches
 from . import gates as gt
-from .lock import LOCK_FILE, LockError, read_lock
+from .lock import LOCK_FILE, LockError, normalise_unit, read_lock
 
 INPUTS_DIR = "inputs"
 INPUTS_FILE = "inputs.json"
@@ -132,13 +132,33 @@ def check_scaffold(ctx: dict[str, Any], text: str, lock: dict[str, Any] | None) 
         if "min_accuracy_map50" in (ctx.get("performance_targets") or {}):
             out.append(_finding(WARN, "vision metric on a time-series use case",
                                 "performance_targets.min_accuracy_map50 is a vision metric; ignored"))
-        if "stride_samples" not in task_input:
+        if "stride_samples" in task_input:
+            same("stride_samples", task_input.get("stride_samples"), ts["stride_samples"])
+        else:
             out.append(_finding(WARN, "stride", f"context carries no stride; the lock's {ts['stride_samples']} is used"))
-        out.append(_finding(WARN, "units / definitions / reduce",
-                            "context carries none of them; meta.json takes them from the lock"))
+        ctx_channels = (task.get("timeseries") or {}).get("channels")
+        if ctx_channels:
+            same("channels (name, unit, reduce)",
+                 [(c.get("name"), normalise_unit(c.get("unit")), c.get("reduce")) for c in ctx_channels],
+                 [(c["name"], normalise_unit(c.get("unit")), c.get("reduce")) for c in ts["channels"]])
+            if [c.get("definition") for c in ctx_channels] != [c.get("definition") for c in ts["channels"]]:
+                out.append(_finding(WARN, "channel definitions", "differ from the lock's; meta.json takes the lock's"))
+        else:
+            out.append(_finding(WARN, "units / definitions / reduce",
+                                "context carries none of them; meta.json takes them from the lock"))
 
     accuracy = (ctx.get("performance_targets") or {}).get("accuracy") or {}
-    if "at_fpr" not in accuracy:
+    # The success criterion the model is built and gated against (ML-eval review, HIGH: only at_fpr
+    # was compared, so a scaffold from a use case with another metric or bar passed clean).
+    for key in ("metric", "min_value"):
+        if key in accuracy:
+            same(f"target {key}", accuracy[key], lock["target"].get(key))
+        else:
+            out.append(_finding(WARN, f"target {key}", f"context carries none; the lock's "
+                                                       f"{lock['target'].get(key)!r} is used"))
+    if "at_fpr" in accuracy:
+        same("at_fpr", float(accuracy["at_fpr"]), float(lock["target"]["at_fpr"]))
+    else:
         where = " (only in free-text notes)" if "fpr" in str(accuracy.get("notes", "")).lower() else ""
         out.append(_finding(WARN, "at_fpr", f"not a structured field{where}; the lock's "
                                             f"{lock['target']['at_fpr']} is used"))
@@ -146,7 +166,8 @@ def check_scaffold(ctx: dict[str, Any], text: str, lock: dict[str, Any] | None) 
         out.append(_finding(WARN, "data.path", "empty; the build reads data/contract/, never the scaffold's path"))
     if (ctx.get("model_hint") or {}).get("framework") in (None, "", "auto"):
         out.append(_finding(WARN, "framework", "model_hint.framework is 'auto'; model_proposed.md decides"))
-    if re.search(r"git\+https?://", text):
+    local_install = re.search(r"pip install -e [^\n]*neuroedge_return", text)
+    if re.search(r"git\+https?://", text) and not local_install:
         out.append(_finding(WARN, "return writer install", "the install hint fetches neuroedge_return over the "
                             "network; install it from a local path or wheel instead"))
     if re.search(r"pip install (?![^\n]*==)[^\n]*torch", text):
@@ -155,6 +176,9 @@ def check_scaffold(ctx: dict[str, Any], text: str, lock: dict[str, Any] | None) 
         out.append(_finding(PASS, "return writer", "the scaffold writes the package through neuroedge_return"))
     else:
         out.append(_finding(FAIL, "return writer", "no write_return_package call; not the portal's return contract"))
+    if "mlflow" in text:
+        out.append(_finding(PASS, "mlflow", "the scaffold logs to MLflow; M8 reuses its run naming and tags "
+                                            "(ADR-0026 D-3)"))
     out.append(_finding(WARN, "training body", "the scaffold's data loading, split, model, loss, metric and export "
                         "are NOT used; M8 generates them from the lock and model_proposed.md (ADR-0025 D-5)"))
     return out
@@ -174,7 +198,7 @@ def check_use_case(raw: bytes, lock: dict[str, Any] | None) -> list[dict[str, st
         return [_finding(FAIL, "parse", "not a use-case mapping with an id")]
     out = [_finding(PASS, "parse", f"use case {data['id']!r}")]
     if lock is not None:
-        if source_digest(raw) == lock.get("use_case_sha256"):
+        if source_matches(raw, lock.get("use_case_sha256")):
             out.append(_finding(PASS, "lock", "identical to the use case the lock was built from"))
         else:
             out.append(_finding(FAIL, "lock", "differs from the use case the lock was built from; "
@@ -224,9 +248,57 @@ def read_inputs(dest: str) -> dict[str, Any]:
 
 
 def stored_path(dest: str, kind: str) -> str | None:
-    """Absolute path of the recorded input of ``kind``, or None."""
+    """Absolute path of the recorded input of ``kind``, or None (also when it was waived)."""
     entry = read_inputs(dest).get(kind)
-    return os.path.join(dest, entry["path"]) if entry else None
+    return os.path.join(dest, entry["path"]) if entry and entry.get("path") else None
+
+
+# Only the scaffold may be waived (ADR-0026 D-3): without one, M8 builds from the default template.
+# The use case and the capability manifest stay required (ADR-0026 D-1).
+WAIVABLE = ("scaffold",)
+
+
+def waiver(dest: str, kind: str) -> dict[str, Any] | None:
+    """The recorded waiver for ``kind``, or None."""
+    entry = read_inputs(dest).get(kind)
+    return entry if entry and entry.get("waived") else None
+
+
+def waive(dest: str, kind: str, reason: str, *, identity: str) -> dict[str, Any]:
+    """Record that ``kind`` is deliberately not provided, as the human's answer to its gate.
+
+    A file recorded earlier is removed and its gate is closed by this decision, so the stage is not
+    left blocked on a gate nobody will answer. A later ``record`` of a file replaces the waiver.
+    """
+    if kind not in WAIVABLE:
+        raise ValueError(f"{kind!r} cannot be waived; only {list(WAIVABLE)} can (ADR-0026 D-3)")
+    if not reason.strip():
+        raise ValueError("a waiver needs the human's reason")
+    if not identity.strip() or identity.strip().casefold() == "intake":
+        raise ValueError("a waiver needs the identity of the human who chose it (not the tool's own 'intake')")
+    # The gate decision comes FIRST: if it is refused, nothing else has changed (code review round 2,
+    # HIGH: writing inputs.json and deleting the old file before a refused approval left a half-applied
+    # waiver behind).
+    _, gate_id, stage = KINDS[kind]
+    try:
+        gt.record_human_decision(dest, gate_id, stage=stage, identity=identity, reason=f"waived: {reason.strip()}")
+    except gt.gate_state.SelfApprovalError as exc:
+        raise ValueError(str(exc)) from exc
+    inputs = _read_inputs(dest)
+    previous = inputs["inputs"].get(kind)
+    entry = {"kind": kind, "waived": True, "reason": reason.strip(), "recorded_at": _now(), "path": None,
+             "findings": [_finding(WARN, "waived", f"not provided: {reason.strip()}")]}
+    inputs["inputs"][kind] = entry
+    os.makedirs(os.path.join(dest, INPUTS_DIR), exist_ok=True)
+    with open(os.path.join(dest, INPUTS_DIR, INPUTS_FILE), "w", encoding="utf-8") as fh:
+        json.dump(inputs, fh, indent=2, ensure_ascii=False)
+        fh.write("\n")
+    if previous and previous.get("path"):
+        old = os.path.join(dest, previous["path"])
+        if os.path.exists(old):
+            os.remove(old)  # last: the waiver is on record before the file it supersedes goes
+    entry["audits_reopened"] = gt.reopen_if_present(dest, DEPENDENT_AUDITS[kind])
+    return entry
 
 
 def record(dest: str, kind: str, src: str, *, open_gate: bool = True) -> dict[str, Any]:
@@ -264,7 +336,7 @@ def record(dest: str, kind: str, src: str, *, open_gate: bool = True) -> dict[st
     previous = inputs["inputs"].get(kind)
     target = os.path.join(dest, rel)
     os.makedirs(os.path.dirname(target), exist_ok=True)
-    if previous and previous["path"] != rel:
+    if previous and previous.get("path") and previous["path"] != rel:
         old = os.path.join(dest, previous["path"])
         if os.path.exists(old):
             os.remove(old)  # one input per kind: a scaffold of another name replaces the old one
@@ -281,15 +353,17 @@ def record(dest: str, kind: str, src: str, *, open_gate: bool = True) -> dict[st
         "gate": gate_id,
         "findings": findings,
     }
-    if previous:
+    if previous and previous.get("sha256"):
         entry["replaces_sha256"] = previous["sha256"]
+    elif previous and previous.get("waived"):
+        entry["replaces_waiver"] = previous["reason"]
     inputs["inputs"][kind] = entry
     path = os.path.join(dest, INPUTS_DIR, INPUTS_FILE)
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(inputs, fh, indent=2, ensure_ascii=False)
         fh.write("\n")
 
-    unchanged = previous is not None and previous["sha256"] == entry["sha256"]
+    unchanged = previous is not None and previous.get("sha256") == entry["sha256"]
     entry["unchanged"] = unchanged
     if open_gate and not unchanged:
         entry["gate_action"] = gt.open_pending(dest, gate_id, stage=stage, opened_by="intake")
@@ -411,6 +485,8 @@ def check(dest: str, need: list[str]) -> tuple[int, list[str]]:
                 # (Defender, OneDrive, an open editor) abort the check and hide that it happened.
                 lines.append(f"  recorded, but could not move {os.path.basename(files[0])} to recorded/ ({exc}); "
                              "remove it from incoming/ by hand")
+        elif kind in recorded and recorded[kind].get("waived"):
+            lines.append(f"[WAIVED] {kind}: {recorded[kind]['reason']} (drop the file here to use one instead)")
         elif kind in recorded:
             lines.append(f"[PRESENT] {kind}: {recorded[kind]['path']} (sha256 {recorded[kind]['sha256'][:12]})")
         else:
@@ -426,11 +502,15 @@ def check(dest: str, need: list[str]) -> tuple[int, list[str]]:
         return 1, lines
     if missing:
         lines.append(f"STOP: {len(missing)} input(s) missing. Drop them into {folder}, then run check again.")
+        if set(missing) <= set(WAIVABLE):
+            lines.append("  or, to build without it: intake waive --dest <dest> --kind scaffold --reason \"...\" --identity <who>")
         return MISSING_EXIT, lines
     return 0, lines
 
 
 def format_entry(entry: dict[str, Any]) -> str:
+    if entry.get("waived"):
+        return f"{entry['kind']}: WAIVED — {entry['reason']} (recorded {entry['recorded_at']})"
     lines = [
         f"{entry['kind']}: {entry['path']}",
         f"  sha256        {entry['sha256']}",
@@ -466,7 +546,23 @@ def main(argv: list[str] | None = None) -> int:
     c = sub.add_parser("check", help="record dropped files; exit 3 naming each input still missing")
     c.add_argument("--dest", required=True)
     c.add_argument("--need", required=True, help="comma-separated kinds, e.g. use_case,capability_manifest")
+    w = sub.add_parser("waive", help="record that the scaffold is deliberately not provided (default template)")
+    w.add_argument("--dest", required=True)
+    w.add_argument("--kind", required=True, choices=list(WAIVABLE))
+    w.add_argument("--reason", required=True)
+    w.add_argument("--identity", required=True, help="the human who chose to go without it")
     args = p.parse_args(argv)
+
+    if args.cmd == "waive":
+        try:
+            entry = waive(args.dest, args.kind, args.reason, identity=args.identity)
+        except ValueError as exc:
+            print(f"waive refused: {exc}", file=sys.stderr)
+            return 1
+        print(f"{args.kind}: waived ({entry['reason']}); M8 builds from the default template")
+        if entry["audits_reopened"]:
+            print(f"  re-opened {entry['audits_reopened']}: re-run /usecase-audit at those checkpoints")
+        return 0
 
     if args.cmd == "init":
         print(f"drop folder ready: {init_incoming(args.dest)} (see its README.md)")

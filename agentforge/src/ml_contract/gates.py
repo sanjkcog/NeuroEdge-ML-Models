@@ -41,6 +41,23 @@ def open_pending(dest: str, gate_id: str, *, stage: str, opened_by: str) -> str:
     return action
 
 
+def record_human_decision(dest: str, gate_id: str, *, stage: str, identity: str, reason: str) -> str:
+    """Record a human's approval on ``gate_id``, opening it first when it was never opened.
+
+    For a waiver: the human's choice to go without an input *is* the answer to that input's gate,
+    so a gate a previously recorded file opened is closed by it rather than left pending forever
+    (code review, HIGH). The identity is the human's, never the tool's.
+    """
+    state = _load(dest)
+    if gate_id not in state.gates:
+        state.open_gate(gate_id, stage=stage, gate_type="hard", opened_by="intake")
+    elif state.gates[gate_id].status != "pending":
+        state.reopen_gate(gate_id)
+    state.record_decision(gate_id, "approved", identity=identity, reason=reason)
+    state.save(_path(dest))
+    return "approved"
+
+
 def reopen_if_present(dest: str, gate_ids: list[str] | tuple[str, ...]) -> list[str]:
     """Re-arm each of ``gate_ids`` that already exists. Returns the ids re-armed.
 

@@ -160,7 +160,9 @@ ML_STAGE_GATES: dict[str, tuple[str, ...]] = {
     "label": ("data/split-review.md",),
     "synth": ("data/synth-review.md",),
     "model-select": ("model_proposed.md",),
-    "model-build": ("inputs/scaffold", "audit/M8", "eval-methodology"),
+    # The scaffold is optional (ADR-0026 D-3): when one is recorded its own gate (stage model-build)
+    # must still be resolved, which the "no unresolved hard gate" rule enforces.
+    "model-build": ("audit/M8", "eval-methodology"),
     "return": ("audit/M11", "return-upload"),
 }
 STAGE_GATES_BY_SEQUENCE: dict[str, dict[str, tuple[str, ...]]] = {"ml": ML_STAGE_GATES}

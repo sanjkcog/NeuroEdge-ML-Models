@@ -61,6 +61,24 @@ does NOT run training** and assumes no local GPU. Spawns `ml-modeler` (applies `
    export come from the lock and `model_proposed.md`. Where the scaffold context disagrees with the lock
    (vision defaults on a time-series use case, `at_fpr` only in notes), the lock wins; the intake findings list
    each case.
+   **No scaffold (a recorded waiver, ADR-0026 D-3) → the default template.** `train.py` writes the whole
+   model-package itself, exactly as `ml-model-package` specifies: `model.onnx`, `meta.json`, `metrics.json`, and
+   `model_artifact.json` in the consuming platform's `ModelArtifact` schema (`use_case_id`, `model_name`,
+   `framework`, `format`, `uri`, `metrics`, `metrics_type`, `class_names`, `input_shape`, `created_at`, `extras`),
+   with the **`baseline` block `{name, metrics, beats_baseline}` in `extras`**, which is as mandatory here as
+   on the scaffold path.
+   When `neuroedge_return` is installed locally, it also runs `neuroedge_return.validate_package` on the result.
+   Both paths produce the same folder.
+   **Training KPIs in MLflow, both paths.** `train.py` logs to MLflow when it is importable:
+   - params: arch, window, stride, lr, epochs, seed, `split_hash`, `lock_sha256`
+   - per-epoch metrics: train/val loss, val PR-AUC, val recall at `at_fpr`
+   - artifacts: `model.onnx` and `meta.json`
+
+   The tracking URI comes from `MLFLOW_TRACKING_URI`. Point it at the portal's MLflow server to see the run on the
+   portal's *Prepare Model* page; otherwise it logs to a local `./mlruns`. Without MLflow, training still runs and
+   says so. When a scaffold is provided, reuse **only** its MLflow run naming and tag *string literals*, so runs
+   line up with the portal's. Never reuse its `log_metric`/`log_param` calls or any value its (unused) training
+   body computes. Every logged metric comes from this `train.py`'s own train/val computation, never from test.
    **The lock drives the build (NeuroEdge-Web ADR-0008).** Inside `/agentforge-ml`:
    - Read `<dest>/use_case.lock.json` and take from it the channel order, window, stride, rate, head and class
      order. For time series, `train.py` reads **`<dest>/data/contract/`** (already at the lock's rate and units)
