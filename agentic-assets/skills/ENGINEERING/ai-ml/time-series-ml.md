@@ -86,6 +86,27 @@ point-glitch task or pipeline plumbing, not a drift/wear objective
 Rules mirror the vision skill: synthesize the **rare class**, keep a **real hold-out**, emit a
 reproducible `synthetic-recipe` (generator + params + seed), never validate on synthetic only.
 
+## Acquisition profile (ADR-0024 D-6)
+
+Transport rules live in [`dataset-acquisition`](../_mechanism/dataset-acquisition.md); this is
+the time-series selection layer.
+
+- **Unit:** experiment, machine, cutter, or run — the same physical unit the split rule above
+  groups by. Scope to the units the objective needs: on the reference run only 7 of 33
+  experiments served the objective, and the other 26 were other anomaly categories entirely.
+- **Valid selection:** whole units; a **prefix** of a unit only under the stationarity rule below.
+- **Invalid selection:** a prefix when the labelled condition is localised in time. A seeded
+  tool-wear run carries its condition from the first cut, so any slice represents it; a run that
+  seeds a defect at a stated depth does not, and a prefix can miss the defect entirely while the
+  file still looks complete.
+- **Redundancy to look for by file type:** a pre-synchronised or resampled copy alongside the raw
+  streams. On the reference archive that copy was **88% of 44.58 GB** — the 500 Hz controller
+  signals interpolated up to the 10 kHz sensor rate and merged. It is derivable from the parts,
+  and upsampling a slow channel is the opposite of what an edge window wants.
+- **Sizing:** count windows, not bytes. One ~7-minute experiment at 500 Hz yields ~400 windows at
+  `window=1000, stride=500` — a handful of units usually saturates a small 1D-CNN long before the
+  archive is exhausted.
+
 ## Labeling time series
 
 `/auto-label`'s zero-shot pipeline is **vision-only**. For TS: labels come from the dataset's own

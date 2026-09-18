@@ -41,23 +41,29 @@ portal side).
 |---|---|---|---|---|
 | M0 | `destination` | the orchestrator | `README.md`, `run.json`, `gates.json` | — |
 | M1 | `scout` | `/dataset-scout` → `ml-data-engineer` | `data/dataset-card.md` | **hard, automatic: licence** |
-| M2 | `verify` | `/dataset-verify` → `ml-data-engineer` | `data/profile.json`, `data/splits/{train,val,test}.json`, `data/portal_upload.zip` | **hard, human: data verified** |
-| M3 | `label` | `/auto-label` (vision zero-shot → review · TS window rule) | `data/label-manifest.md` | hard for vision, soft for TS |
-| M4 | `synth` | `/synth-data` — only when needed | `data/synthetic-recipe.md` | — |
-| M5 | `model-select` | `/model-select` → `ml-modeler` | `model-select.md` | — |
-| M6 | `model-build` | `/model-build` → `ml-modeler`, then `ml-eval-reviewer` | `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md` | **hard: eval methodology** |
-| M7 | `train` | **you**, on your GPU (laptop / AWS VM) or the portal's trainer | `<arch>/runs/<run_id>/model-package/` | waits for you |
-| M8 | `eval` | the orchestrator runs `eval.py` on the **withheld test split** | `metrics.json` (`eval_split: held_out_test`) | **hard: KPIs + beats the baseline** |
-| M9 | `return` | `POST /models/{id}/upload-return-package` | `return.json` | — |
-| M10 | `model-card` | `ml-modeler` | `model-card.md` | — |
+| M2 | `plan` | `/dataset-download` phase 1 → `ml-data-engineer` | `data/archive-manifest.tsv`, `data/fetch-plan.json` | **hard, human: scope** |
+| M3 | `download` | `/dataset-download` phase 2 | `data/raw/**` (gitignored) | waits — resumable |
+| M4 | `verify` | `/dataset-verify` → `ml-data-engineer` | `data/profile.json`, `data/splits/{train,val,test}.json`, `data/portal_upload.zip` | **hard, human: data verified** |
+| M5 | `label` | `/auto-label` (vision zero-shot → review · TS window rule) | `data/label-manifest.md` | hard for vision, soft for TS |
+| M6 | `synth` | `/synth-data` — only when needed | `data/synthetic-recipe.md` | — |
+| M7 | `model-select` | `/model-select` → `ml-modeler` | `model-select.md` | — |
+| M8 | `model-build` | `/model-build` → `ml-modeler`, then `ml-eval-reviewer` | `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md` | **hard: eval methodology** |
+| M9 | `train` | **you**, on your GPU (laptop / AWS VM) or the portal's trainer | `<arch>/runs/<run_id>/model-package/` | waits for you |
+| M10 | `eval` | the orchestrator runs `eval.py` on the **withheld test split** | `metrics.json` (`eval_split: held_out_test`) | **hard: KPIs + beats the baseline** |
+| M11 | `return` | `POST /models/{id}/upload-return-package` | `return.json` | — |
+| M12 | `model-card` | `ml-modeler` | `model-card.md` | — |
 
-Three rules hold the whole thing together:
+Four rules hold the whole thing together:
 
 1. **The destination is asked once** (M0). Every later stage and agent receives it. If a stage asks you
    for a folder, something is wrong.
-2. **The test split never leaves the model folder.** Trainers — yours or the portal's — only ever see
-   train + val. The number you publish is measured at M8 on data no trainer touched.
-3. **ONNX is the only deployable artifact.** A model that cannot export (MiniRocket, some TS foundation
+2. **Nothing is transferred before it is priced** (M2). The archive's own index is read first — kilobytes
+   — and the transfer is scoped against it at a gate. On the run this was built from, that step found 88%
+   of a 44.58 GB archive to be a derivable duplicate and a further 56% out of scope, before a payload byte
+   moved. A download that starts without a recorded scope decision is the bug this prevents.
+3. **The test split never leaves the model folder.** Trainers — yours or the portal's — only ever see
+   train + val. The number you publish is measured at M10 on data no trainer touched.
+4. **ONNX is the only deployable artifact.** A model that cannot export (MiniRocket, some TS foundation
    models) is your *baseline*, never the thing you ship.
 
 ---
@@ -95,11 +101,11 @@ orchestrator falls back to `<git root>/neuroedge-ml-projects/` if it exists, els
 All optional; an unset key stops the download with its name — it never falls back to a mirror whose
 licence is not the rights holder's.
 
-**4. A GPU box for M7.** Laptop (RTX-class) today, an AWS VM later — the flow is identical. Training
+**4. A GPU box for M9.** Laptop (RTX-class) today, an AWS VM later — the flow is identical. Training
 never runs inside AgentForge.
 
 **5. The NeuroEdge Web portal**, running, with the use case already created (its `use_case_id` is what
-M9 returns the model to). Only needed from M6 onward (the scaffold context) and at M9.
+M11 returns the model to). Only needed from M8 onward (the scaffold context) and at M11.
 
 **6. Data directory.** Raw downloads land outside git: `$NEUROEDGE_ML_DATA` if set, else
 `<model-folder>/../.data/<dataset-id>/`. Both are gitignored; the `pre-commit-ml-artifact` hook blocks
@@ -117,7 +123,8 @@ blobs anyway.
 
 The orchestrator asks two kinds of question and nothing else: the **destination** at M0 (accept the
 proposed `cnc_drift-timeseries` or type another), and the **gates** (licence at M1 if unclear, the
-data-verified decision at M2, the KPI decision at M8). Everything between gates runs without you. At M7
+**scope** decision at M2, the data-verified decision at M4, the KPI decision at M10). Everything between
+gates runs without you. At M9
 it stops and waits for your training run; `--resume` continues.
 
 ### B. Step by step — the same commands, standalone
@@ -125,8 +132,9 @@ it stops and waits for your training run; `--resume` continues.
 Every stage command works on its own; pass the folder explicitly so no stage asks:
 
 ```text
-/dataset-scout  "<objective>" --timeseries --dest <folder>
-/dataset-verify --dest <folder>
+/dataset-scout    "<objective>" --timeseries --dest <folder>
+/dataset-download --dest <folder>              # phase 1 prices it, you pick a scope, phase 2 fetches
+/dataset-verify   --dest <folder>              # reads what is already on disk; transfers nothing
 /auto-label     --dest <folder>              # vision, or the TS window rule
 /synth-data     "<what and why>" --dest <folder>
 /model-select   "<objective>" --target jetson --dest <folder>
@@ -182,17 +190,21 @@ delegate it to a subagent.
   run.json  gates.json      orchestrator state — the run resumes from these alone
   data/
     dataset-card.md         M1 — YAML front matter (id, url, licence, units, split_rule, keys_required) + prose
-    profile.json            M2 — what actually arrived: units, channels, rates, counts (claimed vs measured)
-    splits/                 M2 — train.json · val.json · test.json + split_hash   ← test never leaves here
-    portal_upload.zip       M2 — train + val only, in the portal's upload layout
-    label-manifest.md       M3
-    synthetic-recipe.md     M4
-  model-select.md           M5 — family, backbone, baseline, runner, export path
-  <architecture>/           M6 — one folder per architecture, e.g. 1DCNN/, MiniRocket/
+    archive-manifest.tsv    M1 — the source's own index: path · offset · compressed · uncompressed · crc
+                                 (kilobytes; every later scoping question is answered from this, for free)
+    fetch-plan.json         M2 — the chosen scope, its spans, wire vs disk budget, projected wall-clock
+    raw/                    M3 — the payload. GITIGNORED — never committed, never in the repo
+    profile.json            M4 — what actually arrived: units, channels, rates, counts (claimed vs measured)
+    splits/                 M4 — train.json · val.json · test.json + split_hash   ← test never leaves here
+    portal_upload.zip       M4 — train + val only, in the portal's upload layout
+    label-manifest.md       M5
+    synthetic-recipe.md     M6
+  model-select.md           M7 — family, backbone, baseline, runner, export path
+  <architecture>/           M8 — one folder per architecture, e.g. 1DCNN/, MiniRocket/
     train.py eval.py config.yaml requirements.txt RUN_ON_GPU.md HANDOFF.md
-    runs/<run_id>/model-package/    M7 — model.onnx · meta.json · model_artifact.json · metrics.json · calibration/
-    runs/<run_id>/return.json       M9
-  model-card.md             M10
+    runs/<run_id>/model-package/    M9 — model.onnx · meta.json · model_artifact.json · metrics.json · calibration/
+    runs/<run_id>/return.json       M11
+  model-card.md             M12
 ```
 
 Folder name = `<intent>-<modality>`, derived from the objective: intent is 1–3 `snake_case` words for
@@ -218,8 +230,32 @@ balance, label quality (for TS: can it be split per unit at all?). Output: a ran
 three repos downstream.
 **Verify:** the card's front matter has `license_verdict`, `units`, `split_rule`, `keys_required`.
 
-### M2 — `verify` (the step v1 lacked)
-Download → **measure** → split → withhold → package → **you decide**. `profile.json` is measured from
+### M2 — `plan`  (transfers nothing)
+`ml-data-engineer` reads the archive's index — captured at M1, or read now — and **prices the transfer
+before any of it happens**. It reports total size, size grouped by file type, size grouped by logical
+unit, and two or more candidate scopes with their cost. Grouping alone is what does the work: on the run
+this flow was built from it exposed that 88% of a 44.58 GB archive was a PCHIP-upsampled duplicate of
+data present in two other formats, and that only 7 of 33 experiments served the objective.
+
+If the source is Hugging Face, Kaggle, Roboflow or TFDS, this stage says so and **uses that client** —
+they already do resumable ranged transfer, and hand-rolling against them is worse than what exists.
+
+**Gate — three outcomes:** *approve* a scope; *narrow* it and re-plan; *reject* and return to M1 with the
+reason as a constraint. **A run cannot enter M3 without a recorded scope decision** — an unbounded
+transfer is precisely the failure this stage exists to prevent.
+**Verify:** `fetch-plan.json` names the scope, both budgets (wire and disk are different numbers), and
+the rate the estimate came from.
+
+### M3 — `download`
+Executes the approved plan and nothing else. Resumable by design: each pass skips entries already on
+disk at their declared size, so an interrupted transfer costs one span, not the run — and a transfer
+*will* outlive its session. `--resume` reads `fetch-plan.json` and the files present; it never replays a
+transcript. Raw data lands in `data/raw/`, gitignored, verified with `git check-ignore` before the first
+byte.
+**Verify:** bytes fetched against the approved budget, and no size mismatch in the log.
+
+### M4 — `verify` (the step v1 lacked)
+**Measure** → split → withhold → package → **you decide**. It transfers nothing; M3 did that, and this stage reads what is already on disk. `profile.json` is measured from
 disk, never copied from the card; the two are shown side by side and a discrepancy is the finding
 (the KIT dataset says 33 experiments on the record page and 32 in the paper — you find out here, not
 during training). The split is per physical unit (experiment / cutter / machine), or chronological with
@@ -231,25 +267,25 @@ candidates before synthetic is offered); *accept as hold-out* (real but insuffic
 validation/test and synthesize the rare class at M4).
 **Verify:** `data/splits/test.json` exists and its unit ids appear in neither train nor val.
 
-### M3 — `label`
+### M5 — `label`
 Vision: Autodistill (Grounding DINO boxes, SAM masks) → Label Studio review → FiftyOne QA → YOLO
 export with class names identical to the use case. Time series: no annotation tool — a **window rule**
 (`majority` · `any` · `unit`) applied by code over the fixed splits, or `training_labels: none` for
 normal-only anomaly detection; you review sample plots.
 **Verify:** `label-manifest.md` states the rule, per-split counts and the `split_hash`.
 
-### M4 — `synth` (conditional)
+### M6 — `synth` (conditional)
 Runs only after *accept as hold-out* or when a class is rare. Synthesizes the rare class; keeps the real
 hold-out; emits a reproducible recipe (generator, params, seed). Never validate on synthetic only.
 
-### M5 — `model-select`
+### M7 — `model-select`
 Decides family, backbone, transfer recipe, **baseline** (MiniRocket for TS, gradient-boosted trees for
 tabular, a linear probe for vision), **runner** (`package` = your GPU; `portal` = the portal's own trainer,
 only for families it supports **and** whose split integrity is proven — for NeuroEdge time series that is
 disallowed until Web ADR-0002 V-1/V-2 land), and the export path (ONNX; TensorRT/QNN derived later).
 **Verify:** `model-select.md` names the baseline and the runner.
 
-### M6 — `model-build`
+### M8 — `model-build`
 `ml-modeler` reads the portal's scaffold **context** for your use case (classes, resolution, target
 device, KPIs), owns the training body, and generates the package. `train.py` reads only
 `data/splits/{train,val}.json`; `eval.py` is the only code that opens `test.json`. `train.py` ends by
@@ -257,22 +293,68 @@ writing the **model-package** through the portal's `neuroedge_return` helper. Th
 reviews the code: a leakage or wrong-metric finding blocks the stage until fixed.
 **Verify:** `RUN_ON_GPU.md` exists; `grep test.json <arch>/train.py` returns nothing.
 
-### M7 — `train` — see the next section.
+### M9 — `train` — see the next section.
 
-### M8 — `eval`
+### M10 — `eval`
 The orchestrator runs `<arch>/eval.py --package <pkg> --split data/splits/test.json` (CPU is fine) and
 writes `metrics.json` with `eval_split: held_out_test` and the `split_hash`. Then the gate: metrics
 against the use case's KPIs (recall at the fixed FPR / mAP / …) **and** `beats_baseline: true`. You may
 accept a documented miss; the acceptance is recorded, never implied.
 
-### M9 — `return`
+### M11 — `return`
 Posts `model_artifact.json`, `metrics.json`, `model.onnx`, `meta.json` (and calibration data) to the
 portal. The portal re-validates the package (see the integration section). A 422 here means a defect in
 M6/M8 to fix — not a second opinion to argue with.
 
-### M10 — `model-card`
+### M12 — `model-card`
 Dataset id, licence and **attribution** (CC BY is only satisfied if it reaches the card and the
 product NOTICE), split hash, seed, commit, baseline vs model, threshold, caveats.
+
+---
+
+## What does the acquiring — the helper modules
+
+`/dataset-download` is not a prompt asking an agent to improvise a transfer. It calls four modules that
+ship with AgentForge into your project at `agentforge/src/acquisition/`, the same way `agentforge/src/state/`
+does. They carry **no modality awareness** — a time-series tar, a vision zip and an offline-RL archive all
+present the same problem to them — so the same code serves every family, and only the *selector* changes.
+
+| Module | What it owns | Why it exists as code, not advice |
+|---|---|---|
+| `archive_index` | Read a remote container's table of contents without its payload — ZIP central directory incl. ZIP64, tar headers incl. GNU base-256 sizes, ZIP-nested-in-tar. Emits `(path, offset, compressed, uncompressed, method, crc)` and persists it as `archive-manifest.tsv` | This is the whole economic argument: 64 KB of index priced a 44.58 GB archive. An octal-only tar parser silently reads a >8 GB member as size 0 — the kind of detail that has to live in tested code |
+| `ranged_fetch` | HTTP byte-range client with the transport injected (so it tests without a network): asserts **206**, asserts the response length, enforces a cumulative budget *before* each request, serves backoff, and records the rate and throttle penalty it observed | `raise_for_status()` passes on 200 — a host ignoring `Range` returns the entire object, and code that trusts it parses full-file bytes as the requested window, producing offsets that are wrong but plausible |
+| `fetch_plan` | Group by file type and by unit (this is where the savings are found), merge selections into spans, and cost them — wire bytes and disk bytes as **separate** budgets, plus a wall-clock projection | The merge threshold is derived, not guessed: `gap = measured_rate x per_request_penalty`. Pay for wasted bytes exactly when they are cheaper than another throttled request |
+| `archive_extract` | Inflate members from a fetched span and write them — path-safe against `../` escapes, and **size-verified before the write**, not after | A span one byte short truncates its last entry while every other entry in it extracts perfectly. Verifying after writing leaves a wrong file on disk counted as a success |
+
+You will not normally call these yourself — the command does. They matter to you for two reasons: a
+transfer that fails now fails *loudly and specifically* rather than leaving plausible-looking wrong data
+on disk, and the observed rate/penalty they record is what makes the next estimate accurate rather than
+a guess.
+
+> `requests` is the one new dependency, and only for the *caller* — the modules keep it out of their
+> imports so they remain testable offline.
+
+---
+
+## The skills behind it
+
+Two skills were added, and one existing skill grew a section. The commands read them; you may want to
+read them when a decision looks arbitrary.
+
+- **`skills/ENGINEERING/_mechanism/dataset-acquisition.md`** — the cross-pack mechanism. Owns the
+  *ordering*: index first, then group by type, then group by unit, then merge, then (carefully) prefix.
+  That order is the whole product — skipping to "optimise the transfer" is what produces a strategy that
+  fetches data you never needed. Also owns the transport invariants and the rule against hand-rolling
+  when a source ships its own client.
+- **`skills/ENGINEERING/ai-ml/vision-ml.md`** — new, the vision counterpart to `time-series-ml.md`. Its
+  most important section is **leakage-safe splitting**, which previously had no home: vision's
+  characteristic leak is augmented or near-duplicate variants of one source image landing in both train
+  and validation, which is how portal exports routinely ship. It inflates mAP and shows no symptom. Also
+  carries dataset licence verdicts (MVTec AD is CC BY-NC — the default choice in every tutorial, and
+  unusable in a product) and metric guidance.
+- **`skills/ENGINEERING/ai-ml/time-series-ml.md`** — gained an *Acquisition profile*: the unit is the
+  experiment, prefix-fetching is allowed only when the labelled condition holds across the whole run,
+  and the redundancy to look for is a pre-synchronised or resampled copy alongside the raw streams.
 
 ---
 
@@ -375,22 +457,30 @@ Everything the orchestrator asks can be answered outside it:
 /agentforge-ml "detect CNC machining drift from spindle-load, x_axis_error and vibration signals"
   → proposes C:\SanjeevE\NeuroEdge-ML-Models\neuroedge-ml-projects\cnc_drift-timeseries — accept
 
-# 1. scout   → pick: KIT multimodal CNC milling (CC BY 4.0) — all three channels; licence gate passes
-# 2. verify  → downloads from KITopen (no key), profiles 32/33 experiments, splits per experiment,
-#              withholds 6 anomalous + normal experiments as test, builds portal_upload.zip
-#              gate: approve   (or: accept as hold-out → synth the rare drift class)
-# 3. label   → TS window rule: any; training_labels: unit ground truth
-# 5. select  → baseline MiniRocket+ridge; deployable 1D-CNN; runner: package; export ONNX
-# 6. build   → 1DCNN/train.py eval.py …; ml-eval-reviewer passes
-# 7. train   → session stops: HANDOFF.md written
+# 1. scout    → pick: KIT multimodal CNC milling (CC BY 4.0) — all three channels; licence gate passes
+#               captures archive-manifest.tsv (64 KB) — no payload yet
+# 2. plan     → prices it from the index, no bytes moved:
+#                 44.58 GB total; 39.27 GB (88%) is processed_data/*_synchronized.mat — a PCHIP-upsampled
+#                 merge of data already present as CSV + raw .mat, so it is derivable and excluded
+#                 4.31 GB in 41 merged ranges ≈ 2.3 h   (vs 169 requests, rate-limited to 2 files/hour;
+#                 vs one 44.58 GB stream at a measured 0.94 MB/s = 13.2 h)
+#               gate: approve scope
+# 3. download → 4.31 GB into data/raw/ (gitignored), resumable
+# 4. verify   → profiles 33 experiments (resolves the record-vs-paper 32/33 ambiguity), splits per
+#               experiment 23/5/5, withholds test, builds portal_upload.zip
+#               gate: approve   (or: accept as hold-out → synth the rare drift class)
+# 5. label    → TS window rule: any; training_labels: unit ground truth
+# 7. select   → baseline MiniRocket+ridge; deployable 1D-CNN; runner: package; export ONNX
+# 8. build    → 1DCNN/train.py eval.py …; ml-eval-reviewer passes
+# 9. train    → session stops: HANDOFF.md written
 
 cd …\cnc_drift-timeseries\1DCNN ; python train.py --config config.yaml      # on the RTX laptop
 
 /agentforge-ml --resume
-# 8. eval    → eval.py on the withheld experiments: pr_auc, recall@fpr=0.01, event_f1 … beats_baseline
+# 10. eval   → eval.py on the withheld experiments: pr_auc, recall@fpr=0.01, event_f1 … beats_baseline
 #              gate: approve
-# 9. return  → upload-return-package → 200, source=custom_return
-# 10. card   → model-card.md
+# 11. return → upload-return-package → 200, source=custom_return
+# 12. card   → model-card.md
 
 # Portal: Optimize shows "Uploaded: model.onnx · opset 13 · validated ✓" → Prepare Device → Deploy
 ```

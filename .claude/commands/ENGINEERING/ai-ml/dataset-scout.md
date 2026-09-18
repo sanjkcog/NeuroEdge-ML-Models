@@ -3,13 +3,14 @@
 ## NeuroEdge Assets
 
 > At the start of your response output exactly:
-> `[ NeuroEdge Assets ]  /dataset-scout · Skills: dataset-sourcing, time-series-ml, ml-artifact-destination`
+> `[ NeuroEdge Assets ]  /dataset-scout · Skills: dataset-sourcing, time-series-ml, dataset-acquisition, ml-artifact-destination`
 >
 > Then read these skill files before executing:
 > - `agentic-assets/skills/ENGINEERING/ai-ml/dataset-sourcing.md`
 > - `agentic-assets/skills/ENGINEERING/ai-ml/time-series-ml.md`
+> - `agentic-assets/skills/ENGINEERING/_mechanism/dataset-acquisition.md`
 > - `agentic-assets/skills/ENGINEERING/_mechanism/ml-artifact-destination.md`
-<!-- neuroedge-assets-patched source-version=8acd6bf -->
+<!-- neuroedge-assets-patched source-version=b5f0180 -->
 
 ## Arguments
 
@@ -48,9 +49,19 @@ first step of the `ai-ml` pipeline (ADR-0014). Spawns the `ml-data-engineer` age
    `split_rule` (`grouped` | `chronological`), `expected_counts`, and `keys_required` (none | kaggle |
    roboflow | hf-gated | manual). Prose below it is for humans. End by printing the path.
 
+4. **Capture the archive's index** for the picked dataset, and only its index (ADR-0024 D-1). Scouting already
+   reads public metadata; the index costs kilobytes more and makes every later scoping question free — on the
+   reference run a 64 KB index priced a 44.58 GB archive and answered every re-scope with no further requests.
+   Write it to `<dest>/data/archive-manifest.tsv` via
+   `agentforge/src/acquisition/archive_index.py` (`read_zip_index` / `find_tar_member` → `write_manifest`),
+   capturing the CRC where the format carries one, and cite it from the card's front matter as `manifest`.
+   Skip this only when the source ships a client that handles transfer itself (Hugging Face, Kaggle, Roboflow,
+   TFDS) — see `dataset-acquisition`. **Still no payload: an index is not a download.**
+
 ## Next step
 
-- Suitable dataset found → `/dataset-verify` (download, measure, split per unit, withhold test, human gate),
-  then `/auto-label` if labels are missing, then `/model-select`.
+- Suitable dataset found → `/dataset-download` (price the transfer, scope gate, fetch), then `/dataset-verify`
+  (measure, split per unit, withhold test, human gate), then `/auto-label` if labels are missing, then
+  `/model-select`.
 - No suitable dataset → `/synth-data`.
 - Inside `/agentforge-ml` the orchestrator sequences these; the licence verdict is its hard M1 gate.

@@ -3,13 +3,14 @@
 ## NeuroEdge Assets
 
 > At the start of your response output exactly:
-> `[ NeuroEdge Assets ]  /dataset-verify · Skills: dataset-sourcing, time-series-ml, ml-artifact-destination`
+> `[ NeuroEdge Assets ]  /dataset-verify · Skills: dataset-sourcing, time-series-ml, vision-ml, ml-artifact-destination`
 >
 > Then read these skill files before executing:
 > - `agentic-assets/skills/ENGINEERING/ai-ml/dataset-sourcing.md`
 > - `agentic-assets/skills/ENGINEERING/ai-ml/time-series-ml.md`
+> - `agentic-assets/skills/ENGINEERING/ai-ml/vision-ml.md`
 > - `agentic-assets/skills/ENGINEERING/_mechanism/ml-artifact-destination.md`
-<!-- neuroedge-assets-patched source-version=4cf4279 -->
+<!-- neuroedge-assets-patched source-version=b5f0180 -->
 
 ## Arguments
 
@@ -36,8 +37,12 @@ Nothing downstream is allowed to re-shuffle what this step decides.
    needs `KAGGLE_USERNAME`+`KAGGLE_KEY`; Roboflow `ROBOFLOW_API_KEY`; Hugging Face `HF_TOKEN` only for gated sets;
    PHM Society is manual. If a needed key is unset, say which and stop — do not fall back to a mirror whose licence
    is not the rights holder's.
-2. **Acquire** into the data dir (outside git; the `pre-commit-ml-artifact` hook blocks blobs). Record the URL,
-   checksum and size. Re-read the **licence file that arrived**, not the portal's summary.
+2. **The data is already local — this command does not transfer anything** (ADR-0024 D-3). `/dataset-download`
+   priced the transfer against a scope gate and fetched it; verify reads `<dest>/data/raw/`. If it is missing or
+   the fetch plan is unsatisfied, **stop and say so** — run `/dataset-download` rather than pulling bytes here.
+   A transfer inside this stage is what left a real run 90 minutes in with nothing profiled and its gate
+   unreachable. Do re-read the **licence file that actually arrived**, not the portal's summary, and record the
+   URL, checksum and size that `fetch-plan.json` reports.
 3. **Profile → `<dest>/data/profile.json`** (measured, never copied from the card): units found (experiments /
    cutters / machines / recordings), channels present vs the card's required list, sample rates, rows, per-class or
    per-anomaly-type counts, missing values, per-unit class presence. For vision: images, boxes per class,

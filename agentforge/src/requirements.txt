@@ -12,3 +12,8 @@ jsonschema>=4.0
 
 # qa/testrail_adapter.py shells out to TestRail's own CLI (`trcli parse_junit`).
 trcli
+
+# ADR-0024: the acquisition modules keep `requests` out of their imports (the
+# transport is injected, so they test without a network), but the caller wired up by
+# /dataset-download supplies `requests.get` as that transport.
+requests

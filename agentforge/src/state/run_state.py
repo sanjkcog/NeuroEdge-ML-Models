@@ -111,7 +111,12 @@ STAGE_AGENTS: dict[str, str] = {
 # `ml-data-engineer` (scout/verify/label/synth) and `ml-modeler` (model-select through
 # model-card).
 ML_STAGE_SEQUENCE: tuple[str, ...] = (
-    "destination", "scout", "verify", "label", "synth",
+    "destination", "scout",
+    # plan/download split out of verify (ADR-0024 D-3, D-12): planning is priced from the
+    # archive's index and transfers nothing, transfer is long and resumable, and verify is
+    # left free to profile and reach its gate instead of being starved by a download.
+    "plan", "download",
+    "verify", "label", "synth",
     "model-select", "model-build",
     "train",
     "eval",
@@ -121,6 +126,8 @@ ML_STAGE_SEQUENCE: tuple[str, ...] = (
 ML_STAGE_AGENTS: dict[str, str] = {
     "destination": "none (orchestrator — resolves the model folder, ADR-0021/0022)",
     "scout": "ml-data-engineer",
+    "plan": "ml-data-engineer",
+    "download": "none (orchestrator executes the fetch plan; resumable, budget-guarded)",
     "verify": "ml-data-engineer",
     "label": "ml-data-engineer",
     "synth": "ml-data-engineer",
@@ -431,16 +438,43 @@ def _validate(data: dict) -> None:
     if loaded_stages != current_stages:
         missing = current_stages - loaded_stages
         extra = loaded_stages - current_stages
-        detail = []
-        if missing:
-            detail.append(f"missing {sorted(missing)}")
-        if extra:
-            detail.append(f"unexpected {sorted(extra)}")
-        raise InvalidRunState(
-            f"INVALID run.json: field 'stages' does not match the current {sequence!r} "
-            f"sequence ({', '.join(detail)}) — this run.json was likely created under "
-            "an older stage graph; start a new run rather than resuming this one"
-        )
+
+        # A PURELY ADDITIVE change — the run knows a subset of today's stages and nothing
+        # this sequence has never heard of — is sequence evolution, not corruption. ADR-0024
+        # inserted `plan` and `download` into the ml sequence mid-flight, and a run already
+        # past `scout` must survive that: stage ids are the contract, so gaining one is not
+        # a reason to discard a run's history. Backfill the newcomers as pending, which is
+        # what they would have been, and the KeyError this guard exists to prevent cannot
+        # occur because every current id is now present.
+        if missing and not extra:
+            for sid in missing:
+                # Serialised from StageState rather than hand-written, so a newcomer is
+                # byte-for-byte what `new()` would have produced and cannot drift from the
+                # schema as fields are added.
+                data["stages"][sid] = asdict(StageState(agent=_agents(sequence)[sid]))
+
+            # Re-point the cursor at the earliest outstanding stage — the same rule
+            # `reopen_stage` had to learn. A newcomer can land BEFORE the recorded
+            # current_stage (ADR-0024 inserted `plan`/`download` ahead of a run sitting at
+            # `verify`), which would otherwise leave the cursor reporting a stage with
+            # pending work in front of it. Every other path maintains the invariant that
+            # current_stage implies everything earlier is complete; `status` and `resume`
+            # read it verbatim, so breaking it here would have them announce `verify` while
+            # the scope gate that must precede any transfer had never been asked (D-3a).
+            order = _seq(sequence)
+            outstanding = [s for s in order if data["stages"][s].get("status") != "complete"]
+            data["current_stage"] = outstanding[0] if outstanding else None
+        else:
+            detail = []
+            if missing:
+                detail.append(f"missing {sorted(missing)}")
+            if extra:
+                detail.append(f"unexpected {sorted(extra)}")
+            raise InvalidRunState(
+                f"INVALID run.json: field 'stages' does not match the current {sequence!r} "
+                f"sequence ({', '.join(detail)}) — this run.json was likely created under "
+                "an older stage graph; start a new run rather than resuming this one"
+            )
 
     stage_schema = schema["properties"]["stages"]["additionalProperties"]
     stage_required = stage_schema["required"]
