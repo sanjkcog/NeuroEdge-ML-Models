@@ -9,7 +9,7 @@ keys_required: []   # KITopen/RADAR is open download, no API key/account needed
 cross_machine_holdout: Bosch Research CNC_Machining (Tnani/Feil/Diepold, 2022) — vibration-only, CC BY 4.0, no key required
 verified_by: ml-data-engineer (AgentForge)
 verified_on: 2026-09-17
-local_path: data/raw/_metadata_extracts/  # metadata-only this pass; full 44.6 GB payload NOT downloaded — see profile.json
+local_path: data/raw/  # scope B (169 entries, 7.48 GB on disk, fetch-plan.json); vibration aligned into data/interim/
 split_hash: bca8a336e7edcef703dbe5865c6f8518f6ec6757e9fb665dd0ba10b0c1b286c4  # M4 taxonomy re-split 2026-09-17, see label-manifest.md
 profile: data/profile.json
 ---

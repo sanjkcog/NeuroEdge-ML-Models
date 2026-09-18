@@ -158,13 +158,24 @@
     "measurement_method": "README.txt text, re-confirmed by re-extracting the README bundled inside the archive itself (not just the portal page) â€” matches exactly."
   },
   "row_counts_and_duration": {
-    "status": "TBD â€” not measured this pass. Computing exact row counts requires decompressing full hfdata.csv files (partial decompression only fetched the first ~3 rows per file to read the header); the smallest file alone is 31 MB uncompressed, the largest (IM-01R-A01) is 336 MB uncompressed. Rough scale check: IMP-01_hfdata.csv is 95,754,725 bytes uncompressed CSV text across 61 columns at 500 Hz â€” order-of-magnitude ~10-11 minutes of recording for that one trial, consistent with the record's aggregate '~six hours of milling operations' claim across all 33 experiments, but this is an estimate, not a measured row count."
+    "status": "RESOLVED at M4 -- see _M4_measured_3ch.per_unit"
   },
   "missing_values": {
-    "status": "TBD â€” requires full CSV parse per experiment, not done this pass (partial-download policy)."
+    "status": "RESOLVED at M4 -- 0 missing in the 3 chosen channels on all 25 unit/segment entries; see _M4_measured_3ch"
   },
   "portal_upload_zip": {
-    "status": "NOT PRODUCED this pass. Building it requires downloading the actual hfdata.csv payload for all 23 train + 5 val = 28 experiments, which is the bulk of the 44.6 GB archive (test-only holdout is just 5 of 33 experiments by count, and does not proportionally reduce archive size much since train+val still spans nearly all of it). Per the 20 GB stop-and-report rule, this full pull was not performed â€” awaiting the orchestrator/user go-ahead before pulling that volume."
+    "status": "BUILT 2026-09-17",
+    "path": "data/portal_upload.zip",
+    "bytes": 53065032,
+    "sha256": "64d1371f7f42ccc61df6a2ebe28b6468ee66b562f1102814ed40e88a9e735479",
+    "contents": "train + val only (test withheld). One CSV per experiment (IM-01R: one per time segment) + manifest.tsv + README.txt",
+    "layout": "columns timestamp (=CYCLE), spindle_load, x_axis_error, vibration_rms, label; unit id in the file name (a text unit_id column would make the portal parser skip every row)",
+    "class_names": [
+      "normal",
+      "tool_wear"
+    ],
+    "class_names_source": "use case cnc-machine-performance-drift-leading-to-production-loss: drift_class \"tool_wear\"; \"normal\" = no drift",
+    "portal_runner_warning": "NeuroEdge-Web ts_preprocessor.py concatenates all files into one stream (windows cross unit boundaries), z-scores over everything loaded, and splits windows by random shuffle -- window-level leakage that undoes the per-experiment split. Recommend runner: package (train.py reading data/splits/*.json) at M7."
   },
   "_channel_contract_finding_M2": {
     "raised_by": "user, 2026-09-17",
@@ -176,7 +187,7 @@
       "x_axis_error": "SUBSTITUTION by the orchestrator for use case \"dimensional accuracy\" — defensible (following error is the upstream cause of dimensional error and is measurable at 500 Hz) but not the use case wording",
       "temperature": "DROPPED silently by the orchestrator; KIT has no temperature channel in any of the 61 hfdata.csv columns, so it cannot be honoured from this dataset regardless"
     },
-    "status": "OPEN — channel contract is a user decision at M3/M5, not an inheritance. Does not affect the M2 download scope."
+    "status": "DECIDED at M4 2026-09-17 -- see _channel_contract_M4"
   },
   "_ctrl_diff_verification_M2": {
     "claim": "CTRL_DIFF|n equals DES_POS|n minus ENC_POS|n",
@@ -377,5 +388,724 @@
     "split_hash": "bca8a336e7edcef703dbe5865c6f8518f6ec6757e9fb665dd0ba10b0c1b286c4",
     "supersedes_split_hash": "6e204992c94c740228b619eb9b30c1ad1c0565217125b9c56960fd32422f7369",
     "manifest": "data/label-manifest.md"
+  },
+  "_M4_measured_3ch": {
+    "measured_on": "2026-09-17",
+    "channels": {
+      "spindle_load": "TORQUE|6 (hfdata.csv)",
+      "x_axis_error": "CTRL_DIFF|1 (hfdata.csv, mm)",
+      "vibration_rms": "interim/<trial>_sensor.parquet (sensor_align, 3-axis accel RMS per 2 ms tick; unit unconfirmed)"
+    },
+    "join": "hfdata.CYCLE == sensor.tick, inner; rows outside the DAQ recording are dropped (min 88.7% of CSV rows kept)",
+    "missing_values_total": {
+      "spindle_load": 0,
+      "x_axis_error": 0,
+      "vibration_rms": 0
+    },
+    "cycle_discontinuities_total": 0,
+    "per_split_class": {
+      "train/normal": {
+        "units": 13,
+        "hours": 1.27
+      },
+      "train/tool_wear": {
+        "units": 3,
+        "hours": 1.002
+      },
+      "val/normal": {
+        "units": 4,
+        "hours": 0.354
+      },
+      "val/tool_wear": {
+        "units": 1,
+        "hours": 0.336
+      },
+      "test/normal": {
+        "units": 3,
+        "hours": 0.22
+      },
+      "test/tool_wear": {
+        "units": 1,
+        "hours": 0.333
+      }
+    },
+    "per_unit": [
+      {
+        "split": "train",
+        "unit_id": "IMP-BASE",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 378930,
+        "rows_joined": 372970,
+        "duration_s": 745.9,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -0.5332414918492104,
+          "x_axis_error": 1.0921039225675268e-06,
+          "vibration_rms": 26.334313022526366
+        },
+        "std": {
+          "spindle_load": 3.1378522887792006,
+          "x_axis_error": 0.030997127114097887,
+          "vibration_rms": 4.866007667261179
+        }
+      },
+      {
+        "split": "train",
+        "unit_id": "IMP-01",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 172052,
+        "rows_joined": 166787,
+        "duration_s": 333.6,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -0.5910131474815186,
+          "x_axis_error": -1.7388165744333314e-06,
+          "vibration_rms": 26.80145384266808
+        },
+        "std": {
+          "spindle_load": 4.687996762452478,
+          "x_axis_error": 0.03569539418052417,
+          "vibration_rms": 5.8720088159367325
+        }
+      },
+      {
+        "split": "train",
+        "unit_id": "IMP-02",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 176346,
+        "rows_joined": 171387,
+        "duration_s": 342.8,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -0.5986870830051289,
+          "x_axis_error": 1.3157882453160921e-06,
+          "vibration_rms": 24.392198316459982
+        },
+        "std": {
+          "spindle_load": 4.624830471105139,
+          "x_axis_error": 0.02714120273716237,
+          "vibration_rms": 5.07747127806661
+        }
+      },
+      {
+        "split": "train",
+        "unit_id": "IMP-03",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 148169,
+        "rows_joined": 143138,
+        "duration_s": 286.3,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -0.6068544352163647,
+          "x_axis_error": -1.4723343905881016e-06,
+          "vibration_rms": 25.901555844830447
+        },
+        "std": {
+          "spindle_load": 5.056994871955967,
+          "x_axis_error": 0.021516065629800546,
+          "vibration_rms": 6.351048752453888
+        }
+      },
+      {
+        "split": "train",
+        "unit_id": "IMP-04",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 132360,
+        "rows_joined": 126640,
+        "duration_s": 253.3,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -0.6109505261449779,
+          "x_axis_error": -2.4733891345544667e-07,
+          "vibration_rms": 24.250917680838263
+        },
+        "std": {
+          "spindle_load": 5.368098481107223,
+          "x_axis_error": 0.031320699558443174,
+          "vibration_rms": 5.906786025630971
+        }
+      },
+      {
+        "split": "train",
+        "unit_id": "IMP-06",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 140838,
+        "rows_joined": 130190,
+        "duration_s": 260.4,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -0.612710367678009,
+          "x_axis_error": -4.234810661340928e-07,
+          "vibration_rms": 24.79870344791061
+        },
+        "std": {
+          "spindle_load": 5.300050600862056,
+          "x_axis_error": 0.02574539867076412,
+          "vibration_rms": 5.813070565602041
+        }
+      },
+      {
+        "split": "train",
+        "unit_id": "IMP-07",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 118877,
+        "rows_joined": 112142,
+        "duration_s": 224.3,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -0.6262528735531735,
+          "x_axis_error": 2.148044443651788e-06,
+          "vibration_rms": 25.307369119407582
+        },
+        "std": {
+          "spindle_load": 5.718624609989337,
+          "x_axis_error": 0.029628907541510388,
+          "vibration_rms": 6.674604413330342
+        }
+      },
+      {
+        "split": "train",
+        "unit_id": "IMP-08",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 174427,
+        "rows_joined": 168336,
+        "duration_s": 336.7,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -0.5960532950765136,
+          "x_axis_error": -9.721865792225705e-07,
+          "vibration_rms": 24.586939675403627
+        },
+        "std": {
+          "spindle_load": 4.667095568362664,
+          "x_axis_error": 0.029837744277192463,
+          "vibration_rms": 5.422125165808782
+        }
+      },
+      {
+        "split": "train",
+        "unit_id": "IMP-10",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 125442,
+        "rows_joined": 120541,
+        "duration_s": 241.1,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -0.6148148166681876,
+          "x_axis_error": -7.654988759011095e-07,
+          "vibration_rms": 24.052883156163485
+        },
+        "std": {
+          "spindle_load": 5.518542744674977,
+          "x_axis_error": 0.03309302453515554,
+          "vibration_rms": 5.701478687529051
+        }
+      },
+      {
+        "split": "train",
+        "unit_id": "IMP-11",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 168569,
+        "rows_joined": 162787,
+        "duration_s": 325.6,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -0.5886093371890873,
+          "x_axis_error": 3.2205274376947025e-07,
+          "vibration_rms": 24.60031319674816
+        },
+        "std": {
+          "spindle_load": 4.750142669179178,
+          "x_axis_error": 0.03343780345601874,
+          "vibration_rms": 5.255024478376891
+        }
+      },
+      {
+        "split": "train",
+        "unit_id": "TF-01",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 130772,
+        "rows_joined": 124040,
+        "duration_s": 248.1,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -3.2359574790148335,
+          "x_axis_error": -2.194130925507849e-07,
+          "vibration_rms": 1.9066318474543102
+        },
+        "std": {
+          "spindle_load": 2.6369521773264952,
+          "x_axis_error": 0.012249789400667123,
+          "vibration_rms": 0.4602398960263662
+        }
+      },
+      {
+        "split": "train",
+        "unit_id": "TF-03",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 144667,
+        "rows_joined": 128340,
+        "duration_s": 256.7,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -4.679635675938912,
+          "x_axis_error": -2.9880006233443324e-07,
+          "vibration_rms": 1.8404796158260932
+        },
+        "std": {
+          "spindle_load": 3.2506605482315996,
+          "x_axis_error": 0.011845383727145215,
+          "vibration_rms": 0.4773297793983346
+        }
+      },
+      {
+        "split": "train",
+        "unit_id": "IM-01R",
+        "label": "normal",
+        "segment": true,
+        "rows_hfdata": 610343,
+        "rows_joined": 359555,
+        "duration_s": 719.1,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -2.3754065443673427,
+          "x_axis_error": -2.618567395808719e-06,
+          "vibration_rms": 5.695980927734863
+        },
+        "std": {
+          "spindle_load": 1.7455041515666168,
+          "x_axis_error": 0.03133517452121261,
+          "vibration_rms": 1.3079453864561803
+        }
+      },
+      {
+        "split": "train",
+        "unit_id": "IM-01R-A01",
+        "label": "tool_wear",
+        "segment": false,
+        "rows_hfdata": 604462,
+        "rows_joined": 600661,
+        "duration_s": 1201.3,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -2.240201950486214,
+          "x_axis_error": 1.9406620373224498e-07,
+          "vibration_rms": 5.728872656785647
+        },
+        "std": {
+          "spindle_load": 1.7947720430973735,
+          "x_axis_error": 0.039468832387298744,
+          "vibration_rms": 1.2077687782845183
+        }
+      },
+      {
+        "split": "train",
+        "unit_id": "IM-01R-A02",
+        "label": "tool_wear",
+        "segment": false,
+        "rows_hfdata": 606127,
+        "rows_joined": 601869,
+        "duration_s": 1203.7,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -2.2933915150024355,
+          "x_axis_error": 7.843401138787211e-08,
+          "vibration_rms": 5.664574096385436
+        },
+        "std": {
+          "spindle_load": 1.8327601292196554,
+          "x_axis_error": 0.03943075762964316,
+          "vibration_rms": 1.2257214058221224
+        }
+      },
+      {
+        "split": "train",
+        "unit_id": "IM-01R-A05",
+        "label": "tool_wear",
+        "segment": false,
+        "rows_hfdata": 604489,
+        "rows_joined": 600377,
+        "duration_s": 1200.8,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -2.4266977993410794,
+          "x_axis_error": 4.940062660629152e-08,
+          "vibration_rms": 5.387859737581486
+        },
+        "std": {
+          "spindle_load": 1.877185664372846,
+          "x_axis_error": 0.039273141072133665,
+          "vibration_rms": 1.2012044943597397
+        }
+      },
+      {
+        "split": "val",
+        "unit_id": "IMP-09",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 126368,
+        "rows_joined": 120040,
+        "duration_s": 240.1,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -0.6084533313145619,
+          "x_axis_error": 1.9955514828389937e-06,
+          "vibration_rms": 24.21091868099876
+        },
+        "std": {
+          "spindle_load": 5.527335323370666,
+          "x_axis_error": 0.02670206011980109,
+          "vibration_rms": 5.829171365549765
+        }
+      },
+      {
+        "split": "val",
+        "unit_id": "IMP-12",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 98636,
+        "rows_joined": 94643,
+        "duration_s": 189.3,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -0.6268498205889499,
+          "x_axis_error": -3.2531935800850993e-06,
+          "vibration_rms": 24.684096528757454
+        },
+        "std": {
+          "spindle_load": 6.220679059217381,
+          "x_axis_error": 0.03979966069515306,
+          "vibration_rms": 6.353169170684255
+        }
+      },
+      {
+        "split": "val",
+        "unit_id": "IM-01F",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 308454,
+        "rows_joined": 303871,
+        "duration_s": 607.7,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -0.8458909828348214,
+          "x_axis_error": -1.6579403760146432e-07,
+          "vibration_rms": 12.732034268117557
+        },
+        "std": {
+          "spindle_load": 2.5603139764600376,
+          "x_axis_error": 0.024065000084994254,
+          "vibration_rms": 3.051512212146531
+        }
+      },
+      {
+        "split": "val",
+        "unit_id": "IM-01R",
+        "label": "normal",
+        "segment": true,
+        "rows_hfdata": 610343,
+        "rows_joined": 118185,
+        "duration_s": 236.4,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -1.7813344032745277,
+          "x_axis_error": -1.7138638575114466e-06,
+          "vibration_rms": 5.662258780510702
+        },
+        "std": {
+          "spindle_load": 0.8727425079948039,
+          "x_axis_error": 0.05078219192865845,
+          "vibration_rms": 1.056989549557183
+        }
+      },
+      {
+        "split": "val",
+        "unit_id": "IM-01R-A04",
+        "label": "tool_wear",
+        "segment": false,
+        "rows_hfdata": 608929,
+        "rows_joined": 604958,
+        "duration_s": 1209.9,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -2.405250558865244,
+          "x_axis_error": 1.7901738633099207e-07,
+          "vibration_rms": 5.426098763919159
+        },
+        "std": {
+          "spindle_load": 1.8844733304585288,
+          "x_axis_error": 0.03933246157430685,
+          "vibration_rms": 1.2925139374833186
+        }
+      },
+      {
+        "split": "test",
+        "unit_id": "IMP-05",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 156752,
+        "rows_joined": 149988,
+        "duration_s": 300.0,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -0.6040788113649093,
+          "x_axis_error": 2.634144064858686e-07,
+          "vibration_rms": 25.390995271471088
+        },
+        "std": {
+          "spindle_load": 4.92098610411052,
+          "x_axis_error": 0.03416902138706004,
+          "vibration_rms": 5.828669975408804
+        }
+      },
+      {
+        "split": "test",
+        "unit_id": "TF-02",
+        "label": "normal",
+        "segment": false,
+        "rows_hfdata": 131704,
+        "rows_joined": 125940,
+        "duration_s": 251.9,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -4.046505155994919,
+          "x_axis_error": -2.2862474194062658e-07,
+          "vibration_rms": 1.880951759191423
+        },
+        "std": {
+          "spindle_load": 2.8729670003734564,
+          "x_axis_error": 0.011912848275771897,
+          "vibration_rms": 0.4172870129869176
+        }
+      },
+      {
+        "split": "test",
+        "unit_id": "IM-01R",
+        "label": "normal",
+        "segment": true,
+        "rows_hfdata": 610343,
+        "rows_joined": 120686,
+        "duration_s": 241.4,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -1.724159830427722,
+          "x_axis_error": 6.1362958421026815e-06,
+          "vibration_rms": 5.297965254063515
+        },
+        "std": {
+          "spindle_load": 2.2601426756755183,
+          "x_axis_error": 0.044107262811203765,
+          "vibration_rms": 1.5429831547485495
+        }
+      },
+      {
+        "split": "test",
+        "unit_id": "IM-01R-A03",
+        "label": "tool_wear",
+        "segment": false,
+        "rows_hfdata": 604182,
+        "rows_joined": 599627,
+        "duration_s": 1199.3,
+        "missing": {
+          "spindle_load": 0,
+          "x_axis_error": 0,
+          "vibration_rms": 0
+        },
+        "cycle_discontinuities": 0,
+        "mean": {
+          "spindle_load": -2.3846403179409874,
+          "x_axis_error": 6.377648104571401e-07,
+          "vibration_rms": 5.338729744926188
+        },
+        "std": {
+          "spindle_load": 1.8598496085994727,
+          "x_axis_error": 0.03900009649449728,
+          "vibration_rms": 1.1559463165092705
+        }
+      }
+    ],
+    "row_counts_and_duration_status": "RESOLVED: measured per unit above (supersedes row_counts_and_duration TBD)"
+  },
+  "_channel_contract_M4": {
+    "decided_by": "sanjkcog",
+    "date": "2026-09-17",
+    "model_inputs": [
+      "spindle_load = TORQUE|6",
+      "x_axis_error = CTRL_DIFF|1 (mm)",
+      "vibration_rms = RMS of mean-removed 3-axis acceleration magnitude per 2 ms tick"
+    ],
+    "assumptions_unconfirmed": {
+      "field_accelerometer": "ASSUMED present on the edge device (unconfirmed)",
+      "acceleration_unit": "ASSUMED g (unconfirmed; the dataset does not state it)"
+    },
+    "open_contract_mismatch": {
+      "portal_use_case": "NeuroEdge-Web use_cases/manufacturing/cnc-drift-on-powertrain-shop-for-car-prduction.yaml",
+      "portal_declares": {
+        "channels": [
+          "spindle_load (%)",
+          "vibration (g)",
+          "coolant_temp (degC)",
+          "feed_rate (mm/min)"
+        ],
+        "sample_rate_hz": 100,
+        "window_samples": 512,
+        "stride_samples": 100,
+        "classes": [
+          "drift"
+        ]
+      },
+      "training_data_has": {
+        "channels": [
+          "spindle_load (TORQUE|6, torque not %)",
+          "x_axis_error (mm)",
+          "vibration_rms (g assumed)"
+        ],
+        "sample_rate_hz": 500,
+        "classes": [
+          "normal",
+          "tool_wear"
+        ]
+      },
+      "gaps": [
+        "coolant_temp: not in KIT at all",
+        "feed_rate: a commanded parameter -- the leakage channel the taxonomy excluded",
+        "x_axis_error: not in the portal contract",
+        "spindle_load unit: % in the portal; LOAD|6 (%) is missing in IM-01R-A03/A04, so torque is used",
+        "rate/window: 512 samples at 100 Hz = 5.12 s, longer than the 5 s split gap"
+      ],
+      "status": "OPEN -- must be reconciled before M7/M8"
+    }
   }
 }

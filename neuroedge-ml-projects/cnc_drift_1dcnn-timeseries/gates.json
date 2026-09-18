@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "updated": "2026-09-18T05:25:01.802327+00:00",
+  "updated": "2026-09-18T06:37:38.713818+00:00",
   "gates": {
     "data/fetch-plan.json": {
       "stage": "plan",
@@ -13,6 +13,21 @@
           "timestamp": "2026-09-18T05:25:01.802327+00:00",
           "outcome": "approved",
           "reason": "Scope B: 169 entries, 3.90 GB payload / 4.89 GB wire / 7.48 GB disk; synchronized.mat, raw JSON, .fig excluded as derivable. Confirms the informal 3.9 GB approval of 2026-09-17."
+        }
+      ],
+      "opened_by": "ml-data-engineer"
+    },
+    "data/profile.json": {
+      "stage": "verify",
+      "type": "hard",
+      "status": "approved",
+      "opened_at": "2026-09-18T06:32:41.201626+00:00",
+      "decisions": [
+        {
+          "identity": "sanjkcog",
+          "timestamp": "2026-09-18T06:37:38.713818+00:00",
+          "outcome": "approved",
+          "reason": "M4 approved. Taxonomy normal vs tool_wear (split_hash bca8a336...). Channels: spindle_load (TORQUE|6), x_axis_error (CTRL_DIFF|1), vibration_rms (3-axis accel RMS, sensor_align). Field accelerometer ASSUMED, unconfirmed; acceleration unit ASSUMED g, unconfirmed. Device input contract must be reconciled with the portal use case before M7/M8 (see README)."
         }
       ],
       "opened_by": "ml-data-engineer"

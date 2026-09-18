@@ -18,3 +18,5 @@ neuroedge-ml-projects/*/data/interim/*.parquet
 # Python bytecode
 __pycache__/
 *.pyc
+# Trainer upload package (dataset-verify step 6): regenerable from data/raw + data/interim
+neuroedge-ml-projects/*/data/portal_upload.zip
