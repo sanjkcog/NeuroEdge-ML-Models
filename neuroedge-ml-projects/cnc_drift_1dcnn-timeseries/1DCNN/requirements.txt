@@ -1,0 +1,20 @@
+# 1D-CNN training + export -- CUDA GPU recommended, CPU also works (the model is ~11.4k params).
+#
+# On a laptop / workstation NVIDIA GPU, install the CUDA build of torch FIRST, e.g.:
+#   pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+# then the rest of this file. On CPU-only or Colab, plain `pip install -r requirements.txt` is fine.
+
+torch==2.6.0
+numpy==1.26.4
+pandas==2.3.3
+pyarrow==17.0.0
+PyYAML==6.0.2
+scikit-learn==1.9.1
+onnx==1.22.0
+onnxruntime==1.30.0
+
+# Optional experiment tracking (training works without it -- see RUN_ON_GPU.md):
+# mlflow==3.16.1
+
+# Optional NeuroEdge return-package validation (training works without it):
+# pip install -e <NeuroEdge-Web>/src/neuroedge_design_usecase -e <NeuroEdge-Web>/src/neuroedge_return

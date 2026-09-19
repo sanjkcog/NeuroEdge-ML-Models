@@ -85,8 +85,10 @@ These are binding on `/model-build` and are checked by `ml-eval-reviewer` at M8:
 2. **Windows come from the split files.** Build windows inside each unit's
    `[cycle_start, cycle_end_exclusive)` bounds from `splits/*.json`, keyed on `CYCLE`/`tick`,
    never by row position, and never window first and split afterwards. Assert at load time that
-   no window crosses a split boundary. The portal's `ts_preprocessor.py` does the opposite, so
-   it must not be used for this dataset.
+   no window crosses a split boundary. *(Corrected 2026-09-19: this line said the portal's
+   `ts_preprocessor.py` "does the opposite". The portal fixed that on 2026-09-18, NeuroEdge-Web
+   `1197d27`. The portal is still not used for this dataset, because it cannot take these split
+   files: see `model_proposed.md` §Runner.)*
 3. **Centring is already train-only.** IM-01R's channel means come from its train segment
    (`interim/alignment.json` records `centre_ticks` and `channel_means`). Any later scaling in
    `train.py` must also be fitted on the train split only and exported in-graph.

@@ -2,8 +2,8 @@
   "schema_version": "1.0",
   "objective": "cnc drift 1D CNN model with 3 sensors",
   "created": "2026-09-17T22:28:24.692128+00:00",
-  "updated": "2026-09-18T14:54:07.235689+00:00",
-  "current_stage": "model-select",
+  "updated": "2026-09-19T04:15:54.692464+00:00",
+  "current_stage": "train",
   "completed_stages": [
     "destination",
     "scout",
@@ -12,15 +12,16 @@
     "verify",
     "label",
     "synth",
-    "model-select"
+    "model-select",
+    "model-build"
   ],
   "escalation": null,
   "sprint_id": null,
   "sequence": "ml",
   "gate": {
-    "pending": false,
-    "stage": null,
-    "reason": null
+    "pending": true,
+    "stage": "train",
+    "reason": "waiting_external"
   },
   "use_case_lock": {
     "path": "neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/use_case.lock.json",
@@ -29,7 +30,7 @@
   },
   "stages": {
     "destination": {
-      "agent": "none (orchestrator — resolves the model folder, ADR-0021/0022)",
+      "agent": "none (orchestrator \u2014 resolves the model folder, ADR-0021/0022)",
       "status": "complete",
       "artifacts": [
         "README.md"
@@ -165,13 +166,19 @@
       "agent": "ml-modeler",
       "status": "complete",
       "artifacts": [
-        "model-select.md"
+        "model_proposed.md"
       ],
       "consecutive_failures": 0,
       "spawns": [
         {
           "spawned_by": "orchestrator",
           "at": "2026-09-18T14:50:38.623780+00:00",
+          "result": "complete",
+          "identity": ""
+        },
+        {
+          "spawned_by": "orchestrator",
+          "at": "2026-09-19T02:03:39.901258+00:00",
           "result": "complete",
           "identity": ""
         }
@@ -187,10 +194,25 @@
     },
     "model-build": {
       "agent": "ml-modeler",
-      "status": "pending",
-      "artifacts": [],
+      "status": "complete",
+      "artifacts": [
+        "audit/M8.md",
+        "model_proposed.md",
+        "1DCNN/train.py",
+        "1DCNN/eval.py",
+        "1DCNN/RUN_ON_GPU.md",
+        "MiniRocket/train.py",
+        "common/metrics.py"
+      ],
       "consecutive_failures": 0,
-      "spawns": [],
+      "spawns": [
+        {
+          "spawned_by": "orchestrator",
+          "at": "2026-09-19T02:08:22.262926+00:00",
+          "result": "complete",
+          "identity": ""
+        }
+      ],
       "usage": {
         "tokens_in": 0,
         "tokens_out": 0,
@@ -201,11 +223,18 @@
       "usage_history": []
     },
     "train": {
-      "agent": "none (external — laptop GPU / AWS VM / portal; dependency-wait)",
-      "status": "pending",
+      "agent": "none (external \u2014 laptop GPU / AWS VM / portal; dependency-wait)",
+      "status": "in_progress",
       "artifacts": [],
       "consecutive_failures": 0,
-      "spawns": [],
+      "spawns": [
+        {
+          "spawned_by": "orchestrator",
+          "at": "2026-09-19T04:15:46.611952+00:00",
+          "result": "in_progress",
+          "identity": ""
+        }
+      ],
       "usage": {
         "tokens_in": 0,
         "tokens_out": 0,

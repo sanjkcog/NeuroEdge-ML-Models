@@ -1,5 +1,5 @@
 {
-  "checkpoint": "M4",
+  "checkpoint": "M8",
   "failed": false,
   "findings": [
     {
@@ -129,10 +129,106 @@
       "detail": "'47871db08ccc'"
     },
     {
-      "level": "NOT_YET",
+      "level": "PASS",
       "area": "use case <-> scaffold",
-      "check": "present",
-      "detail": "recorded at M8"
+      "check": "use_case_id",
+      "detail": "'cnc-drift-on-powertrain-shop-for-car-prduction'"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "class_names (order included)",
+      "detail": "['normal', 'tool_wear']"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "channel order",
+      "detail": "['spindle_load', 'x_axis_error', 'vibration_rms']"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "sample_rate_hz",
+      "detail": "10.0"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "window_samples",
+      "detail": "64"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "stride_samples",
+      "detail": "10"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "channels (name, unit, reduce)",
+      "detail": "[('spindle_load', 'nm', 'mean'), ('x_axis_error', 'um', 'mean'), ('vibration_rms', 'g', 'rms')]"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "target metric",
+      "detail": "'recall'"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "target min_value",
+      "detail": "0.9"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "at_fpr",
+      "detail": "0.01"
+    },
+    {
+      "level": "WARN",
+      "area": "use case <-> scaffold",
+      "check": "data.path",
+      "detail": "empty; the build reads data/contract/, never the scaffold's path"
+    },
+    {
+      "level": "WARN",
+      "area": "use case <-> scaffold",
+      "check": "framework",
+      "detail": "model_hint.framework is 'auto'; model_proposed.md decides"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "return writer",
+      "detail": "the scaffold writes the package through neuroedge_return"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "mlflow",
+      "detail": "the scaffold logs to MLflow; M8 reuses its run naming and tags (ADR-0026 D-3)"
+    },
+    {
+      "level": "WARN",
+      "area": "use case <-> scaffold",
+      "check": "training body",
+      "detail": "the scaffold's data loading, split, model, loss, metric and export are NOT used; M8 generates them from the lock and model_proposed.md (ADR-0025 D-5)"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "scaffold used",
+      "detail": "its context, return writer and MLflow naming are used"
+    },
+    {
+      "level": "WARN",
+      "area": "scaffold <-> device",
+      "check": "device_profile_id",
+      "detail": "'nvidia-jetson-orin-nano', expected None"
     },
     {
       "level": "NOT_YET",

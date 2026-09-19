@@ -1,0 +1,1 @@
+- `v1.md` — archived 2026-09-19: Re-run /model-select: proposal predates the ADR-0025 required sections (no Architecture heading, no Alternatives considered section)

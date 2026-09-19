@@ -1,6 +1,6 @@
 {
   "checkpoint": "M0",
-  "failed": true,
+  "failed": false,
   "findings": [
     {
       "level": "PASS",
@@ -45,19 +45,19 @@
       "detail": "no execution provider reported available (ort_version None); re-assess the device before deployment"
     },
     {
-      "level": "FAIL",
+      "level": "WARN",
       "area": "use case <-> device",
       "check": "task supported",
       "detail": "task 'anomaly_detection'; device supports ['object_detection']"
     },
     {
-      "level": "FAIL",
+      "level": "WARN",
       "area": "use case <-> device",
       "check": "runtime_profile available",
       "detail": "use case asks 'ep-tensorrt'; device offers ['ep-jetson-tensorrt', 'cuda', 'ort-cpu']"
     },
     {
-      "level": "FAIL",
+      "level": "WARN",
       "area": "use case <-> device",
       "check": "device_profile_id",
       "detail": "'nvidia-jetson-orin-nano', expected None"

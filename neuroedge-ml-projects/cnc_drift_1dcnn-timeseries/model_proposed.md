@@ -1,276 +1,316 @@
-# model-select — cnc_drift_1dcnn-timeseries (M7)
+# model-select — cnc_drift_1dcnn-timeseries (M7, v2)
 
 - **Decided:** 2026-09-18, `/model-select --pytorch --target edge`
+- **Supersedes:** `model_proposed/v1.md` (archived — missing the ADR-0025 required section
+  headings; refused by `ml_contract.review model`). v1's technical decisions are carried forward
+  as prior context only; none of them were approved, and every one is re-justified below against
+  the evidence in `data/`.
 - **Contract locked at:** `use_case.lock.json` (`lock_sha256 b7a3765f48f6c07e73e553928f8ff40371d87286824e85d8dad48cb401d15f0d`)
 - **Split locked at:** `split_hash 47871db08ccc16d34f4947407ec731a9988afdfb00ac890baf645df45f07baad`
 - Generates no code and runs no training. Input to `/model-build` (M8).
 
-## 1. Deployable pick — small 1D-CNN, plain conv stack (not InceptionTime)
+## Architecture
 
-**Architecture** (PyTorch, `channels-first (batch, 3, 64)`):
+**Family and rung:** `time-series-ml`'s architecture ladder, rung 2 (1D-CNN trained from scratch)
+— matching the objective's explicit request ("cnc drift 1D CNN model with 3 sensors",
+`README.md`) and the data volume available (4,491 real normal / 3,588 real worn train windows,
+plus the M6 synthetic mix). Rung 1 (MiniRocket+ridge) is retained as the required honesty-floor
+baseline, not the deployable model (§Baseline). Rung 3 (frozen TSFM encoder) is rejected — see
+§Alternatives considered.
 
-| Layer | In→Out ch | Kernel | Dilation | Padding | Notes |
-|---|---|---|---|---|---|
-| Conv1d + BN + ReLU | 3→16 | 5 | 1 | 2 | local texture, receptive field 5 |
-| Conv1d + BN + ReLU | 16→32 | 5 | 2 | 4 | receptive field 13 |
-| Conv1d + BN + ReLU | 32→64 | 3 | 4 | 4 | receptive field 21 |
-| GlobalAvgPool1d (over the 64-step time axis) | 64→64 | — | — | — | collapses time; keeps per-channel activation *statistics* over the window |
-| Linear + ReLU + Dropout(0.3) | 64→32 | — | — | — | head |
-| Linear | 32→1 | — | — | — | scalar logit; Sigmoid folded in at export (§9), not during training loss |
+**Proposed network** (PyTorch, `channels-first`, input `(batch, 3, 64)`):
 
-**Param count:** conv 256 + 2,592 + 6,208 = 9,056; BatchNorm affine 2×(16+32+64) = 224; head
-64×32+32 + 32×1+1 = 2,113. **Total ≈ 11.4k parameters** — well inside edge budget (KB-scale
-weights at fp32/int8), matches the deployment shape in `time-series-ml` ("a model of this class
-runs on an MCU; Jetson-class hardware is oversized but fine when already owned").
+| Layer | In→Out ch | Kernel | Dilation | Padding | Receptive field | Why this size |
+|---|---|---|---|---|---|---|
+| Conv1d + BN + ReLU | 3→16 | 5 | 1 | 2 | 5 | 16 channels is the smallest width that lets 3 input channels each get several independent learned combinations (≈5:1 expansion) without the first layer being the network's parameter bottleneck; kernel 5 covers 0.5 s at 10 Hz, enough to see a few raw samples of local dispersion per channel, matching the "texture, not shape" signature below |
+| Conv1d + BN + ReLU | 16→32 | 5 | 2 | 4 | 13 | doubling width (16→32) is the standard doubling-per-block convention that keeps parameter growth log-linear with depth; dilation 2 (not a second kernel-5 pass at dilation 1) grows the receptive field to 13 samples (1.3 s) without adding parameters relative to a wider kernel — appropriate because the wear signature (below) is a *dispersion* feature over an extended span, not a fine edge that needs dense sampling |
+| Conv1d + BN + ReLU | 32→64 | 3 | 4 | 4 | 21 | kernel shrinks to 3 and dilation grows to 4 so the third block keeps extending the receptive field (13→21 samples, 2.1 s, ≈33% of the 6.4 s window) with the same or fewer per-layer parameters than block 2, rather than paying for a still-wider kernel at this depth; 64 channels caps the deepest, most expressive layer at a width still small enough to keep the whole network in the low tens of thousands of parameters |
+| GlobalAvgPool1d over the time axis | 64→64 | — | — | — | window (64) | collapses the time axis into one activation-**statistic** per channel-64 feature — appropriate because, per the fitted wear signature, the label is carried by a *window-wide* variance change, not a moment-in-time event, so a pooling operator that must attend to a specific time step (e.g. max-pool or attention) would be solving the wrong problem |
+| Linear + ReLU + Dropout(0.3) | 64→32 | — | — | — | — | a single 32-wide hidden layer is enough head capacity to combine 64 pooled features into a decision surface without adding meaningful overfitting risk on top of a conv trunk this small; dropout 0.3 sized for a train set with effectively only 3–8 independent worn realizations (real + capped synthetic) once per-unit correlation is accounted for |
+| Linear | 32→1 | — | — | — | — | scalar logit per `use_case.lock.json`'s `head.shape: scalar`; sigmoid is folded in only at export (§Export), not during training (numerically stable `BCEWithLogitsLoss` on the raw logit) |
 
-**Why a plain dilated conv stack, not InceptionTime:** the fitted wear signature
-(`data/synthetic-recipe.md` §"Fitted wear signature") is a **single, consistent scale change** —
-`x_axis_error` std ×1.20–1.32, `spindle_load` std ×1.03–1.10, `vibration_rms` std ×0.78–0.85 — not
-a mix of temporal patterns at different frequencies/durations. InceptionTime's value is multi-branch
-multi-kernel-size parallelism to catch *heterogeneous* motifs across many classes/datasets; here
-there is one motif family (variance change) on a 64-sample (6.4 s) window with only 3 independent
-real worn train units. A multi-branch net would add parameters and overfitting surface without a
-matching diversity of patterns to justify it. The dilated stack (receptive field 5→13→21, covering
-about a third of the window by the last block) plus **BatchNorm3+GlobalAvgPool** is intentional:
-BatchNorm's normalization statistics and a stack of ReLU-conv layers are variance-sensitive by
-construction (a rectified combination of shifted/scaled convolutions responds to local dispersion,
-not just local mean), and global average pooling aggregates that response over the whole window
-into the scalar the head reads. This is a standard, well-fit choice for a texture/variance-type
-univariate-per-channel signature, not a level-shift signature that would want mean-pooling of raw
-values.
+**Parameter count, computed, not guessed:**
+- Conv1: 3×16×5 + 16 = 256; BN1 affine: 2×16 = 32
+- Conv2: 16×32×5 + 32 = 2,592; BN2 affine: 2×32 = 64
+- Conv3: 32×64×3 + 64 = 6,208; BN3 affine: 2×64 = 128
+- Head: (64×32 + 32) + (32×1 + 1) = 2,080 + 33 = 2,113
+- **Total ≈ 11,393 parameters** (conv 9,056 + BN 224 + head 2,113) — KB-scale at fp32, comfortably
+  inside `time-series-ml`'s edge guidance ("a model of this class runs on an MCU; Jetson-class
+  hardware is oversized but fine when already owned" — the `--target edge` flag here maps to a
+  Jetson Orin Nano, so headroom is intentional rather than needed).
 
-**Fits 64-step windows:** all three receptive fields stay well under 64, so the network can look at
-several distinct sub-regions of the window rather than being forced to a single global receptive
-field on the first layer.
+**Why the receptive-field/pooling combination fits the actual signal, not a generic default:**
+the fitted wear signature (`data/synthetic-recipe.md` §"Fitted wear signature", measured on real
+train data only) is a **consistent per-channel standard-deviation change** across all three real
+worn units — `x_axis_error` std ×1.20–1.32, `spindle_load` std ×1.03–1.10, `vibration_rms` std
+×0.78–0.85 — with mean shifts that are negligible to small by comparison. A stack of
+BatchNorm+ReLU convolutions is variance-sensitive by construction (a rectified, scaled/shifted
+convolution responds to local dispersion around a learned reference, not only to local mean), and
+global average pooling aggregates that dispersion response over the whole 6.4 s window into the
+scalar the head reads — matching a *texture/variance*-type signature rather than a level-shift or
+short-transient signature that would instead want mean-pooling of raw values or a
+sharper/localized receptive field.
 
-## 2. Pretrained / transfer — none; train from scratch, small
+**No pretrained backbone — architecture is trained from scratch.** This is a `time-series-ml`
+sensor/process objective, not vision or NLP: there is no timm/torchvision/TF-Hub backbone to
+transfer from, and the `pretrained-and-transfer` skill's advice does not apply here (it governs
+CNN/DNN objectives with an image or text pretraining corpus, which this is not). The only
+transfer-eligible options in this domain are time-series foundation models, evaluated and rejected
+in §Alternatives considered.
 
-No pretrained TS backbone is worth adopting here. **MOMENT** (MIT, the one TSFM in `time-series-ml`
-natively covering AD/classification) is a transformer encoder in the tens of millions of parameters
-— orders of magnitude over the edge budget in §1, and it would need an adapter to accept this
-3-channel/64-step/10 Hz contract cleanly. Chronos-Bolt/TimesFM/TinyTimeMixers/Lag-Llama are
-forecasting-only (AD only via forecast residual, which is the wrong framing when we already have
-direct wear labels) and Moirai is CC BY-NC (blocked outright). None of this data problem is
-label-scarce in the way that motivates rung 3 of the ladder: we have 4,491 real normal windows,
-3,588 real worn windows across 3 independent worn units, plus the synthetic mix in §5. Rung 3 is
-for when labels are too thin even for rung 2 — that is not the case here. **Verdict: train the
-architecture in §1 from scratch**, matching `time-series-ml`'s ladder rung 2 and the objective's
-explicit "1D-CNN" request in `README.md`.
+## Framing
 
-## 3. Training framing — two-class supervised (BCE), not one-class
+**Recommend:** two-class supervised, scalar head, `BCEWithLogitsLoss({normal: 0, tool_wear: 1})`,
+over the one-class/reconstruction alternative that `data/label-manifest.md`'s "Known limits"
+provisionally leaned toward ("thin positive class... argues for... a model trained on `normal`
+only").
 
-**Recommend:** a two-class supervised scalar head trained with `BCEWithLogitsLoss` against
-`{normal: 0, tool_wear: 1}`, over the one-class/reconstruction alternative the label-manifest
-flags as a fallback ("thin positive class... argues for a model trained on normal only").
+**Why the reversal is justified now, not asserted:** the label-manifest's lean predates M6. M6
+landed genuine contrastive signal — 3 independent real worn units (A01, A02, A05) plus, per
+`data/synthetic-recipe.md`, 30 synthetic worn units matched 1:1 against 30 synthetic normal units
+generated under *identical* per-run domain randomization (gain, baseline offset, noise), differing
+only in the fitted wear delta. A discriminative model can use that contrast directly to shape a
+decision boundary tuned to the KPI operating point (**recall ≥ 0.90 at FPR 0.01**,
+`use_case.lock.json`). A one-class/reconstruction model trained on `normal` only would learn
+"reconstructs the IM-01R program" from a single program with no mechanism to tune toward a target
+FPR, and reconstruction anomaly scores are typically noisier at a fixed FPR than a directly
+supervised head — a strictly harder ask given that labeled positives now exist to spend. This
+choice is flagged as the one open, non-blocking judgment call for the human (see end of document).
 
-**Reason:** the label-manifest's caution was written before M6 synth landed. We now have genuine
-contrastive signal — 3 real independent worn units plus 30 synthetic worn units matched 1:1 against
-30 synthetic normal units generated under identical domain randomization (§5) — which a
-discriminative model can use directly to shape a decision boundary tuned to the KPI (**recall ≥
-0.90 at FPR 0.01**, `use_case.lock.json`). A one-class/reconstruction model trained on `normal`
-only would have to learn "reconstructs the IM-01R program" from a single program and would have no
-mechanism to be tuned toward the false-positive-rate operating point the KPI demands; it also risks
-a strictly harder generalization ask (reconstruction anomaly scores are typically noisier at fixed
-FPR than a directly supervised head) given we do have positive examples to spend. Two-class
-supervised is the better fit for the stated metric.
+- **Loss:** `BCEWithLogitsLoss(pos_weight=...)`, `pos_weight` computed in `train.py` from the
+  *effective* class balance of the assembled train set (real + capped synthetic, §Synthetic),
+  never hardcoded.
+- **Optimizer / schedule:** AdamW, weight decay 1e-4, base LR 1e-3, cosine decay with a 5%-of-steps
+  linear warmup — all values live in `config.yaml`.
+- **Model selection:** on **real val only** (never synthetic), aggregated **per unit** (§Evaluation),
+  monitoring **recall @ FPR 0.01** with PR-AUC as tie-break; patience 15 / max epochs 100, both
+  config-driven.
+- **Seed:** one seed threaded through torch/numpy/python, value in `config.yaml` (suggested
+  `20260918` to match the synth seed for traceability) — never hardcoded in `model.py`/`train.py`.
 
-- **Loss:** `BCEWithLogitsLoss(pos_weight=...)` — `pos_weight` set from the **effective** class
-  balance of the assembled train set (real + capped synthetic, §5), computed in `train.py` from the
-  loaded split, not hardcoded.
-- **Optimizer / schedule:** AdamW, weight decay 1e-4, base LR 1e-3, cosine decay with a short linear
-  warmup (5% of steps) — values live in `config.yaml`, not the code.
-- **Early stopping / model selection:** on **real val only** (never synthetic), tracked per-unit
-  (§7's per-unit aggregation, not per-window), monitoring metric = **recall @ FPR 0.01** with PR-AUC
-  as tie-break; patience default 15 epochs, max epochs default 100 — all config-driven.
-- **Seed:** a single seed threaded through torch/numpy/python, its value living in `config.yaml`
-  (default suggested: `20260918`, matching the synth seed for this project's traceability, but a
-  free config field — never hardcoded in `model.py`/`train.py`).
+## Synthetic
 
-## 4. Augmentation (train-only, real windows) — ranges bounded to protect the variance signature
+Adopt `data/synthetic-recipe.md` and `data/synth-review.md`'s approved cap as-is: synthetic
+windows capped at **≤ 50% of real train windows per class** — 2,245 synthetic normal (of 35,867
+available) and 1,794 synthetic worn (of 35,719 available), subsampled uniformly across the 30
+synthetic units per class (not by dropping whole units), preserving realisation diversity. Final
+assembled train set: 4,491 real + ≤2,245 synthetic normal; 3,588 real + ≤1,794 synthetic worn
+(exact counts config-driven, capped by the rule above, never exceeding the approved 33%
+post-cap synthetic share recorded in `data/synth-review.md`).
 
-The wear signal is mostly a **1.03×–1.32× std ratio**, not a mean shift (§synthetic-recipe fitted
-signature). Every augmentation range below is deliberately tight so it cannot wash out that ratio:
+**Required M8 output — the ablation.** Train the §Architecture network twice, real-only and
+real+capped-synthetic, identical seed/splits/hyperparameters; compare **only on real val**
+(§Evaluation's per-unit recall@FPR0.01 / PR-AUC). Per `data/synth-review.md`'s decision, the
+synthetic data is kept in the deployable model **only if** real+synthetic beats real-only on that
+comparison; both runs and the delta ship in the handoff package regardless of outcome.
+
+**Guarding against a synthetic-texture shortcut.** `data/synthetic-recipe.md`'s fidelity table
+shows real `spindle_load`/`vibration_rms` std running ~81–91% of real magnitude in the synthetic
+set (block-bootstrap steady-state pool has slightly lower dispersion than the full real pool) —
+a leak surface if the model could learn "low-dispersion synthetic texture" instead of "worn":
+1. **Matched synthetic normals** — identical domain randomization is applied to synthetic
+   `normal` and `tool_wear` runs, differing only by the fitted wear delta, so a "this is
+   synthetic" cue is present equally in both synthetic classes and cannot by itself carry the
+   label.
+2. **The ablation is judged on real val only** — if real+synth training taught a
+   synthetic-vs-real cue instead of normal-vs-worn, that cue is absent from real val and the
+   ablation would show real+synth losing. This is the actual falsification test, not a side note.
+3. 🔴 **No per-window standardization as a workaround.** The lock's `scaling: in_graph` is
+   **global** (train-fold mean/std, fixed at export), never per-window. Per-window standardization
+   would force every window to unit variance and destroy the exact signal this task depends on
+   (a window-to-window variance change). M8 must not substitute a per-window normalizer to fight
+   the synthetic-fidelity gap.
+- Synthetic data is never used in val or test (`data/synth-review.md`'s "How it is used" table,
+  hard rule 6).
+
+## Augmentation
+
+Train-only, real windows only (never applied to synthetic windows, val, or test). The wear signal
+is mostly a 1.03×–1.32× std ratio, not a mean shift (`data/synthetic-recipe.md`'s fitted
+signature), so every range below is deliberately tight — an augmentation strong enough to
+manufacture a comparable std inflation would itself confuse the label:
 
 | Augmentation | Range | Why this range |
 |---|---|---|
-| Jitter (additive Gaussian noise, per channel) | std = 1–3% of that channel's **train** std | Large enough to regularize, small enough that it cannot itself manufacture a 20–30% std inflation and confuse the label |
-| Per-window gain (multiplicative, per channel, per window) | 0.97–1.03× | Deliberately tighter than a generic vision-style gain aug — a wider gain range directly perturbs the exact variance ratio the model must learn to detect |
-| Time-shift | ±5 samples (≤ 8% of the 64-sample window), applied within the unit's split bounds only | Preserves local texture; no interpolation/warping that would compress or stretch the variance structure |
+| Jitter (additive Gaussian noise, per channel) | std = 1–3% of that channel's **train** std | Large enough to regularize against exact-sample memorization, small enough that it cannot itself produce a 20–30% std inflation |
+| Per-window gain (multiplicative, per channel, per window) | 0.97–1.03× | Deliberately tighter than a generic vision-style gain aug — a wider range would directly perturb the exact variance ratio the model must detect |
+| Time-shift | ±5 samples (≤8% of the 64-sample window), within the unit's split bounds only | Preserves local texture; no interpolation/warping that would compress or stretch the variance structure |
 
 Explicitly **not** used: time-warping/stretching (would distort the std ratio nonlinearly),
-mixup/cutmix across classes (label-manifest confirms each window carries a single unambiguous
-per-unit label — mixing labels here has no principled meaning), and no augmentation is ever applied
-to val/test.
+mixup/cutmix across classes (`data/label-manifest.md` confirms each window carries one
+unambiguous per-unit label — mixing labels has no principled meaning here).
 
-## 5. Synthetic mix — adopt the recipe's cap, plus the required ablation
+## Baseline
 
-Adopt `data/synthetic-recipe.md`'s recommendation as-is: cap synthetic `tool_wear` at **≤ 50% of
-real tool_wear train windows** (≤ ~1,794 of 35,719 synthetic worn windows — subsample uniformly
-across the 30 synthetic worn units, not by picking whole units, to keep the realisation diversity
-that was the point of synthesizing), matched 1:1 by an equal count of synthetic `normal` windows
-drawn the same way. Final assembled train set: 4,491 real normal + up to ~1,794 synthetic normal,
-3,588 real worn + up to ~1,794 synthetic worn (exact counts config-driven, capped by the rule
-above).
+**MiniRocket + Ridge**, via `aeon` (BSD-3) — **not** `angus924/minirocket` (GPL-3.0), per
+`time-series-ml`'s license rule. Fit on the **same windows and the same `split_hash 47871db0`
+splits** as the CNN, evaluated with the identical per-unit protocol (§Evaluation). MiniRocket's
+random convolutional kernels need no fitting, but the PPV/max feature-selection and the ridge
+classifier must be **fit on train windows only**, then applied frozen to val/test — mirroring the
+leakage-safety rule already binding on the CNN's normalization stats.
 
-**Required M8 output — the ablation:** train the §1 architecture twice, real-only and
-real+capped-synthetic, same seed, same splits, same hyperparameters; compare **only on real val**
-(§3's per-unit recall@FPR0.01 / PR-AUC). Never validate on synthetic. Both runs and the delta go
-into the handoff package.
+This is the honesty floor (`model-codegen` invariant 9): the CNN in §Architecture is reported as
+`beats_baseline: true` only if it beats MiniRocket+ridge on real val recall@FPR0.01. **Baseline
+only — no ONNX/edge export**: `time-series-ml` is explicit that MiniRocket has no edge deployment
+path in this stack (the transform emits ~10k features into a linear head, not the `{1, C, W}`
+ONNX Conv graph the device runtime loads).
 
-**Guarding against a "syntheticness" shortcut** (real spindle_load/vibration_rms std run ~10–19%
-low against real, per the recipe's fidelity table — a leak surface if the model could learn
-"low-dispersion synthetic block-bootstrap texture" instead of "worn"):
-1. **Matched synthetic normals.** The generator applies identical domain randomization (gain,
-   baseline offset, noise) to synthetic `normal` and `tool_wear` runs and differs them *only* by the
-   fitted wear delta — so any "this is synthetic" texture is present equally in both synthetic
-   classes and cannot by itself carry the label.
-2. **The ablation is judged on real val only** — if real+synth training were teaching the model a
-   synthetic-vs-real cue instead of normal-vs-worn, that cue is absent from real val and the
-   ablation would show real+synth losing to real-only. The ablation is the actual falsification
-   test for this shortcut, not a side note.
-3. 🔴 **Do not use per-window standardization as a guard.** The lock's `scaling: in_graph` is a
-   **global** normalization (subtract/divide by **train-fold** mean/std, fixed at export) — not
-   per-window standardization. Per-window standardization would force every window to unit
-   variance and **destroy the exact signal this task depends on** (the wear signature is a
-   window-to-window variance change). Keep normalization global-train-stats only, matching the
-   already-locked contract; do not let M8 substitute a per-window normalizer to try to fight the
-   synthetic-fidelity gap — that would defeat the objective outright.
+## Evaluation
 
-## 6. Baseline — MiniRocket + Ridge (`aeon`, BSD-3)
+Binding on M8's `eval.py`:
 
-MiniRocket (via `aeon`, **not** `angus924/minirocket`, which is GPL-3.0 — see `time-series-ml`)
-transform → `RidgeClassifierCV` (or `RidgeClassifier` with a fixed alpha grid), on the **same
-windows and the same `split_hash 47871db0` splits** as the CNN, same per-unit evaluation protocol
-(§7). MiniRocket's convolutional kernels are fixed/random (no fitting needed for the kernels
-themselves), but the **PPV/max feature-selection and the ridge classifier are fit on train windows
-only** — fit MiniRocket's transform on the train split, then transform val/test with the frozen
-transform, exactly mirroring the leakage-safety rule already applied to the CNN's normalization
-stats. This is the honesty floor — the CNN in §1 must beat it on real val (and is only reported as
-`beats_baseline: true` if it does) per `model-codegen` invariant 9. **Baseline-only: no ONNX/edge
-export** — `time-series-ml` is explicit that MiniRocket has no edge deployment path in this stack
-(transform emits ~10k features into a linear head, not the `{1, C, W}` ONNX Conv graph the device
-runtime loads).
-
-## 7. Evaluation protocol (binding on M8's `eval.py`)
-
-- **Per-unit aggregation, never per-window.** For each experiment/segment, compute the maximum and
-  the mean `drift_score` (post-sigmoid, bounded 0–1) over that unit's windows; both are reported.
-  Overlapping windows within one unit are near-duplicates (stride 10 vs window 64 = 84% overlap) —
-  per-window metrics would overstate confidence.
-- **Threshold:** calibrated on **real val** at the KPI's operating point, **FPR 0.01**
-  (`use_case.lock.json: target.at_fpr`), never on test. Persisted in `meta.json` (§9).
+- **Per-unit aggregation, never per-window.** Max and mean `drift_score` (post-sigmoid, 0–1) per
+  unit/segment, both reported. Stride 10 vs window 64 = 84% overlap, so per-window metrics would
+  overstate confidence.
+- **Threshold** calibrated on **real val only**, at the KPI operating point FPR 0.01
+  (`use_case.lock.json: target.at_fpr`), never on test. Persisted in `meta.json` (§Export).
 - **Primary metrics:** recall @ FPR 0.01 (the KPI metric), PR-AUC (primary per `time-series-ml`),
-  event/unit-level F1, full confusion matrix at the calibrated threshold. ROC-AUC reported
-  secondary only. Never accuracy alone, never point-adjust F1 alone.
-- **Segmentation of results, all required:**
-  - **A01/A02 reported separately from A03/A04/A05** — A01/A02 carry seeded blowholes layered on
-    top of tool wear (label-manifest §Taxonomy); a per-trial metric mixing them with pure-wear
+  event/unit-level F1, full confusion matrix at the calibrated threshold. ROC-AUC secondary only.
+  Never accuracy alone, never point-adjust F1 alone.
+- **Segmentation, all required:**
+  - **A01/A02 reported separately from A03/A04/A05** — A01/A02 carry seeded blowholes on top of
+    tool wear (`data/label-manifest.md` Taxonomy); mixing them into one metric with pure-wear
     units is not a clean tool-wear number.
-  - **IM-01R segment vs A03 reported separately from the cross-program normals** — per
-    label-manifest's documented split deviation (IM-01R is the only normal run of the worn tools'
-    program, and spans train/val/test by time). Report test recall on A03 against the IM-01R test
-    tail *and* against the cross-program normals (IMP-05, TF-02) separately, so the
-    same-program-vs-different-program risk noted in label-manifest is visible, not averaged away.
-  - **Test is one worn trial.** `use_case.lock.json`'s test split holds exactly one worn unit
-    (A03). State plainly in `metrics.json`/the model card that the reported test recall is a
-    **single-trial pass/fail**, not a population estimate.
-- **Leave-one-worn-unit-out CV, required, train+val worn units only.** Over the 4 worn units
-  available outside test (A01, A02, A05 from train, A04 from val — never A03), run 4 folds each
-  holding one worn unit out for validation and training on the rest (plus all normal units,
-  respecting split-hash provenance — this is a spread estimate over train+val data, computed
-  independently of, and never touching, the official test split). Report the per-fold recall@FPR0.01
-  spread (min/max/mean) as an uncertainty band around the single test-trial number. This does not
-  replace the official train/val/test protocol; it is an additional robustness read required by this
-  spec.
+  - **IM-01R segment vs A03 reported separately from the cross-program normals** — IM-01R is the
+    only normal run of the worn tools' program and spans train/val/test by time
+    (`data/label-manifest.md`'s documented split deviation). Report test recall on A03 against the
+    IM-01R test tail *and* against the cross-program normals (IMP-05, TF-02) separately, so the
+    same-program-vs-different-program risk stays visible rather than averaged away.
+  - **Test is one worn trial** (A03 only). State plainly in `metrics.json`/the model card that the
+    reported test recall is a single-trial pass/fail, not a population estimate.
+- **Leave-one-worn-unit-out CV, required, train+val worn units only.** 4 folds over A01, A02, A05
+  (train) and A04 (val) — never touching A03/test — each holding one worn unit out, training on
+  the rest (plus all normal units, respecting split provenance). Report per-fold recall@FPR0.01
+  spread (min/max/mean) as an uncertainty band around the single test-trial number. Additive to,
+  never a replacement for, the official train/val/test protocol.
 
-## 8. Runner — `package`
+## Export
 
-`portal` is disallowed for this objective: the portal's `ts_preprocessor.py` windows across files
-and splits randomly (confirmed in `data/README.md`'s stage log, M4 gate note, and restated in
-`data/label-manifest.md`'s binding M7/M8 requirement #2 — "the portal's `ts_preprocessor.py` does
-the opposite [of split-then-window], so it must not be used for this dataset"). NeuroEdge-Web
-ADR-0002 V-1/V-2 (portal-side TS windowing fix) has not landed. **M8 generates a training package
-the user runs on their own GPU/VM** (`RUN_ON_GPU.md`), reading windows from `data/contract/` inside
-each unit's split bounds per `data/splits/*.json`.
-
-## 9. Export — ONNX opset 13, edge-static shape
-
-- **Opset 13**, pinned (per `use_case.lock.json`'s deployment target — Jetson Orin class, the value
-  named explicitly here, not left to the exporter default).
-- **Input:** `[1, 3, 64]` — static feature dim (3, fixed by the channel contract) and static window
-  (64, fixed by the lock), **dynamic batch dimension** for offline batch scoring convenience; the
+- **ONNX opset 13**, pinned to the deployment target (Jetson Orin Nano class, `--target edge`),
+  not left to the exporter default.
+- **Input `[1, 3, 64]`** — static feature dim (3, fixed by the channel contract), static window
+  (64, fixed by the lock), dynamic batch dimension for offline batch-scoring convenience; the
   device runtime feeds batch=1.
-- **In-graph ops:** `Sub`/`Div` by train-fold mean/std (global, per §5 guard #3 — not per-window),
-  then the §1 conv stack, then a terminal **Sigmoid** folded into the graph so the exported scalar
-  output is bounded (0, 1) and directly comparable to the persisted threshold (`model-codegen`
-  invariant 8) — training itself uses `BCEWithLogitsLoss` on the pre-sigmoid logit for numerical
-  stability, with the sigmoid appended only in the exported graph.
-- **`meta.json`** (beside the checkpoint/ONNX export), fields per lock + `model-codegen` invariant 7:
-  - `feature_order`: `["spindle_load", "x_axis_error", "vibration_rms"]`
-  - `window`: 64, `stride`: 10, `sample_rate_hz`: 10.0
-  - `reduce`: `{"spindle_load": "mean", "x_axis_error": "mean", "vibration_rms": "rms"}` (from the
-    lock's per-channel `reduce`)
-  - `units`: `{"spindle_load": "Nm", "x_axis_error": "um", "vibration_rms": "g"}`
-  - `definitions`: copied verbatim from `use_case.lock.json.timeseries.channels[*].definition`
-  - `lock_sha256`: `b7a3765f48f6c07e73e553928f8ff40371d87286824e85d8dad48cb401d15f0d`
-  - `head`: `"scalar"`; `output_schema`: `"anomaly_score"` (bounded 0–1, post-sigmoid)
-  - `decision_threshold`: the value calibrated per §7, `at_fpr`: 0.01
-  - `class_names`: `["normal", "tool_wear"]`
-  - normalization stats (train-fold mean/std per channel) actually baked into the graph, recorded
-    here too for auditability
+- **In-graph ops:** `Sub`/`Div` by train-fold mean/std (global, per §Synthetic guard #3, never
+  per-window) → the §Architecture conv stack → a terminal **Sigmoid** folded into the graph so the
+  exported scalar is bounded (0, 1) and directly comparable to the persisted threshold
+  (`model-codegen` invariant 8). Training uses `BCEWithLogitsLoss` on the pre-sigmoid logit for
+  numerical stability; sigmoid is appended only in the exported graph.
+- **`meta.json`** beside the checkpoint/ONNX export (`model-codegen` invariant 7):
+  `feature_order: ["spindle_load", "x_axis_error", "vibration_rms"]`; `window: 64`, `stride: 10`,
+  `sample_rate_hz: 10.0`; `reduce` per channel from the lock; `units` per channel from the lock;
+  `definitions` copied verbatim from `use_case.lock.json`; `lock_sha256`; `head: "scalar"`,
+  `output_schema: "anomaly_score"`; `decision_threshold` calibrated per §Evaluation with
+  `at_fpr: 0.01`; `class_names: ["normal", "tool_wear"]`; and the baked-in normalization stats
+  (train-fold mean/std per channel), recorded for auditability.
 
-## 10. Window guard — confirmed, not re-opened
+## Runner
 
-64 samples at 10 Hz = **6.4 s**, under the **10 s** (5,000-tick) split-boundary gap that
-`data/label-manifest.md` widened specifically for this contract window (2026-09-18, ADR-0008 M3).
-`data/contract/manifest.json` and the M0 re-lock stage-log entries confirm the contract dataset was
-rebuilt against this gap. No window can cross a split boundary under this guard — `train.py` must
-still assert it at load time (label-manifest's binding requirement #2), but the geometry itself is
-sound. No contract concern to raise on window/rate (see §"Contract concerns" below for the one item
-that *is* raised).
+**`package`.** The decision stands; its recorded reason was corrected on 2026-09-19.
 
-## 11. Subfolder names for M8
+> **Correction (2026-09-19, doc-only, after the M7 approval).** This section first said the
+> portal's `ts_preprocessor.py` windows before it splits and that the fix had not landed. That was
+> stale: the portal fixed it on 2026-09-18 (NeuroEdge-Web `1197d27`, Web ADR-0009). It now splits
+> rows first, fits normalisation on training rows only, windows inside each split piece, and
+> refuses a random split over overlapping windows. The claim was copied from
+> `data/label-manifest.md` requirement #2, written before that fix, and was checked only against
+> this folder, which could not show it.
 
-- **CNN (deployable):** `1DCNN/` (matches `README.md`'s architecture-carrying folder-name
-  convention already set at M0) — contains `model.py`, `train.py`, `config.yaml`, `eval.py`,
-  `requirements.txt`, `RUN_ON_GPU.md`, exported `model.onnx` + `meta.json` after the user trains.
-- **Baseline:** `MiniRocket/` — same `split_hash 47871db0`, contains its own `train.py`/`eval.py`
-  pair (features fit train-only) and `metrics.json`; no ONNX export (§6).
+`portal` is still not the runner for this objective, for reasons read from the portal's code
+(`neuroedge_model_training/`, 2026-09-19):
 
-## 12. Dataset facts used, and source
+- **It cannot take the approved split.** Its `per_unit` method shuffles units at random (fixed seed)
+  into fractions. It is not class-aware, so with 5 worn units among about 30 it can leave val or
+  test with no worn unit, and it cannot express the M5-approved assignment (A01/A02/A05 train, A04
+  val, A03 test) or the recorded IM-01R chronological deviation.
+- **It would not keep test withheld.** `data/portal_upload.zip` holds train + val only, so the portal
+  would carve its own test set out of this run's val.
+- **Its TS trainer does not train to the lock's target.** It is a fixed small net trained with
+  multiclass cross-entropy and selected on accuracy: no scalar head, no threshold calibrated at
+  `at_fpr`, no recall at a fixed FPR, no PR-AUC, no class weighting, no seed.
+- **It produces no baseline**, so no `beats_baseline`, and no real-only vs real+synthetic ablation or
+  leave-one-worn-unit-out CV (§Synthetic, §Baseline, §Evaluation).
 
-| Fact | Source |
-|---|---|
-| 3 channels, order, units, definitions, 10 Hz, window 64, stride 10, classes, scalar head, threshold calibrated on val, recall ≥0.90 @ FPR 0.01, layout, in-graph scaling | `use_case.lock.json` |
-| Real train counts (13 normal / 4,491 windows; 3 worn A01/A02/A05 / 3,588 windows), val (4 normal / A04), test (3 normal / A03), 5 independent worn units total, one program IM-01R, one material | `data/label-manifest.md` (Splits, Known limits), `data/contract/manifest.json` (per-unit row counts) |
-| A01/A02 blowhole confound; A03/A04/A05 pure tool wear | `data/label-manifest.md` (Taxonomy) |
-| Wear signature (std ratios, direction, magnitude) | `data/synthetic-recipe.md` §"Fitted wear signature" |
-| Synthetic counts, 50% cap recommendation, real:synthetic ratio ≈1:9.96, ablation requirement, never-in-val/test rule | `data/synthetic-recipe.md` §"Counts and mix" |
-| Synthetic fidelity gap (std ~81–91% / ~10–19% low vs real on spindle_load/vibration_rms) | `data/synthetic-recipe.md` §"Fidelity table" |
-| Matched domain randomization for synth normal/worn pairs | `data/synthetic-recipe.md` §"Generation approach" step 2 |
-| Portal `ts_preprocessor.py` disallowed for this dataset | `data/label-manifest.md` binding requirement #2; `README.md` M4 gate stage-log row |
-| 10 s split gap sized for the 6.4 s contract window | `data/label-manifest.md` (Splits table note, ADR-0008 M3) |
-| IM-01R spans train/val/test by time, documented deviation | `data/label-manifest.md` §"Deviation from time-series-ml" |
-| Per-unit / segment evaluation, recall @ stated FPR, MiniRocket baseline required, A01/A02 vs A03/A04/A05 split | `data/label-manifest.md` §"Requirements carried into M7/M8" |
-| Edge target: Jetson Orin class, ONNX opset 13 | `README.md` (Architecture requested), this run's `--target edge` flag |
-| MiniRocket license (aeon BSD-3 vs angus924 GPL-3.0), architecture ladder, deployment shape, metrics rules | `agentic-assets/skills/ENGINEERING/ai-ml/time-series-ml.md` |
+`inputs/inputs.json`'s recorded scaffold WARN ("training body... NOT used; M8 generates them from
+the lock and `model_proposed.md`") confirms the portal scaffold's training body is out of scope
+regardless.
+
+M8 therefore generates a training package the user runs on their own GPU/VM (`RUN_ON_GPU.md`),
+reading windows from `data/contract/` inside each unit's split bounds per `data/splits/*.json`.
+The recorded scaffold (`inputs/scaffold/neuroedge_train_cnc-drift-....py`) is reused only for its
+context plumbing, return writer, and MLflow run naming/tags (per `inputs/inputs.json`'s PASS
+findings on those two items) — never its training body.
+
+Subfolders for M8: **`1DCNN/`** (deployable — `model.py`, `train.py`, `config.yaml`, `eval.py`,
+`requirements.txt`, `RUN_ON_GPU.md`, exported `model.onnx` + `meta.json` after the user trains) and
+**`MiniRocket/`** (baseline — its own `train.py`/`eval.py`, `metrics.json`, no ONNX export).
+
+## Alternatives considered
+
+**Architecture alternatives:**
+- **InceptionTime** (multi-branch, multi-kernel-size) — rejected. Its value is catching
+  *heterogeneous* motifs across many classes/datasets via parallel kernel sizes. Here the fitted
+  wear signature is a **single, consistent scale change** (variance ratio) present near-identically
+  across all three real worn units, not a mix of temporal patterns at different frequencies or
+  durations. A multi-branch net would add parameters and overfitting surface — on only 3 real
+  worn units — without a matching diversity of patterns to justify it.
+- **Frozen TSFM encoder (MOMENT, MIT)** — rejected for this rung. MOMENT is the one TSFM in
+  `time-series-ml` natively covering AD/classification, but it is a transformer encoder in the
+  tens of millions of parameters, orders of magnitude over the edge budget (§Architecture's
+  ~11.4k), and would need a custom adapter to accept this 3-channel/64-step/10 Hz contract.
+  Rung 3 of the ladder is for objectives where labels are too thin even for rung 2 — not the case
+  here (4,491 real normal + 3,588 real worn train windows across 3 independent worn units, plus
+  the approved synthetic mix).
+- **Other forecasting-only TSFMs (Chronos-Bolt, TimesFM, TinyTimeMixers, Lag-Llama)** — rejected.
+  These support anomaly detection only via forecast residual, which is the wrong framing when
+  direct wear labels already exist (see framing discussion below). **Moirai** is additionally
+  blocked outright by its CC BY-NC license.
+
+**Framing alternatives:**
+- **One-class / reconstruction, trained on `normal` only** — the label-manifest's provisional
+  lean, rejected here (§Framing) on the grounds that M6 now supplies matched real+synthetic
+  worn/normal pairs, giving a discriminative model contrastive signal to tune a decision boundary
+  directly to the KPI's FPR operating point — an operating point a reconstruction-only model has
+  no direct mechanism to hit. Flagged as the one open judgment call for the human to override if a
+  future-program generalization requirement outweighs this.
+- **Forecast-residual anomaly scoring** — rejected together with the forecasting-only TSFMs above:
+  it discards the direct wear labels this dataset actually has.
+
+**Recipe / training alternatives:**
+- **Wider augmentation ranges** (e.g. generic vision-style ±10–20% gain) — rejected (§Augmentation):
+  the wear signal is itself a 3–32% std ratio change, so a loose gain/jitter range risks
+  manufacturing or erasing the exact signal the label depends on.
+- **Per-window standardization instead of global train-fold scaling** — rejected (§Synthetic guard
+  #3, §Export): would force every window to unit variance and destroy the window-to-window
+  variance signature this task depends on, even though it would superficially help mask the
+  synthetic-fidelity gap.
+- **Using the full synthetic set unmasked (1:9.96 real:synthetic ratio) instead of the 50% cap** —
+  rejected; `data/synthetic-recipe.md`'s own recommendation and `data/synth-review.md`'s approval
+  cap synthetic at 50% of real per class specifically so the assembled train set stays
+  majority-real and the ablation in §Synthetic remains a meaningful test rather than training
+  predominantly on block-bootstrapped data.
+- **`portal` as the M8 runner** — rejected; see §Runner for the verified evidence.
 
 ## Contract concerns
 
-None on window/rate — §10 confirms the geometry is sound as locked, so this section records a
-**process** observation instead, not a request to change the lock: `README.md`'s M4 gate stage-log
-row notes the portal use case *separately* declared `[spindle_load %, vibration g, coolant_temp,
-feed_rate]` at 100 Hz / 512-sample window, and that this was flagged "must be reconciled... before
-M7/M8." The current `use_case.lock.json` (`b7a3765f`) is the reconciled, authoritative 3-channel/10
-Hz/64-window contract this spec builds against — confirming that reconciliation is closed is worth
-a one-line check by the user before M8, since the lock file itself doesn't narrate that it
-superseded the portal's earlier 4-channel/100 Hz declaration.
+None on window/rate. 64 samples at 10 Hz = 6.4 s, under the 10 s (5,000-tick) split-boundary gap
+that `data/label-manifest.md` widened specifically for this contract window (ADR-0008 M3);
+`data/contract/manifest.json` and the M0 re-lock stage-log entries confirm the contract dataset was
+rebuilt against this gap. `train.py` must still assert the guard at load time
+(`data/label-manifest.md`'s binding requirement #1), but the geometry itself is sound as locked.
+
+One process observation, not a request to change the lock: `README.md`'s M4 gate stage-log row
+notes the portal use case *separately* declared `[spindle_load %, vibration g, coolant_temp,
+feed_rate]` at 100 Hz / 512-sample window, flagged "must be reconciled... before M7/M8." The
+current `use_case.lock.json` (`b7a3765f`) is the reconciled, authoritative 3-channel/10 Hz/64-window
+contract this proposal builds against — worth a one-line confirmation from the user before M8,
+since the lock file itself doesn't narrate that it superseded the portal's earlier declaration.
 
 ## Open question for the user
 
-None blocking M8. One judgment call made here that the user should sanity-check: choosing
-**two-class supervised BCE over one-class/normal-only training** (§3) reverses the label-manifest's
-provisional lean toward normal-only, on the grounds that M6 synth now supplies matched worn/normal
-pairs. If there's a reason to keep the one-class framing regardless (e.g. a product requirement to
-work even without any worn-unit training signal on a *different* future program), say so before M8
-generates `train.py`.
+None blocking M8. One judgment call the human should sanity-check: choosing **two-class supervised
+BCE over one-class/normal-only training** (§Framing) reverses `data/label-manifest.md`'s
+provisional lean, on the grounds that M6 synth now supplies matched worn/normal pairs. If there is
+a reason to keep the one-class framing regardless — e.g. a product requirement to work even
+without any worn-unit training signal on a *different* future program — say so before M8 generates
+`train.py`.

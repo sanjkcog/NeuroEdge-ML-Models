@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "updated": "2026-09-18T22:52:04.216008+00:00",
+  "updated": "2026-09-19T04:15:31.572488+00:00",
   "gates": {
     "data/fetch-plan.json": {
       "stage": "plan",
@@ -35,58 +35,158 @@
     "inputs/use_case.yaml": {
       "stage": "destination",
       "type": "hard",
-      "status": "pending",
+      "status": "approved",
       "opened_at": "2026-09-18T22:50:40.603066+00:00",
-      "decisions": [],
+      "decisions": [
+        {
+          "identity": "sanjkcog",
+          "timestamp": "2026-09-19T01:59:10.254563+00:00",
+          "outcome": "approved",
+          "reason": "Approve: current portal download; all findings PASS and it matches lock b7a3765f48f6"
+        }
+      ],
       "opened_by": "intake"
     },
     "inputs/capability_manifest.json": {
       "stage": "destination",
       "type": "hard",
-      "status": "pending",
+      "status": "approved",
       "opened_at": "2026-09-18T22:50:40.885843+00:00",
-      "decisions": [],
+      "decisions": [
+        {
+          "identity": "sanjkcog",
+          "timestamp": "2026-09-19T01:59:10.386184+00:00",
+          "outcome": "approved",
+          "reason": "Approve: keep the Orin Nano manifest as advisory (ADR-0027); device findings stay WARNs"
+        }
+      ],
       "opened_by": "intake"
     },
     "inputs/scaffold": {
       "stage": "model-build",
       "type": "hard",
-      "status": "pending",
+      "status": "approved",
       "opened_at": "2026-09-18T22:50:41.188459+00:00",
-      "decisions": [],
+      "decisions": [
+        {
+          "identity": "sanjkcog",
+          "timestamp": "2026-09-19T01:59:59.093614+00:00",
+          "outcome": "approved",
+          "reason": "Closed as legacy: gate opened by pre-ADR-0027 intake; the scaffold is optional and ungated (ADR-0027 D-3)"
+        }
+      ],
       "opened_by": "intake"
     },
     "audit/M0": {
       "stage": "destination",
       "type": "hard",
-      "status": "pending",
-      "opened_at": "2026-09-18T22:51:56.032583+00:00",
-      "decisions": [],
+      "status": "approved",
+      "opened_at": "2026-09-19T01:57:32.298045+00:00",
+      "decisions": [
+        {
+          "identity": "usecase-audit (automatic)",
+          "timestamp": "2026-09-19T01:57:32.475478+00:00",
+          "outcome": "approved",
+          "reason": "audit/M0.md — no FAIL; WARN: device: ONNX Runtime providers; use case <-> device: task supported; use case <-> device: runtime_profile available; use case <-> device: device_profile_id; use case <-> device: capability_manifest_id; use case <-> device: platform; use case <-> device: sensors cover the channels"
+        }
+      ],
       "opened_by": ""
     },
     "audit/M4": {
       "stage": "verify",
       "type": "hard",
-      "status": "pending",
-      "opened_at": "2026-09-18T22:51:56.556346+00:00",
-      "decisions": [],
+      "status": "approved",
+      "opened_at": "2026-09-19T01:59:59.269236+00:00",
+      "decisions": [
+        {
+          "identity": "usecase-audit (automatic)",
+          "timestamp": "2026-09-19T01:59:59.537283+00:00",
+          "outcome": "approved",
+          "reason": "audit/M4.md — no FAIL; WARN: device: ONNX Runtime providers; use case <-> device: task supported; use case <-> device: runtime_profile available; use case <-> device: device_profile_id; use case <-> device: capability_manifest_id; use case <-> device: platform; use case <-> device: sensors cover the channels"
+        }
+      ],
       "opened_by": ""
     },
     "data/split-review.md": {
       "stage": "label",
       "type": "hard",
-      "status": "pending",
-      "opened_at": "2026-09-18T22:52:03.493038+00:00",
-      "decisions": [],
+      "status": "approved",
+      "opened_at": "2026-09-19T02:00:07.409664+00:00",
+      "decisions": [
+        {
+          "identity": "sanjkcog",
+          "timestamp": "2026-09-19T02:00:33.741215+00:00",
+          "outcome": "approved",
+          "reason": "Approve: per-experiment split with recorded IM-01R chronological deviation; ml-eval-reviewer to check at M8"
+        }
+      ],
       "opened_by": "review split"
     },
     "data/synth-review.md": {
       "stage": "synth",
       "type": "hard",
-      "status": "pending",
+      "status": "approved",
       "opened_at": "2026-09-18T22:52:03.921867+00:00",
-      "decisions": [],
+      "decisions": [
+        {
+          "identity": "sanjkcog",
+          "timestamp": "2026-09-19T02:01:02.628388+00:00",
+          "outcome": "approved",
+          "reason": "Approve: train-only synthetic, capped 50% of real per class; kept only if it beats real-only on real val at M8"
+        }
+      ],
       "opened_by": "review synth"
+    },
+    "model_proposed.md": {
+      "stage": "model-select",
+      "type": "hard",
+      "status": "approved",
+      "opened_at": "2026-09-19T02:07:19.874529+00:00",
+      "decisions": [
+        {
+          "identity": "sanjkcog",
+          "timestamp": "2026-09-19T02:08:14.495992+00:00",
+          "outcome": "approved",
+          "reason": "Approve: dilated 1D-CNN ~11.4k params, two-class BCE, MiniRocket baseline, package runner, ONNX opset 13"
+        }
+      ],
+      "opened_by": "review model"
+    },
+    "audit/M8": {
+      "stage": "model-build",
+      "type": "hard",
+      "status": "approved",
+      "opened_at": "2026-09-19T02:08:22.698864+00:00",
+      "decisions": [
+        {
+          "identity": "usecase-audit (automatic)",
+          "timestamp": "2026-09-19T02:08:22.980111+00:00",
+          "outcome": "approved",
+          "reason": "audit/M8.md — no FAIL; WARN: device: ONNX Runtime providers; use case <-> device: task supported; use case <-> device: runtime_profile available; use case <-> device: device_profile_id; use case <-> device: capability_manifest_id; use case <-> device: platform; use case <-> device: sensors cover the channels; use case <-> scaffold: data.path; use case <-> scaffold: framework; use case <-> scaffold: training body; scaffold <-> device: device_profile_id"
+        }
+      ],
+      "opened_by": ""
+    },
+    "eval-methodology": {
+      "stage": "model-build",
+      "type": "hard",
+      "status": "approved",
+      "opened_at": "2026-09-19T02:36:19.685465+00:00",
+      "decisions": [
+        {
+          "identity": "sanjkcog",
+          "timestamp": "2026-09-19T03:54:15.911707+00:00",
+          "outcome": "changes_requested",
+          "reason": "Round 2 BLOCK (CRITICAL: per-unit max at window threshold saturates). Chosen: Option 3 - pooled window recall@FPR0.01 headline, per-unit rate table, event diagnostics persistence 1, LOWO spread, meets_target needs recall>=0.90 AND fpr<=0.01; also fix 3 code-review HIGHs. Round 3 review authorised."
+        },
+        {
+          "identity": "sanjkcog",
+          "timestamp": "2026-09-19T04:15:31.572488+00:00",
+          "outcome": "approved",
+          "reason": "Fix tolerance, then approve: ml-eval-reviewer round 3 PASS + code-reviewer APPROVE; fpr_tolerance set to 0 with effective_fpr_bound disclosed, val single-trial caveat and LOWO spread added to reports"
+        }
+      ],
+      "opened_by": ""
     }
   }
 }

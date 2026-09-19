@@ -1,6 +1,6 @@
 # Split review — M5 (human gate `data/split-review.md`)
 
-Generated 2026-09-18T22:52:03+00:00 by `ml_contract.review split` from `data/contract/manifest.json` and `data/splits/{train,val}.json`. Test is summarised from the counts recorded at M4; `splits/test.json` was not opened.
+Generated 2026-09-19T02:00:07+00:00 by `ml_contract.review split` from `data/contract/manifest.json` and `data/splits/{train,val}.json`. Test is summarised from the counts recorded at M4; `splits/test.json` was not opened.
 
 - **Lock** `b7a3765f48f6` · **split_hash** `47871db08ccc`
 - **Window** 64 samples at 10 Hz = 6.4 s · **stride** 10 (1 s; consecutive windows share 54 of 64 samples)

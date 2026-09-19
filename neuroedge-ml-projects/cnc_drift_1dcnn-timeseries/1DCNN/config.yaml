@@ -1,0 +1,109 @@
+# 1D-CNN training config — cnc_drift_1dcnn-timeseries (M8)
+#
+# Every hyperparameter, path and the seed live here (model-codegen invariant 5). Nothing in
+# model.py / train.py / eval.py is hardcoded; they all read this file (or --config <other.yaml>).
+
+seed: 20260918  # matches the M6 synthetic-data seed, for traceability (model_proposed.md §Framing)
+
+# --- Contract (from use_case.lock.json; train.py refuses a mismatch rather than silently drifting) ---
+lock:
+  path: "../use_case.lock.json"
+  lock_sha256: "b7a3765f48f6c07e73e553928f8ff40371d87286824e85d8dad48cb401d15f0d"
+
+paths:
+  splits_dir: "../data/splits"
+  contract_dir: "../data/contract"
+  synthetic_dir: "../data/synthetic"
+  runs_dir: "runs"
+
+timeseries:
+  feature_order: ["spindle_load", "x_axis_error", "vibration_rms"]
+  units: {spindle_load: "Nm", x_axis_error: "um", vibration_rms: "g"}
+  definitions:
+    spindle_load: "100 ms mean of spindle torque (SINUMERIK TORQUE|6)"
+    x_axis_error: "100 ms mean of X-axis following error (SINUMERIK CTRL_DIFF|1), in micrometres"
+    vibration_rms: "exact 100 ms RMS of the mean-removed 3-axis spindle acceleration magnitude (unit g assumed, unconfirmed)"
+  reduce: {spindle_load: "mean", x_axis_error: "mean", vibration_rms: "rms"}
+  sample_rate_hz: 10.0
+  window_samples: 64
+  stride_samples: 10
+  split_boundary_gap_seconds: 10.0  # config refuses a window longer than this (label-manifest.md #1)
+
+task:
+  class_names: ["normal", "tool_wear"]
+  head: "scalar"  # 0 = normal, 1 = tool_wear
+  at_fpr: 0.01
+  target_recall: 0.90  # reported as `meets_target` against the POOLED WINDOW headline recall_at_fpr
+
+model:
+  dropout: 0.3
+  # conv trunk is fixed by model_proposed.md's architecture table (channels/kernel/dilation are
+  # not config knobs — they define the approved architecture); only regularisation is tunable here.
+
+synthetic:
+  cap_fraction: 0.5  # <= 50% of real train windows per class (data/synth-review.md approval)
+  seed: 20260918
+
+augmentation:
+  # Train-only, REAL windows only (model_proposed.md §Augmentation). Deliberately tight ranges:
+  # the wear signal itself is a 3-32% std-ratio change.
+  jitter_std_frac: [0.01, 0.03]  # fraction of that channel's TRAIN std
+  gain_range: [0.97, 1.03]
+  time_shift_max_samples: 5
+
+optimizer:
+  name: "adamw"
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+  warmup_frac: 0.05  # of total steps, linear warmup
+  schedule: "cosine"
+
+training:
+  epochs: 100
+  patience: 15
+  batch_size: 128
+  num_workers: 0  # bump on a real GPU box; 0 is the safe default for a template
+  # PRIMARY model-selection criterion: POOLED WINDOW-level recall@FPR at the val-calibrated
+  # threshold (Option 3, M8 round 3 -- human-approved after ml-eval-reviewer found the round-2
+  # per-unit max-aggregation "headline" saturates almost regardless of the model under pure
+  # noise: flagging a unit whenever its MAX window score crosses a 1%-pooled-FPR threshold gives
+  # ~3.74-of-4 normal units alarming on average). `tie_break` breaks ties on the smoother pr_auc.
+  monitor: "recall_at_fpr"
+  tie_break: "pr_auc"
+
+ablation:
+  enabled: true  # run both real-only and real+synthetic, compare on real val, ship both
+
+cross_validation:
+  # Leave-one-worn-unit-out over the 4 train+val worn units (A01, A02, A05, A04), real data only,
+  # additive uncertainty band — never a replacement for the official train/val/test protocol
+  # (model_proposed.md §Evaluation). Never touches A03/test.
+  enabled: true
+  worn_units: ["IM-01R-A01", "IM-01R-A02", "IM-01R-A05", "IM-01R-A04"]
+  epochs: 60      # smaller budget than the main run; override if the GPU box has time to spare
+  patience: 10
+
+evaluation:
+  # meets_fpr tolerance. On val (the calibration split) the realised fpr is <= at_fpr by
+  # construction, so none is needed. Anything > 0 loosens the KPI out-of-sample (test, LOWO), so
+  # it is 0 (human decision, M8 eval-methodology gate). The bound applied is written into
+  # metrics.json as effective_fpr_bound.
+  fpr_tolerance: 0.0
+  # Alarm persistence for the event diagnostics below (human-chosen, M8 round 3): 1 window means
+  # a single over-threshold window already counts as an alarm event (no debounce).
+  alarm_persistence_windows: 1
+  # Segmentations required by model_proposed.md §Evaluation / label-manifest.md requirement #4:
+  blowhole_units: ["IM-01R-A01", "IM-01R-A02"]        # tool wear + seeded blowholes
+  pure_wear_units: ["IM-01R-A03", "IM-01R-A04", "IM-01R-A05"]
+  im01r_program_test_normal: "IM-01R"                  # same-program normal (test tail segment)
+  cross_program_test_normal_units: ["IMP-05", "TF-02"]
+
+export:
+  onnx_opset: 13
+  logit_clamp: 15.0
+
+mlflow:
+  # Reused literally from the recorded scaffold's run-naming/tag pattern (inputs/scaffold/...py),
+  # never its training body or its log_metric/log_param calls.
+  use_case_id: "cnc-drift-on-powertrain-shop-for-car-prduction"
+  experiment: "cnc-drift-on-powertrain-shop-for-car-prduction"

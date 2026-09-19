@@ -1,0 +1,40 @@
+# MiniRocket + Ridge baseline config — cnc_drift_1dcnn-timeseries (M8 honesty floor)
+#
+# Fit on the SAME windows and the SAME split_hash as the 1DCNN (model_proposed.md §Baseline).
+# Real train windows only: the baseline is not part of the real-only-vs-real+synthetic ablation
+# (that comparison is the 1DCNN's; the baseline's job is a single, simple honesty floor).
+
+seed: 20260918
+
+lock:
+  path: "../use_case.lock.json"
+  lock_sha256: "b7a3765f48f6c07e73e553928f8ff40371d87286824e85d8dad48cb401d15f0d"
+
+paths:
+  splits_dir: "../data/splits"
+  contract_dir: "../data/contract"
+  runs_dir: "runs"
+
+timeseries:
+  feature_order: ["spindle_load", "x_axis_error", "vibration_rms"]
+  sample_rate_hz: 10.0
+  window_samples: 64
+  stride_samples: 10
+
+task:
+  class_names: ["normal", "tool_wear"]
+  at_fpr: 0.01
+  target_recall: 0.90
+
+minirocket:
+  # aeon's MiniRocket, NOT angus924/minirocket (GPL-3.0) -- time-series-ml's license rule.
+  num_kernels: 10000
+  ridge_alphas: [0.1, 1.0, 10.0, 100.0, 1000.0]
+
+evaluation:
+  # See 1DCNN/config.yaml for why: no FPR tolerance (the KPI is exactly fpr <= at_fpr), and
+  # the human-chosen alarm persistence for the (diagnostic-only) event metrics.
+  fpr_tolerance: 0.0
+  alarm_persistence_windows: 1
+  blowhole_units: ["IM-01R-A01", "IM-01R-A02"]
+  pure_wear_units: ["IM-01R-A03", "IM-01R-A04", "IM-01R-A05"]
