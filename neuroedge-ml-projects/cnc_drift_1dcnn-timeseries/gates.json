@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "updated": "2026-09-18T06:37:38.713818+00:00",
+  "updated": "2026-09-18T22:52:04.216008+00:00",
   "gates": {
     "data/fetch-plan.json": {
       "stage": "plan",
@@ -31,6 +31,62 @@
         }
       ],
       "opened_by": "ml-data-engineer"
+    },
+    "inputs/use_case.yaml": {
+      "stage": "destination",
+      "type": "hard",
+      "status": "pending",
+      "opened_at": "2026-09-18T22:50:40.603066+00:00",
+      "decisions": [],
+      "opened_by": "intake"
+    },
+    "inputs/capability_manifest.json": {
+      "stage": "destination",
+      "type": "hard",
+      "status": "pending",
+      "opened_at": "2026-09-18T22:50:40.885843+00:00",
+      "decisions": [],
+      "opened_by": "intake"
+    },
+    "inputs/scaffold": {
+      "stage": "model-build",
+      "type": "hard",
+      "status": "pending",
+      "opened_at": "2026-09-18T22:50:41.188459+00:00",
+      "decisions": [],
+      "opened_by": "intake"
+    },
+    "audit/M0": {
+      "stage": "destination",
+      "type": "hard",
+      "status": "pending",
+      "opened_at": "2026-09-18T22:51:56.032583+00:00",
+      "decisions": [],
+      "opened_by": ""
+    },
+    "audit/M4": {
+      "stage": "verify",
+      "type": "hard",
+      "status": "pending",
+      "opened_at": "2026-09-18T22:51:56.556346+00:00",
+      "decisions": [],
+      "opened_by": ""
+    },
+    "data/split-review.md": {
+      "stage": "label",
+      "type": "hard",
+      "status": "pending",
+      "opened_at": "2026-09-18T22:52:03.493038+00:00",
+      "decisions": [],
+      "opened_by": "review split"
+    },
+    "data/synth-review.md": {
+      "stage": "synth",
+      "type": "hard",
+      "status": "pending",
+      "opened_at": "2026-09-18T22:52:03.921867+00:00",
+      "decisions": [],
+      "opened_by": "review synth"
     }
   }
 }

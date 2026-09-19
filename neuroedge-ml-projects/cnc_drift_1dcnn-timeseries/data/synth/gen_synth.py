@@ -325,7 +325,12 @@ def generate(dest: Path, seed: int, n_worn: int, n_normal: int, out_dir: Path) -
 
     rng = np.random.default_rng(seed)
     out_dir.mkdir(parents=True, exist_ok=True)
+    # Stamp the set with the lock and split it was fitted on (ADR-0025 D-3, D-6).
+    lock = json.loads((dest / "use_case.lock.json").read_text(encoding="utf-8"))
+    train_split = json.loads((dest / "data" / "splits" / "train.json").read_text(encoding="utf-8"))
     manifest: dict[str, Any] = {
+        "lock_sha256": lock["lock_sha256"],
+        "split_hash": train_split["split_hash"],
         "seed": seed,
         "startup_transient_rows": [int(t_lo), int(t_hi)],
         "units": [],

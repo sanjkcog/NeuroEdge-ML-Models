@@ -1,0 +1,186 @@
+{
+  "checkpoint": "M4",
+  "failed": true,
+  "findings": [
+    {
+      "level": "PASS",
+      "area": "use case",
+      "check": "lock intact",
+      "detail": "b7a3765f48f6 (cnc-drift-on-powertrain-shop-for-car-prduction)"
+    },
+    {
+      "level": "PASS",
+      "area": "use case",
+      "check": "input is the use case the lock was built from",
+      "detail": "lock 1db4afbe8113"
+    },
+    {
+      "level": "PASS",
+      "area": "use case",
+      "check": "ingress feature_order = lock channel order",
+      "detail": "['spindle_load', 'x_axis_error', 'vibration_rms']"
+    },
+    {
+      "level": "PASS",
+      "area": "device",
+      "check": "manifest status",
+      "detail": "'success'"
+    },
+    {
+      "level": "PASS",
+      "area": "device",
+      "check": "manifest age",
+      "detail": "2 days (generated 2026-09-16T07:07:49.019560+00:00)"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> device",
+      "check": "device accepts ONNX",
+      "detail": "supported_export_formats ['onnx', 'tensorrt']"
+    },
+    {
+      "level": "WARN",
+      "area": "device",
+      "check": "ONNX Runtime providers",
+      "detail": "no execution provider reported available (ort_version None); re-assess the device before deployment"
+    },
+    {
+      "level": "FAIL",
+      "area": "use case <-> device",
+      "check": "task supported",
+      "detail": "task 'anomaly_detection'; device supports ['object_detection']"
+    },
+    {
+      "level": "FAIL",
+      "area": "use case <-> device",
+      "check": "runtime_profile available",
+      "detail": "use case asks 'ep-tensorrt'; device offers ['ep-jetson-tensorrt', 'cuda', 'ort-cpu']"
+    },
+    {
+      "level": "FAIL",
+      "area": "use case <-> device",
+      "check": "device_profile_id",
+      "detail": "'nvidia-jetson-orin-nano', expected None"
+    },
+    {
+      "level": "WARN",
+      "area": "use case <-> device",
+      "check": "capability_manifest_id",
+      "detail": "the use case links no manifest; recorded manifest is 'cap-gpu-20260916T070749Z'"
+    },
+    {
+      "level": "WARN",
+      "area": "use case <-> device",
+      "check": "platform",
+      "detail": "use case 'jetson', device family 'gpu'"
+    },
+    {
+      "level": "WARN",
+      "area": "use case <-> device",
+      "check": "sensors cover the channels",
+      "detail": "the device declares no sensors (source None); ['spindle_load', 'x_axis_error', 'vibration_rms'] cannot be confirmed on the device"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> dataset",
+      "check": "contract lock_sha256",
+      "detail": "'b7a3765f48f6'"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> dataset",
+      "check": "sample_rate_hz",
+      "detail": "10.0"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> dataset",
+      "check": "window_samples",
+      "detail": "64"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> dataset",
+      "check": "stride_samples",
+      "detail": "10"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> dataset",
+      "check": "channels (order, unit, reduce)",
+      "detail": "[('spindle_load', 'nm', 'mean'), ('x_axis_error', 'um', 'mean'), ('vibration_rms', 'g', 'rms')]"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> dataset",
+      "check": "split_hash agrees",
+      "detail": "contract 47871db08ccc, train 47871db08ccc, val 47871db08ccc"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> dataset",
+      "check": "synthetic set lock_sha256",
+      "detail": "'b7a3765f48f6'"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> dataset",
+      "check": "synthetic set split_hash",
+      "detail": "'47871db08ccc'"
+    },
+    {
+      "level": "NOT_YET",
+      "area": "use case <-> scaffold",
+      "check": "present",
+      "detail": "recorded at M8"
+    },
+    {
+      "level": "NOT_YET",
+      "area": "package",
+      "check": "present",
+      "detail": "built at M9, checked at M11"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> simulator",
+      "check": "lock_sha256",
+      "detail": "'b7a3765f48f6'"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> simulator",
+      "check": "split_hash",
+      "detail": "'47871db08ccc'"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> simulator",
+      "check": "feature_order",
+      "detail": "['spindle_load', 'x_axis_error', 'vibration_rms']"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> simulator",
+      "check": "sample_rate_hz",
+      "detail": "10.0"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> simulator",
+      "check": "units",
+      "detail": "{'spindle_load': 'nm', 'x_axis_error': 'um', 'vibration_rms': 'g'}"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> simulator",
+      "check": "reduce",
+      "detail": "{'spindle_load': 'mean', 'x_axis_error': 'mean', 'vibration_rms': 'rms'}"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> simulator",
+      "check": "test exported only for acceptance",
+      "detail": "no test file without acceptance_only"
+    }
+  ]
+}

@@ -1,0 +1,216 @@
+version: '1.0'
+id: cnc-drift-on-powertrain-shop-for-car-prduction
+created_at: '2026-09-17T15:54:39.324839+00:00'
+created_by: ''
+business_requirement:
+  industry: manufacturing
+  objective: 'Detect CNC machine drift on the powertrain shop floor using time-series
+    sensor data, enabling faster response than manual operator detection.
+
+    '
+  business_kpi: detection_latency
+  target_improvement_percent: null
+  baseline_metric: 2-4 hours (operator detection)
+  current_process: null
+  environment: null
+  decision_action: null
+  false_positive_cost: medium
+  false_negative_cost: high
+  success_criteria: []
+  constraints: []
+  kpi_link:
+    baseline_value: 4.0
+    target_value: 0.04777777777777778
+    at_fpr: 0.01
+    kpi_type: detection_latency
+    unit: hours
+    notes: 'baseline_value as stated: "2-4 hours (operator detection)". target_value
+      as stated: "alert within 172 seconds of drift onset"'
+    confidence: estimated
+    aspirational: true
+    time_budget:
+      modality: timeseries
+      target_ms: 172000.0
+      terms:
+        window_ms: 6400.0
+        stride_ms: 1000.0
+        egress_ms: 0.0
+      inference_budget_ms: 164600.0
+      derivable: true
+      explanation: your 172 s target leaves ~164.6 s for inference and egress after
+        a 6.4 s window and a 1 s stride
+    derived_targets:
+    - field: performance_targets.max_latency_ms
+      value: 164600.0
+      because: how fast the customer needs to know is the response-delay budget; your
+        172 s target leaves ~164.6 s for inference and egress after a 6.4 s window
+        and a 1 s stride
+      source: business_requirement.kpi_link.target_value
+      soft: true
+    - field: performance_targets.accuracy.metric
+      value: recall_at_fpr
+      because: you said a false alarm costs lost technician time, while a miss costs
+        bad parts reaching assembly, or a machine failure — so the system is tuned
+        towards the side that hurts more
+      source: business_requirement.false_positive_cost + false_negative_cost
+      soft: true
+  expectations: []
+use_case:
+  name: CNC Drift Detection — Powertrain Shop
+  description: 'Detect CNC machine drift on the powertrain shop floor using time-series
+    sensor data, enabling faster response than manual operator detection.
+
+    '
+  industry: manufacturing
+  domain: predictive_maintenance
+task:
+  type: anomaly_detection
+  model_category: anomaly_detection
+  classes:
+  - normal
+  - tool_wear
+  timeseries:
+    window_samples: 64
+    stride_samples: 10
+    decision_threshold: null
+    channels:
+    - name: spindle_load
+      unit: Nm
+      source_ref: opcua://channel/spindle_load
+      definition: 100 ms mean of spindle torque (SINUMERIK TORQUE|6)
+      reduce: mean
+    - name: x_axis_error
+      unit: um
+      source_ref: opcua://channel/x_axis_error
+      definition: 100 ms mean of X-axis following error (SINUMERIK CTRL_DIFF|1), in
+        micrometres
+      reduce: mean
+    - name: vibration_rms
+      unit: g
+      source_ref: opcua://channel/vibration_rms
+      definition: exact 100 ms RMS of the mean-removed 3-axis spindle acceleration
+        magnitude (unit g assumed, unconfirmed)
+      reduce: rms
+  input:
+    modality: industrial_sensor
+    source: opcua
+    streams: null
+    fps: null
+    sample_rate_hz: 10.0
+    line_speed: null
+    lighting: null
+    camera_mount: null
+    sensor_notes: null
+target:
+  platform: jetson
+  accelerator: cuda
+  arch: arm64
+  device_name: NVIDIA Jetson Orin Nano
+  device_make: null
+  device_model: null
+  device_notes: null
+  device_profile_id: nvidia-jetson-orin-nano
+  capability_manifest_id: null
+  runtime_profile: ep-tensorrt
+  deployment_site: null
+ingress:
+  sensors:
+  - type: opcua
+    uri: opcua://
+    feature_order:
+    - spindle_load
+    - x_axis_error
+    - vibration_rms
+    id: sensor-1
+    source: opcua
+    modality: industrial_sensor
+  notes: null
+egress:
+  local_ui:
+    enabled: true
+    preview_enabled: false
+  mqtt:
+    enabled: true
+    broker_uri: mqtt://ne-bus:1883
+    topics:
+    - ne-bus/cnc-drift-detection-powertrain-shop/inference
+  api:
+    enabled: false
+    url: ''
+    batch_interval_seconds: 60
+    auth_token_ref: NE_EGRESS_AUTH_TOKEN
+  payload_format: json
+  events:
+  - inference_result
+  - alert
+  - telemetry
+  - heartbeat
+  - model_metrics
+  event_granularity: per_window
+model:
+  family: custom
+  variant: null
+  framework: auto
+  pretrained: false
+  fine_tuning_required: true
+  adaptation_mode: fine_tune
+  decision_locked: false
+performance_targets:
+  min_fps: 1.0
+  max_latency_ms: 172000.0
+  min_accuracy_map50: 0.5
+  max_memory_mb: null
+  latency_ms_p95_max: null
+  throughput_fps_min: 1.0
+  power_w_max: null
+  accuracy:
+    metric: recall
+    notes: 'Recall ≥ 0.90 (must catch at least 90% of real drift events). False alarm
+      tolerance: ≤ 1 per week (at_fpr = 0.01).
+
+      '
+    min_value: 0.9
+  max_seconds_per_cycle: null
+  provenance:
+    min_fps:
+      source: stated
+      enforcement: info
+    max_latency_ms:
+      source: stated
+      enforcement: info
+    accuracy.metric:
+      source: stated
+      enforcement: info
+data:
+  source: local
+  path: ''
+  format: csv
+  split:
+    train: 0.7
+    val: 0.15
+    test: 0.15
+  augmentation: false
+  labeling_status: not_available
+  sample_count: null
+  defect_rate: null
+  privacy: unknown
+training:
+  epochs: 50
+  batch_size: null
+  learning_rate: 0.001
+  resume_from: null
+deployment:
+  export_format: onnx
+  quantization: int8
+recommendation_preferences:
+  optimize_for:
+  - latency
+  quantization_allowed:
+  - fp32
+  - fp16
+  - int8
+  fallback_to_cpu_allowed: true
+  prefer_onnx_base_model: true
+  confidence_required: medium
+pipeline:
+  engine: auto

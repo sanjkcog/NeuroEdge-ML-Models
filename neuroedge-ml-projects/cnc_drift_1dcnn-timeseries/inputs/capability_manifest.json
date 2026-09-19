@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.1",
+  "manifest_id": "cap-gpu-20260916T070749Z",
+  "platform": "gpu",
+  "platform_family": "gpu",
+  "device_profile_id": null,
+  "device_name": "SanjeevK",
+  "accelerator": "cuda",
+  "l1": {
+    "os": "linux",
+    "arch": "amd64",
+    "machine": "x86_64",
+    "abi": "glibc 2.35"
+  },
+  "l2": {
+    "chipset_vendor": "nvidia",
+    "chipset_family": "gpu",
+    "accelerator": "cuda",
+    "runtime_profiles": [
+      "ep-jetson-tensorrt",
+      "cuda",
+      "ort-cpu"
+    ]
+  },
+  "compute": {
+    "cores": 20,
+    "compute_capability": null,
+    "tflops": null
+  },
+  "memory": {
+    "total_mb": 10954,
+    "available_mb": 9983
+  },
+  "supported_export_formats": [
+    "onnx",
+    "tensorrt"
+  ],
+  "supported_tasks": [
+    "object_detection"
+  ],
+  "supported_frameworks": [
+    "onnxruntime",
+    "pytorch"
+  ],
+  "runtime": {
+    "ort_version": null,
+    "runtime_profiles": [
+      "ep-jetson-tensorrt",
+      "cuda",
+      "ort-cpu"
+    ],
+    "available_ort_providers": [],
+    "providers": [
+      {
+        "name": "QNNExecutionProvider",
+        "available": false,
+        "library_path": null
+      },
+      {
+        "name": "TensorrtExecutionProvider",
+        "available": false,
+        "library_path": null
+      },
+      {
+        "name": "CUDAExecutionProvider",
+        "available": false,
+        "library_path": null
+      },
+      {
+        "name": "CPUExecutionProvider",
+        "available": false,
+        "library_path": null
+      }
+    ],
+    "qnn": {
+      "sdk_root": null,
+      "htp_library": null,
+      "available": false
+    },
+    "tensorrt": {
+      "python_version": null,
+      "trtexec": null,
+      "library": null,
+      "available": false
+    }
+  },
+  "driver_stack": {
+    "os": "Linux-5.15.167.4-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "system": "Linux",
+    "kernel": "5.15.167.4-microsoft-standard-WSL2",
+    "bsp_version": null,
+    "python": "3.10.18",
+    "machine": "x86_64",
+    "libc": "glibc 2.35",
+    "device_tree_model": null,
+    "nvidia_tegra_release": null,
+    "jetpack_l4t_package": null,
+    "cuda": null,
+    "nvidia_smi": "NVIDIA GeForce RTX 4070 Laptop GPU, 566.07",
+    "tegrastats_available": false,
+    "qnn_sdk_root": null,
+    "snpe_root": null,
+    "docker_available": true,
+    "platform_hint": "gpu",
+    "host_tools": {
+      "make": true,
+      "cmake": "cmake version 3.22.1",
+      "gcc": true,
+      "g++": true,
+      "git": "git version 2.34.1",
+      "tar": true,
+      "curl": true,
+      "wget": true,
+      "docker_compose": "Docker Compose version v5.3.0",
+      "cosign": false,
+      "aws": false,
+      "python_version": "3.10.18"
+    },
+    "platform_devices": {},
+    "disk": {
+      "root_total_gb": 250.9,
+      "root_free_gb": 200.7
+    }
+  },
+  "sensors": [],
+  "task_recommendations": {},
+  "model_fits": {},
+  "recommended_model": null,
+  "recommended_export_format": "onnx",
+  "recommended_quantization": "fp32",
+  "benchmark_results": [],
+  "generated_at": "2026-09-16T07:07:49.019560+00:00",
+  "ml_bench_version": "0.1.0",
+  "status": "success",
+  "diagnostics": {
+    "is_platform_override": false,
+    "probe_warnings": [],
+    "probe_advisory": [],
+    "probe_source": "ne-device-agent.assess --local --mode operational",
+    "assess_mode": "operational"
+  }
+}

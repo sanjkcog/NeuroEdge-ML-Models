@@ -1,4 +1,6 @@
 {
+  "lock_sha256": "b7a3765f48f6c07e73e553928f8ff40371d87286824e85d8dad48cb401d15f0d",
+  "split_hash": "47871db08ccc16d34f4947407ec731a9988afdfb00ac890baf645df45f07baad",
   "seed": 20260918,
   "startup_transient_rows": [
     42,
