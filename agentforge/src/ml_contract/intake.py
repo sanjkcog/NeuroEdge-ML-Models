@@ -1,10 +1,14 @@
-"""Offline inputs from the portal: record, hash and check them, then gate them (ADR-0025 D-1, D-2, D-5).
+"""Offline inputs from the portal: record, hash and check them (ADR-0025 D-1, D-2, D-5; ADR-0027).
 
-The model project never calls the portal. What it needs from the portal arrives as a file a human
-downloaded: the use case, the device's capability manifest, and the training scaffold. This module
-copies such a file into ``<dest>/inputs/``, records its hash in ``<dest>/inputs/inputs.json``,
-checks it against the use-case lock where one exists, and opens the hard gate the human answers.
-It never edits the file, and it never decides the gate.
+The model project never calls the portal. What it takes from the portal arrives as a file a human
+downloaded. This module copies such a file into ``<dest>/inputs/``, records its hash in
+``<dest>/inputs/inputs.json`` and checks it against the use-case lock where one exists. It never
+edits the file, and it never decides a gate.
+
+Only the **use case** is required and gated (ADR-0027 D-1): it is the contract between the portal,
+the device and the model. The **capability manifest** and the **training scaffold** are optional.
+When one is provided it is recorded and checked, and its findings are advisory; when it is not,
+the run goes on (no device checks; M8's default template). Neither opens a gate nor re-arms an audit.
 
     python -m agentforge.src.ml_contract.intake record --dest <dest> --kind use_case --file <yaml>
     python -m agentforge.src.ml_contract.intake record --dest <dest> --kind capability_manifest --file <json>
@@ -12,9 +16,10 @@ It never edits the file, and it never decides the gate.
     python -m agentforge.src.ml_contract.intake show   --dest <dest>
 
 The drop folder (ADR-0025 D-1a). ``init`` creates ``<dest>/inputs/incoming/`` with a README saying
-what to put there and where each file comes from. ``check`` picks up what was dropped, records it
-(opening its gate), and exits ``3`` naming every file still missing, so the orchestrator stops until
-the human has put it there:
+what to put there and where each file comes from. ``check`` picks up what was dropped and records
+it. It exits ``3`` only when a **required** input (the use case) is still missing, so the
+orchestrator stops until the human has put it there. A missing optional input is reported and the
+run continues:
 
     python -m agentforge.src.ml_contract.intake init  --dest <dest>
     python -m agentforge.src.ml_contract.intake check --dest <dest> --need use_case,capability_manifest
@@ -47,12 +52,19 @@ KINDS: dict[str, tuple[str, str, str]] = {
     "scaffold": ("inputs/scaffold/{name}", "inputs/scaffold", "model-build"),
 }
 
-# The audit gates whose checks read an input of each kind. A changed input re-arms them, so an
-# approval computed against the previous file cannot keep a stage satisfied (ADR-0025 D-4).
+# Only the use case is required, gated, and able to fail an audit (ADR-0027 D-1). The other kinds
+# are optional: recorded and checked when provided, never a reason to stop.
+REQUIRED = ("use_case",)
+OPTIONAL = ("capability_manifest", "scaffold")
+
+# The audit gates whose checks can FAIL on an input of each kind. A changed input re-arms them, so
+# an approval computed against the previous file cannot keep a stage satisfied (ADR-0025 D-4). An
+# optional input only ever produces WARNs in the audit, so changing it re-arms nothing: a model
+# built for one device can be tried against another without re-answering a gate (ADR-0027 D-2).
 DEPENDENT_AUDITS: dict[str, tuple[str, ...]] = {
     "use_case": ("audit/M0", "audit/M4", "audit/M8", "audit/M11"),
-    "capability_manifest": ("audit/M0", "audit/M4", "audit/M8", "audit/M11"),
-    "scaffold": ("audit/M8", "audit/M11"),
+    "capability_manifest": (),
+    "scaffold": (),
 }
 
 PASS, WARN, FAIL = "PASS", "WARN", "FAIL"
@@ -248,61 +260,27 @@ def read_inputs(dest: str) -> dict[str, Any]:
 
 
 def stored_path(dest: str, kind: str) -> str | None:
-    """Absolute path of the recorded input of ``kind``, or None (also when it was waived)."""
+    """Absolute path of the recorded input of ``kind``, or None when none was provided."""
     entry = read_inputs(dest).get(kind)
     return os.path.join(dest, entry["path"]) if entry and entry.get("path") else None
 
 
-# Only the scaffold may be waived (ADR-0026 D-3): without one, M8 builds from the default template.
-# The use case and the capability manifest stay required (ADR-0026 D-1).
-WAIVABLE = ("scaffold",)
+def usable_scaffold(dest: str) -> str | None:
+    """Absolute path of the recorded scaffold when M8 may use it, else None (ADR-0027 D-3).
 
-
-def waiver(dest: str, kind: str) -> dict[str, Any] | None:
-    """The recorded waiver for ``kind``, or None."""
-    entry = read_inputs(dest).get(kind)
-    return entry if entry and entry.get("waived") else None
-
-
-def waive(dest: str, kind: str, reason: str, *, identity: str) -> dict[str, Any]:
-    """Record that ``kind`` is deliberately not provided, as the human's answer to its gate.
-
-    A file recorded earlier is removed and its gate is closed by this decision, so the stage is not
-    left blocked on a gate nobody will answer. A later ``record`` of a file replaces the waiver.
+    A scaffold with a FAIL finding was generated from another use case. It is never a reason to
+    stop: M8 ignores it and builds from the default template.
     """
-    if kind not in WAIVABLE:
-        raise ValueError(f"{kind!r} cannot be waived; only {list(WAIVABLE)} can (ADR-0026 D-3)")
-    if not reason.strip():
-        raise ValueError("a waiver needs the human's reason")
-    if not identity.strip() or identity.strip().casefold() == "intake":
-        raise ValueError("a waiver needs the identity of the human who chose it (not the tool's own 'intake')")
-    # The gate decision comes FIRST: if it is refused, nothing else has changed (code review round 2,
-    # HIGH: writing inputs.json and deleting the old file before a refused approval left a half-applied
-    # waiver behind).
-    _, gate_id, stage = KINDS[kind]
-    try:
-        gt.record_human_decision(dest, gate_id, stage=stage, identity=identity, reason=f"waived: {reason.strip()}")
-    except gt.gate_state.SelfApprovalError as exc:
-        raise ValueError(str(exc)) from exc
-    inputs = _read_inputs(dest)
-    previous = inputs["inputs"].get(kind)
-    entry = {"kind": kind, "waived": True, "reason": reason.strip(), "recorded_at": _now(), "path": None,
-             "findings": [_finding(WARN, "waived", f"not provided: {reason.strip()}")]}
-    inputs["inputs"][kind] = entry
-    os.makedirs(os.path.join(dest, INPUTS_DIR), exist_ok=True)
-    with open(os.path.join(dest, INPUTS_DIR, INPUTS_FILE), "w", encoding="utf-8") as fh:
-        json.dump(inputs, fh, indent=2, ensure_ascii=False)
-        fh.write("\n")
-    if previous and previous.get("path"):
-        old = os.path.join(dest, previous["path"])
-        if os.path.exists(old):
-            os.remove(old)  # last: the waiver is on record before the file it supersedes goes
-    entry["audits_reopened"] = gt.reopen_if_present(dest, DEPENDENT_AUDITS[kind])
-    return entry
+    entry = read_inputs(dest).get("scaffold")
+    if not entry or not entry.get("path") or any(f["level"] == FAIL for f in entry.get("findings", [])):
+        return None
+    path = os.path.join(dest, entry["path"])
+    return path if os.path.exists(path) else None
 
 
 def record(dest: str, kind: str, src: str, *, open_gate: bool = True) -> dict[str, Any]:
-    """Copy ``src`` into the model folder as the input of ``kind``, check it, record it, gate it."""
+    """Copy ``src`` into the model folder as the input of ``kind``, check it and record it. A
+    required kind also gets its gate opened; an optional kind never does (ADR-0027 D-1)."""
     if kind not in KINDS:
         raise ValueError(f"unknown kind {kind!r}, expected one of {sorted(KINDS)}")
     with open(src, "rb") as fh:
@@ -350,13 +328,11 @@ def record(dest: str, kind: str, src: str, *, open_gate: bool = True) -> dict[st
         "source_name": name,
         "generated_at": generated_at,
         "recorded_at": _now(),
-        "gate": gate_id,
+        "gate": gate_id if kind in REQUIRED else None,
         "findings": findings,
     }
     if previous and previous.get("sha256"):
         entry["replaces_sha256"] = previous["sha256"]
-    elif previous and previous.get("waived"):
-        entry["replaces_waiver"] = previous["reason"]
     inputs["inputs"][kind] = entry
     path = os.path.join(dest, INPUTS_DIR, INPUTS_FILE)
     with open(path, "w", encoding="utf-8") as fh:
@@ -365,7 +341,7 @@ def record(dest: str, kind: str, src: str, *, open_gate: bool = True) -> dict[st
 
     unchanged = previous is not None and previous.get("sha256") == entry["sha256"]
     entry["unchanged"] = unchanged
-    if open_gate and not unchanged:
+    if open_gate and not unchanged and kind in REQUIRED:
         entry["gate_action"] = gt.open_pending(dest, gate_id, stage=stage, opened_by="intake")
     if not unchanged:
         # Unconditional (not tied to open_gate): a stale audit approval is wrong whether or not
@@ -379,18 +355,26 @@ def record(dest: str, kind: str, src: str, *, open_gate: bool = True) -> dict[st
 INCOMING_DIR = "inputs/incoming"
 RECORDED_DIR = "inputs/incoming/recorded"
 MISSING_EXIT = 3  # "a human must drop a file": distinct from 1 (a check failed) and 0 (all present)
+# What the run does without each optional input (ADR-0027 D-2, D-3).
+ABSENT_MEANS = {
+    "capability_manifest": "no device-fit checks here; the device is assessed at deployment",
+    "scaffold": "M8 builds from the default template",
+}
 
 INCOMING_README = """# Drop portal files here
 
 `/agentforge-ml` never calls the portal. Download these files from the portal (or the device) and
-drop them in this folder. The run records each one with its hash, asks you to confirm it at a gate,
-then moves it to `recorded/`. Nothing proceeds until the files a stage needs are here.
+drop them in this folder. The run records each one with its hash, then moves it to `recorded/`.
+
+Only the **use case** is required: the run stops at M0 until it is here, and asks you to confirm it
+at a gate. The other two are **optional**. Drop one and it is used. Leave it out and the run goes
+on without it. They can be added or replaced at any time without re-answering a gate.
 
 | File | Needed from | Where to get it | Recognised as |
 |---|---|---|---|
-| the use case (`<use-case-id>.yaml`) | M0 | Portal **Step 1 · Edge Use Case Design** → validate the spec → **Download use_case.yaml** | any `*.yaml` / `*.yml` with a top-level `id:` and `task:` |
-| the device capability manifest | M0 | The target device's assessment: `ne-device-agent assess --local` writes `capability_manifest.json`, the same file uploaded to the portal in **Step 2 · Target Device** | any `*.json` with `manifest_id` or `device_profile_id` |
-| the training scaffold (`neuroedge_train_<id>.py`) | M8 | Portal **Step 3 · Model Strategy** → *Build my own* → **Script (.py)** (a notebook also works) | any `*.py` / `*.ipynb` containing `NEUROEDGE_CONTEXT` |
+| the use case (`<use-case-id>.yaml`), **required** | M0 | Portal **Step 1 · Edge Use Case Design** → validate the spec → **Download use_case.yaml** | any `*.yaml` / `*.yml` with a top-level `id:` and `task:` |
+| the device capability manifest, *optional* (advisory device-fit warnings) | M0 | The target device's assessment: `ne-device-agent assess --local` writes `capability_manifest.json`, the same file uploaded to the portal in **Step 2 · Target Device** | any `*.json` with `manifest_id` or `device_profile_id` |
+| the training scaffold (`neuroedge_train_<id>.py`), *optional* (without it M8 uses the default template) | M8 | Portal **Step 3 · Model Strategy** → *Build my own* → **Script (.py)** (a notebook also works) | any `*.py` / `*.ipynb` containing `NEUROEDGE_CONTEXT` |
 
 Check what is here and what is missing:
 
@@ -398,8 +382,8 @@ Check what is here and what is missing:
     python -m agentforge.src.ml_contract.intake check --dest <this model folder> --need scaffold
 
 One file per kind. If two files of the same kind are here, `check` stops and names both; remove the
-one you do not want. A newer download of a file already recorded replaces it, and its gate and every
-audit that compared it are asked again.
+one you do not want. A newer download of a file already recorded replaces it. For the use case, its
+gate and every audit are then asked again, and the lock must be rebuilt.
 """
 
 
@@ -449,8 +433,9 @@ def classify(path: str) -> str | None:
 def check(dest: str, need: list[str]) -> tuple[int, list[str]]:
     """Record every needed input that was dropped, and report what is still missing.
 
-    Returns ``(exit_code, lines)``: 0 when every needed kind is recorded, ``MISSING_EXIT`` when a
-    human still has to drop a file, 1 when a drop is ambiguous (two files of one kind).
+    Returns ``(exit_code, lines)``: 0 when every **required** kind asked for is recorded,
+    ``MISSING_EXIT`` when a human still has to drop one, 1 when a drop is ambiguous (two files of
+    one kind). A missing optional kind is reported as ``[ABSENT]`` and never stops the run.
     """
     unknown = [k for k in need if k not in KINDS]
     if unknown:
@@ -485,9 +470,7 @@ def check(dest: str, need: list[str]) -> tuple[int, list[str]]:
                 # (Defender, OneDrive, an open editor) abort the check and hide that it happened.
                 lines.append(f"  recorded, but could not move {os.path.basename(files[0])} to recorded/ ({exc}); "
                              "remove it from incoming/ by hand")
-        elif kind in recorded and recorded[kind].get("waived"):
-            lines.append(f"[WAIVED] {kind}: {recorded[kind]['reason']} (drop the file here to use one instead)")
-        elif kind in recorded:
+        elif kind in recorded and recorded[kind].get("path"):  # a pre-ADR-0027 waiver has no path: absent
             lines.append(f"[PRESENT] {kind}: {recorded[kind]['path']} (sha256 {recorded[kind]['sha256'][:12]})")
         else:
             missing.append(kind)
@@ -497,20 +480,24 @@ def check(dest: str, need: list[str]) -> tuple[int, list[str]]:
             "capability_manifest": "the device's `ne-device-agent assess` output (the file uploaded in portal Step 2 Target Device)",
             "scaffold": "portal Step 3 Model Strategy -> Build my own -> Script (.py)",
         }[kind]
-        lines.append(f"[MISSING] {kind}: drop it into {folder} (from {where})")
+        if kind in REQUIRED:
+            lines.append(f"[MISSING] {kind}: drop it into {folder} (from {where})")
+        else:
+            lines.append(f"[ABSENT] {kind}: optional, not provided ({ABSENT_MEANS[kind]}). "
+                         f"To use one, drop it into {folder} (from {where})")
     if ambiguous:
         return 1, lines
-    if missing:
-        lines.append(f"STOP: {len(missing)} input(s) missing. Drop them into {folder}, then run check again.")
-        if set(missing) <= set(WAIVABLE):
-            lines.append("  or, to build without it: intake waive --dest <dest> --kind scaffold --reason \"...\" --identity <who>")
+    required_missing = [k for k in missing if k in REQUIRED]
+    if required_missing:
+        lines.append(f"STOP: {len(required_missing)} required input(s) missing. Drop them into {folder}, "
+                     "then run check again.")
         return MISSING_EXIT, lines
     return 0, lines
 
 
 def format_entry(entry: dict[str, Any]) -> str:
-    if entry.get("waived"):
-        return f"{entry['kind']}: WAIVED — {entry['reason']} (recorded {entry['recorded_at']})"
+    if not entry.get("path"):  # a waiver recorded before ADR-0027: the input is simply absent
+        return f"{entry['kind']}: not provided"
     lines = [
         f"{entry['kind']}: {entry['path']}",
         f"  sha256        {entry['sha256']}",
@@ -524,6 +511,8 @@ def format_entry(entry: dict[str, Any]) -> str:
         lines.append(f"  [{f['level']}] {f['check']}: {f['detail']}")
     if entry.get("gate_action"):
         lines.append(f"  gate {entry['gate']!r} {entry['gate_action']} — answer it before the input is used")
+    elif not entry.get("gate"):
+        lines.append("  optional input: no gate, and its findings are advisory")
     elif entry.get("unchanged"):
         lines.append(f"  gate {entry['gate']!r} unchanged (same file as before)")
     if entry.get("audits_reopened"):
@@ -534,7 +523,7 @@ def format_entry(entry: dict[str, Any]) -> str:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="intake", description=__doc__.splitlines()[0])
     sub = p.add_subparsers(dest="cmd", required=True)
-    r = sub.add_parser("record", help="copy, hash, check and gate an offline portal input")
+    r = sub.add_parser("record", help="copy, hash and check an offline portal input (the use case is also gated)")
     r.add_argument("--dest", required=True)
     r.add_argument("--kind", required=True, choices=sorted(KINDS))
     r.add_argument("--file", required=True, help="the downloaded file")
@@ -543,26 +532,10 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--dest", required=True)
     i = sub.add_parser("init", help="create inputs/incoming/ (the drop folder) and its README")
     i.add_argument("--dest", required=True)
-    c = sub.add_parser("check", help="record dropped files; exit 3 naming each input still missing")
+    c = sub.add_parser("check", help="record dropped files; exit 3 naming each REQUIRED input still missing")
     c.add_argument("--dest", required=True)
     c.add_argument("--need", required=True, help="comma-separated kinds, e.g. use_case,capability_manifest")
-    w = sub.add_parser("waive", help="record that the scaffold is deliberately not provided (default template)")
-    w.add_argument("--dest", required=True)
-    w.add_argument("--kind", required=True, choices=list(WAIVABLE))
-    w.add_argument("--reason", required=True)
-    w.add_argument("--identity", required=True, help="the human who chose to go without it")
     args = p.parse_args(argv)
-
-    if args.cmd == "waive":
-        try:
-            entry = waive(args.dest, args.kind, args.reason, identity=args.identity)
-        except ValueError as exc:
-            print(f"waive refused: {exc}", file=sys.stderr)
-            return 1
-        print(f"{args.kind}: waived ({entry['reason']}); M8 builds from the default template")
-        if entry["audits_reopened"]:
-            print(f"  re-opened {entry['audits_reopened']}: re-run /usecase-audit at those checkpoints")
-        return 0
 
     if args.cmd == "init":
         print(f"drop folder ready: {init_incoming(args.dest)} (see its README.md)")
@@ -588,7 +561,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"intake refused: {exc}", file=sys.stderr)
         return 1
     print(format_entry(entry))
-    return 1 if any(f["level"] == FAIL for f in entry["findings"]) else 0
+    # An optional input's FAIL is advisory (M8 ignores a mismatched scaffold), so it is not an error exit.
+    return 1 if args.kind in REQUIRED and any(f["level"] == FAIL for f in entry["findings"]) else 0
 
 
 if __name__ == "__main__":

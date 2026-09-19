@@ -1,5 +1,5 @@
 ---
-description: Orchestrate the ML model lifecycle — record the portal's offline inputs and lock the use case, dataset scout, acquire/verify, label, synth, model proposal, model build, external training wait, held-out eval, offline return to the platform, simulator data, model card — with a human gate at every data and model decision, a use-case alignment audit at four checkpoints, and state persisted to <dest>/run.json after every transition (ADR-0022, ADR-0025).
+description: Orchestrate the ML model lifecycle — record the portal's offline inputs and lock the use case, dataset scout, acquire/verify, label, synth, model proposal, model build, external training wait, held-out eval, offline return to the platform, simulator data, model card — with a human gate at every data and model decision, a use-case alignment audit at four checkpoints, and state persisted to <dest>/run.json after every transition (ADR-0022, ADR-0025). Only the use case is a required input; the device capability manifest and the portal training scaffold are optional and advisory (ADR-0027).
 argument-hint: "<objective>" [--use-case <file>] [--capability-manifest <file>] [--dest <folder>] [--stage <id>] | --status | --resume | --dry-run
 ---
 
@@ -13,9 +13,11 @@ argument-hint: "<objective>" [--use-case <file>] [--capability-manifest <file>] 
   not proceed without it. It is the source of truth for channels, rate, window, classes and
   head; M0 records it as `<dest>/inputs/use_case.yaml` and locks it into `<dest>/use_case.lock.json`, and every
   later stage reads the lock.
-- `--capability-manifest <file>` — the target device's `capability_manifest.json` (the device's
-  `ne-device-agent assess` output, the file uploaded in portal Step 2 · Target Device). Optional in the same way:
-  drop it into `<dest>/inputs/incoming/`. M0 records it as `<dest>/inputs/capability_manifest.json`.
+- `--capability-manifest <file>` — a target device's `capability_manifest.json` (the device's
+  `ne-device-agent assess` output, the file uploaded in portal Step 2 · Target Device). **Optional and advisory
+  (ADR-0027 D-2):** with one, `/usecase-audit` reports how the use case fits that device, as WARNs. Without one the
+  run goes on, and the device is assessed at deployment. It can be dropped in, swapped (Jetson → test laptop/VM →
+  Jetson) or left out at any time; it has no gate and re-opens nothing.
 - `--dest <folder>` — the model folder. Given → used as-is. Omitted → derived and confirmed **once** at the
   `destination` stage (`ml-artifact-destination`), then passed to every stage and agent. **No later stage asks.**
 - `--stage <id>` — join the pipeline at an already-wired stage (a user who has a dataset starts at `verify` or
@@ -33,8 +35,8 @@ Do not delegate this command to an agent (D1, same as `/agentforge`): it spawns 
 
 ## No network seam to the portal (ADR-0025 D-1)
 
-The model project never calls the portal API. The use case, the capability manifest and the training scaffold
-arrive as **files the human downloaded**, recorded with a hash by
+The model project never calls the portal API. The use case (required), and the capability manifest and the
+training scaffold (both optional), arrive as **files the human downloaded**, recorded with a hash by
 `python -m agentforge.src.ml_contract.intake record --dest <dest> --kind <use_case|capability_manifest|scaffold>
 --file <downloaded file>`. The model package leaves the same way: M11 builds an upload zip, and the human uploads
 it in the portal. Never fetch a portal file, and never read one from a portal repo's working tree.
@@ -42,22 +44,23 @@ it in the portal. Never fetch a portal file, and never read one from a portal re
 **The drop folder (ADR-0025 D-1a).** Every model folder has `<dest>/inputs/incoming/` with a README saying what to
 drop there and where each file comes from:
 
-| Drop | Needed from | Where it comes from |
-|---|---|---|
-| `<use-case-id>.yaml` | M0 | portal Step 1 · Edge Use Case Design → validate → **Download use_case.yaml** |
-| `capability_manifest.json` | M0 | the device's `ne-device-agent assess` output (uploaded in portal Step 2 · Target Device) |
-| `neuroedge_train_<id>.py` (**optional**) | M8 | portal Step 3 · Model Strategy → **Build my own** → **Script (.py)**. Without it, M8 uses the default template (ADR-0026 D-3) |
+| Drop | Read at | Required? | Where it comes from |
+|---|---|---|---|
+| `<use-case-id>.yaml` | M0 | **required**, gated, locked | portal Step 1 · Edge Use Case Design → validate → **Download use_case.yaml** |
+| `capability_manifest.json` | M0 | optional, advisory | the device's `ne-device-agent assess` output (uploaded in portal Step 2 · Target Device) |
+| `neuroedge_train_<id>.py` | M8 | optional: used when provided, else the default template | portal Step 3 · Model Strategy → **Build my own** → **Script (.py)** |
 
 `python -m agentforge.src.ml_contract.intake check --dest <dest> --need <kinds>` records what was dropped (by
-content, not by name), opens each file's gate, and **exits 3 naming every file still missing**. On exit 3, print
-its lines (the folder and where each file comes from) and **stop the session**. Do not continue, guess or fetch.
-`--resume` runs the same check again. Two files of one kind exit 1: ask which to keep.
+content, not by name). It opens a gate for the use case only, and **exits 3 only when the use case is missing**.
+On exit 3, print its lines (the folder and where the file comes from) and **stop the session**. Do not continue,
+guess or fetch. `--resume` runs the same check again. A missing optional file is reported as `[ABSENT]` with what
+the run does without it: relay that line and **carry on**. Two files of one kind exit 1: ask which to keep.
 
 ## Stage sequence (`run_state` sequence `ml`)
 
 | # | id | Command → agent | Produces (under `<dest>/`) | Gate (gate id in `gates.json`) |
 |---|---|---|---|---|
-| M0 | `destination` | this command | `README.md`, `run.json`, `inputs/{use_case.yaml, capability_manifest.json, inputs.json}`, **`use_case.lock.json`**, `audit/M0.md` | **human:** `inputs/use_case.yaml`, `inputs/capability_manifest.json` · **automatic:** the lock must build · `audit/M0` |
+| M0 | `destination` | this command | `README.md`, `run.json`, `inputs/{use_case.yaml, inputs.json}` (+ `capability_manifest.json` when provided), **`use_case.lock.json`**, `audit/M0.md` | **human:** `inputs/use_case.yaml` · **automatic:** the lock must build · `audit/M0` |
 | M1 | `scout` | `/dataset-scout --dest <dest>` → `ml-data-engineer` | `data/dataset-card.md` | **automatic: licence** (opened on failure) |
 | M2 | `plan` | `/dataset-download --dest <dest>` (phase 1) → `ml-data-engineer` | `data/archive-manifest.tsv`, `data/fetch-plan.json` | **human: scope** `data/fetch-plan.json` |
 | M3 | `download` | `/dataset-download --dest <dest>` (phase 2) | `data/raw/**` (gitignored) | dependency-wait (resumable) |
@@ -65,7 +68,7 @@ its lines (the folder and where each file comes from) and **stop the session**. 
 | M5 | `label` | `/auto-label --dest <dest>` (vision) / TS window rule, then **`review split`** | `data/label-manifest.md`, **`data/split-review.md`** | **human: split review** `data/split-review.md` |
 | M6 | `synth` | `/synth-data --dest <dest>` when chosen, then **`review synth`** (or `review synth --skip-reason`) | `data/synthetic-recipe.md` + `data/synthetic/manifest.json`, **`data/synth-review.md`** | **human: synthetic review** `data/synth-review.md` (a skip is approved too) |
 | M7 | `model-select` | `/model-select --dest <dest>` → `ml-modeler`, then **`review model`** | **`model_proposed.md`** (+ `model_proposed/v<N>.md` for superseded proposals) | **human: model proposal** `model_proposed.md` |
-| M8 | `model-build` | intake the **scaffold**, `audit M8`, then `/model-build --dest <dest>` → `ml-modeler`, then `ml-eval-reviewer` | `inputs/scaffold/<file>` (optional), `audit/M8.md`, `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md` | **human:** `inputs/scaffold` when one is provided, else a recorded waiver · **automatic:** `audit/M8` · **hard:** `eval-methodology` |
+| M8 | `model-build` | pick up a **scaffold** if one was dropped, `audit M8`, then `/model-build --dest <dest>` → `ml-modeler`, then `ml-eval-reviewer` | `inputs/scaffold/<file>` (when provided), `audit/M8.md`, `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md` | **automatic:** `audit/M8` · **hard:** `eval-methodology` |
 | M9 | `train` | **external** — laptop GPU / AWS VM / platform trainer | `<arch>/runs/<run_id>/model-package/` | dependency-wait |
 | M10 | `eval` | this command runs `<arch>/eval.py` on `data/splits/test.json` | `metrics.json` (`eval_split: held_out_test`) | **hard: KPIs + `beats_baseline`** (opened on a miss) |
 | M11 | `return` | `audit M11`, then build + validate the upload zip; **the human uploads it** | `audit/M11.md`, `<arch>/runs/<run_id>/return/upload.zip`, `return.json` | **automatic:** `audit/M11` · **human:** `return-upload` |
@@ -106,13 +109,15 @@ work around it, and never mark a stage complete by hand in `run.json`.
 2. Create `<dest>/README.md` (objective, modality, stage log) if missing.
 3. `run_state.py --path "$RUN" init --objective "<objective>" --sequence ml [--start-stage <id>]`. If `run.json`
    exists, ask before `--force`; a decline means `--resume`. Then `start destination`.
-4. **Record the offline inputs (ADR-0025 D-1, D-1a, D-2).** `intake init --dest <dest>` creates the drop folder.
-   When `--use-case` / `--capability-manifest` were given, record them directly (`intake record --kind use_case
-   --file <path>`, `--kind capability_manifest`). Then **always** run `intake check --dest <dest> --need
-   use_case,capability_manifest`. **Exit 3 → stop here**, showing the missing files and the drop folder; the run
-   resumes with `--resume` once they are dropped. Present both intake summaries (file, sha256, generated-at, findings) and ask the human to confirm each one is
-   the right, current download. Record both decisions. A FAIL in a summary is shown, and the human decides:
-   re-download or approve with a reason.
+4. **Record the offline inputs (ADR-0025 D-1, D-1a, D-2; ADR-0027).** `intake init --dest <dest>` creates the drop
+   folder. When `--use-case` / `--capability-manifest` were given, record them directly (`intake record --kind
+   use_case --file <path>`, `--kind capability_manifest`). Then **always** run `intake check --dest <dest> --need
+   use_case,capability_manifest`. **Exit 3 → stop here** (the use case is missing), showing the drop folder; the
+   run resumes with `--resume` once it is dropped. Present the use case's intake summary (file, sha256,
+   generated-at, findings) and ask the human to confirm it is the right, current download. Record the decision. A
+   FAIL in the summary is shown, and the human decides: re-download or approve with a reason.
+   **The capability manifest has no gate.** When one was provided, show its summary for information. When none
+   was, relay the `[ABSENT]` line and continue. Never stop or ask for it.
 5. **Lock the use case (ADR-0008 L-1, L-2)** from the recorded copy:
    `python -m agentforge.src.ml_contract.lock build --use-case <dest>/inputs/use_case.yaml --dest <dest>
    [--expect-channels a,b,c] [--definitions <json>]`. Pass the signals the objective names as
@@ -121,10 +126,12 @@ work around it, and never mark a stage complete by hand in `run.json`.
    then re-download and re-record it. Do not edit the lock, and do not work around a refusal. `--definitions` is
    only for per-sample definitions the portal schema cannot hold yet (ADR-0008 W2); the lock records that they came
    from the run. Then `run_state.py record-lock <dest>/use_case.lock.json`.
-6. **Audit checkpoint M0:** `python -m agentforge.src.ml_contract.audit --dest <dest> --checkpoint M0` (use case
-   ↔ device). No FAIL → its gate is approved automatically; show the WARNs anyway. A FAIL → present the findings;
-   the human fixes the use case or picks another device (re-download, re-record, re-run the audit), or approves a
-   documented deviation.
+6. **Audit checkpoint M0:** `python -m agentforge.src.ml_contract.audit --dest <dest> --checkpoint M0` (the use
+   case against its lock, plus use case ↔ device when a manifest was provided). No FAIL → its gate is approved
+   automatically; show the WARNs anyway. **Every device finding is a WARN (ADR-0027 D-2):** the model is built to
+   the lock, so a manifest from a test laptop or VM, or none at all, never blocks. Say plainly what the WARNs mean
+   for deployment (for example "the use case asks for `ep-tensorrt`; this device offers only `ort-cpu`"). A FAIL
+   here is about the use case itself → the human fixes and re-downloads it, or approves a documented deviation.
 7. `complete destination --artifact README.md --artifact inputs/inputs.json --artifact use_case.lock.json
    --artifact audit/M0.md`.
 
@@ -171,18 +178,17 @@ Gate handling, in stage order:
   architecture or recipe) → `review model --dest <dest> --archive "<the human's reason>"` (moves the proposal to
   `model_proposed/v<N>.md`), `run_state.py reopen model-select`, and re-run `/model-select` with the reason as a
   **binding constraint**. Repeat until approved.
-- **M8 scaffold intake (human, optional input — ADR-0026 D-3):** before generating anything, `intake check --dest
-  <dest> --need scaffold`. On **exit 3**, ask the human with `AskUserQuestion`:
-  - **Provide the portal scaffold.** They download it (portal **Step 3 · Model Strategy → Build my own → Script
-    (.py)**) into `<dest>/inputs/incoming/`; stop, and `--resume` picks it up.
-  - **Build with the default template.** Record their choice with `intake waive --dest <dest> --kind scaffold
-    --reason "<their words>" --identity <user>`. That is their decision on the `inputs/scaffold` gate, so it also
-    closes a gate a previously dropped scaffold opened.
+- **M8 scaffold pick-up (no gate — ADR-0027 D-3):** before generating anything, `intake check --dest <dest> --need
+  scaffold`. It always exits 0 for a missing scaffold. Do not stop and do not ask.
+  - **A scaffold was dropped** → it is recorded; show its findings for information. No FAIL → `/model-build` uses
+    it (context, return writer, MLflow naming). A FAIL means it was generated from another use case: say so,
+    **build from the default template instead**, and mention that a fresh download (portal **Step 3 · Model
+    Strategy → Build my own → Script (.py)**) would be used on a re-run. The WARNs list what the lock overrides.
+  - **`[ABSENT]`** → build from the default template, and say so in one line.
 
-  Recommend the scaffold when the model returns to the NeuroEdge portal. Either way the choice is recorded, never
-  implied. Present the findings: a FAIL means it was generated from another use case (re-download it). The
-  WARNs list what the lock overrides. Ask, and record.
-- **M8 audit checkpoint:** `audit --dest <dest> --checkpoint M8` (+ scaffold).
+  `python -c "from agentforge.src.ml_contract.intake import usable_scaffold; print(usable_scaffold(r'<dest>'))"`
+  prints the scaffold to use, or `None` for the default template.
+- **M8 audit checkpoint:** `audit --dest <dest> --checkpoint M8` (+ scaffold, advisory: WARN at most).
 - **M8 eval-methodology:** `ml-eval-reviewer`'s report is the gate (`gate_state.py open eval-methodology --stage
   model-build`); any **leakage** or **wrong-metric** finding loops back to `ml-modeler` before the stage completes.
 - **M10 KPIs:** compare `metrics.json` to the use case's targets (recall at the fixed FPR / mAP / …) and require
@@ -205,8 +211,9 @@ Run `<arch>/eval.py --package <pkg> --split <dest>/data/splits/test.json` (CPU i
 gate above.
 
 ### `return` (M11) — offline (ADR-0025 D-1)
-1. `audit --dest <dest> --checkpoint M11`: the package's `meta.json` against the lock, the device and the
-   simulator export. A FAIL here is a defect in M8/M10 to fix, not a deviation to approve lightly.
+1. `audit --dest <dest> --checkpoint M11`: the package's `meta.json` against the lock and the simulator export
+   (and the device, as WARNs, when a manifest was provided). A FAIL here is a defect in M8/M10 to fix, not a
+   deviation to approve lightly.
 2. Build `<arch>/runs/<run_id>/return/upload.zip` holding `model.onnx`, `meta.json`, `model_artifact.json`,
    `metrics.json` and `calibration/` when present. Run `neuroedge_return.validate_package` on it locally when the
    package is installed (from a local path or wheel, never fetched). Record its report in `return.json`, or record
@@ -236,8 +243,10 @@ approved a deviation. Add the stage-log row to `README.md`. The run is complete;
   stop.
 - `--resume`: `run_state.py resume` (exits 3 and names every owed gate when one blocks), then the stage loop from
   the first non-complete stage (train handled above). Resuming at M0 or M8 re-runs `intake check` for that stage's
-  files first, so files dropped since the stop are picked up. A run started before ADR-0025 will be owed the M0 input
-  gates, the M4 audit, and the M5/M6/M7 reviews. Record them in order, as above; each one is a real decision.
+  files first, so files dropped since the stop are picked up. A run started before ADR-0025 will be owed the M0
+  use-case gate, the M4 audit, and the M5/M6/M7 reviews. Record them in order, as above; each one is a real
+  decision. A run started before ADR-0027 may still hold a pending `inputs/capability_manifest.json` or
+  `inputs/scaffold` gate: it no longer guards anything, so ask the human once and record their answer to close it.
 - `--dry-run`: print the remaining sequence with owners; never write `run.json`.
 
 ## Do NOT
@@ -251,12 +260,13 @@ approved a deviation. Add the stage-log row to `README.md`. The run is complete;
 - Do not complete a stage over an unanswered gate, and do not answer a gate for the human.
 - Do not mark `train` complete without a package on disk; do not run training here.
 - Do not present a metric without its `eval_split`; do not skip the baseline.
-- Do not start a run past M0 without the use case and capability manifest recorded (`intake check` exit 0), and do
-  not continue past a lock refusal. Do not start M8 without the scaffold recorded **or** a recorded waiver
-  (ADR-0026 D-3).
+- Do not start a run past M0 without the use case recorded (`intake check` exit 0), and do not continue past a
+  lock refusal.
+- Do not stop, ask, or open a gate for a missing capability manifest or scaffold, and do not treat a device or
+  scaffold WARN as a blocker (ADR-0027). Every other human gate (M2, M4, M5, M6, M7, M10, M11) is unchanged.
 - Do not resample, rescale or convert units anywhere except the contract dataset (ADR-0008 L-3).
 - Do not use the scaffold's training body. Only its context, its return writer and its MLflow tracking
-  conventions are used (ADR-0025 D-5, ADR-0026 D-3).
+  conventions are used (ADR-0025 D-5, ADR-0027 D-3).
 
 ## NeuroEdge Assets
 

@@ -30,22 +30,28 @@ portal, a device re-flashed, a simulator export built on an old lock. This comma
 
 | Pair | What must agree |
 |---|---|
-| use case ↔ device (`inputs/capability_manifest.json`) | task in `supported_tasks`; `onnx` export; the use case's `runtime_profile` offered by the device; `device_profile_id`; `capability_manifest_id` linked; each lock channel covered by a declared device sensor; manifest status and age; an ONNX Runtime provider available |
+| use case ↔ device (`inputs/capability_manifest.json`, **optional, advisory**) | task in `supported_tasks`; `onnx` export; the use case's `runtime_profile` offered by the device; `device_profile_id`; `capability_manifest_id` linked; each lock channel covered by a declared device sensor; manifest status and age; an ONNX Runtime provider available |
 | use case ↔ dataset (`data/contract/`, splits, synthetic) | the contract's `lock_sha256`, rate, window, stride, channel order, units, reduce; one `split_hash` across contract and splits; the synthetic set stamped with this lock and split hash |
-| use case ↔ scaffold (`inputs/scaffold/`) | use case id, class order, channel order, rate and window equal the lock; the vision defaults and free-text `at_fpr` the lock overrides are listed |
+| use case ↔ scaffold (`inputs/scaffold/`, **optional, advisory**) | use case id, class order, channel order, rate and window equal the lock; the vision defaults and free-text `at_fpr` the lock overrides are listed |
 | use case ↔ simulator (`sim/manifest.json`) | `lock_sha256`, `split_hash`, feature order, rate, units, reduce; test exported only as `acceptance_only` |
 | package ↔ all (`<arch>/runs/*/model-package/meta.json`) | `lock_sha256`, class names, head, opset 13, feature order, window, stride, rate, reduce |
 
 Each check is **PASS**, **WARN**, **FAIL** or **NOT_YET**. NOT_YET means the source does not exist at this
 checkpoint by design. A source that should exist by now and does not is a FAIL.
 
+**The device and the scaffold never FAIL (ADR-0027).** Both are optional inputs. Without a capability manifest the
+device checks are NOT_YET. With one, every disagreement is a **WARN**: the model is built to the use-case lock, so
+it can be tried on a test laptop or VM before the deployment device, and swapping the manifest re-opens no audit.
+Without a scaffold, M8 uses the default template (PASS). A scaffold that disagrees with the lock is reported as
+WARN and as **not used**. Only the use case, the dataset, the simulator export and the package can FAIL.
+
 ## When it runs inside `/agentforge-ml`
 
 | Checkpoint | Point in the run | Why there |
 |---|---|---|
-| `M0` | after the lock is built | a device that cannot run the use case should stop the run before any data is fetched |
+| `M0` | after the lock is built | the recorded use case must be the one the lock was built from; a device that cannot run it is flagged (WARN) before any data is fetched |
 | `M4` | after the contract dataset, before the data-verified gate | the data the human approves must be the data the lock describes |
-| `M8` | after the scaffold is recorded, before code is generated | the portal contract the package is written against must be this use case's |
+| `M8` | before code is generated | a provided scaffold is reported as used, or as ignored because it belongs to another use case |
 | `M11` | after M10 eval, before the upload zip | what leaves the folder must agree with the lock, the device and the simulator export |
 
 ## Procedure

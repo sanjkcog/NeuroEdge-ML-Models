@@ -51,17 +51,20 @@ does NOT run training** and assumes no local GPU. Spawns `ml-modeler` (applies `
    the Web schema — and records the `fpr` it actually measured at in `metrics.json`. The platform compares
    that `fpr` with the use case's `at_fpr` as **information** (a `not_comparable` row), never as a gate.
    `eval.py --package <pkg> --split <dest>/data/splits/test.json` produces the held-out `metrics.json`.
-   **The platform's scaffold is an offline input (ADR-0025 D-1, D-5).** When the platform publishes one
-   (NeuroEdge: portal Step 3 · Model Strategy → *Build my own* → Script (.py)), the human downloads it and it is recorded as
-   `<dest>/inputs/scaffold/<file>` (`python -m agentforge.src.ml_contract.intake record --kind scaffold`, with a
-   human gate). Never fetch it. Use exactly two things from it: its `NEUROEDGE_CONTEXT` (ids, target device, KPIs,
+   **The platform's scaffold is an optional offline input (ADR-0025 D-1, D-5; ADR-0027 D-3).** When the platform
+   publishes one (NeuroEdge: portal Step 3 · Model Strategy → *Build my own* → Script (.py)) and the human dropped
+   it, it is recorded as `<dest>/inputs/scaffold/<file>` (`python -m agentforge.src.ml_contract.intake record
+   --kind scaffold`). It has no gate, and its absence never stops the build. Never fetch it.
+   `intake.usable_scaffold(<dest>)` returns the file to use, or `None` when there is none **or** when it
+   disagrees with the lock (it was generated from another use case): then build from the default template below
+   and say so. Use exactly two things from a usable scaffold: its `NEUROEDGE_CONTEXT` (ids, target device, KPIs,
    contract version, carried into `model_artifact.json` extras) and its return helper
    (`neuroedge_return.write_return_package`), installed from a local path or wheel and never fetched during
    training. **Its training body is never used.** Data loading, windowing, split, model, loss, metrics and
    export come from the lock and `model_proposed.md`. Where the scaffold context disagrees with the lock
    (vision defaults on a time-series use case, `at_fpr` only in notes), the lock wins; the intake findings list
    each case.
-   **No scaffold (a recorded waiver, ADR-0026 D-3) → the default template.** `train.py` writes the whole
+   **No usable scaffold → the default template (ADR-0027 D-3).** Nothing is asked and nothing is recorded. `train.py` writes the whole
    model-package itself, exactly as `ml-model-package` specifies: `model.onnx`, `meta.json`, `metrics.json`, and
    `model_artifact.json` in the consuming platform's `ModelArtifact` schema (`use_case_id`, `model_name`,
    `framework`, `format`, `uri`, `metrics`, `metrics_type`, `class_names`, `input_shape`, `created_at`, `extras`),

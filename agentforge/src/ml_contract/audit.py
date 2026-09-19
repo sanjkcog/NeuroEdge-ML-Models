@@ -5,6 +5,11 @@ expectations. This module compares whichever of them exist, and reports every ch
 FAIL or NOT_YET. NOT_YET means the source does not exist at this checkpoint by design. A source that
 should exist but does not is a FAIL.
 
+The device manifest and the training scaffold are optional inputs (ADR-0027). Without one, its
+checks are skipped. With one, a disagreement is a WARN and never a FAIL: the model is built to the
+use-case lock, so it can be tried on a test target before the deployment device, and a scaffold
+from another use case is ignored in favour of the default template.
+
     python -m agentforge.src.ml_contract.audit --dest <dest> --checkpoint M0|M4|M8|M11
     python -m agentforge.src.ml_contract.audit --dest <dest>          (everything that exists; no gate)
 
@@ -110,13 +115,20 @@ def check_use_case(a: Audit, dest: str, lock: dict[str, Any]) -> dict[str, Any] 
 
 
 def check_device(a: Audit, dest: str, lock: dict[str, Any], uc: dict[str, Any] | None) -> None:
+    """Advisory (ADR-0027 D-2): every disagreement is a WARN. The manifest describes one device; the
+    model is built to the lock and may run on another (a test laptop or VM) before deployment."""
     path = intake.stored_path(dest, "capability_manifest")
     if path is None or not os.path.exists(path):
-        a.missing("device", "inputs/capability_manifest.json (record it with ml_contract.intake)", "M0")
+        a.add(NOT_YET, "device", "present", "no capability manifest provided (optional): "
+                                            + intake.ABSENT_MEANS["capability_manifest"])
         return
     cap = _json(path)
     area = "use case <-> device"
-    a.equal("device", "manifest status", cap.get("status"), "success")
+
+    def advise(ok: bool, where: str, check: str, detail: str) -> None:
+        a.add(PASS if ok else WARN, where, check, detail)
+
+    a.equal("device", "manifest status", cap.get("status"), "success", level=WARN)
     generated = cap.get("generated_at")
     if generated:
         try:
@@ -126,7 +138,7 @@ def check_device(a: Audit, dest: str, lock: dict[str, Any], uc: dict[str, Any] |
         except ValueError:
             a.add(WARN, "device", "manifest age", f"unreadable generated_at {generated!r}")
     formats = [str(f).lower() for f in cap.get("supported_export_formats") or []]
-    a.add(PASS if "onnx" in formats else FAIL, area, "device accepts ONNX", f"supported_export_formats {formats}")
+    advise("onnx" in formats, area, "device accepts ONNX", f"supported_export_formats {formats}")
     providers = (cap.get("runtime") or {}).get("providers") or []
     if providers and not any(p.get("available") for p in providers):
         a.add(WARN, "device", "ONNX Runtime providers",
@@ -137,18 +149,19 @@ def check_device(a: Audit, dest: str, lock: dict[str, Any], uc: dict[str, Any] |
         return
     task = _get(uc, "task.type")
     tasks = cap.get("supported_tasks") or []
-    a.add(PASS if task in tasks else FAIL, area, "task supported", f"task {task!r}; device supports {tasks}")
+    advise(task in tasks, area, "task supported", f"task {task!r}; device supports {tasks}")
     want_rt = _get(uc, "target.runtime_profile")
     profiles = list(dict.fromkeys((_get(cap, "l2.runtime_profiles") or []) + (_get(cap, "runtime.runtime_profiles") or [])))
-    a.add(PASS if want_rt in profiles else FAIL, area, "runtime_profile available",
-          f"use case asks {want_rt!r}; device offers {profiles}")
-    a.equal(area, "device_profile_id", _get(uc, "target.device_profile_id"), cap.get("device_profile_id"))
+    advise(want_rt in profiles, area, "runtime_profile available",
+           f"use case asks {want_rt!r}; device offers {profiles}")
+    a.equal(area, "device_profile_id", _get(uc, "target.device_profile_id"), cap.get("device_profile_id"),
+            level=WARN)
     linked = _get(uc, "target.capability_manifest_id")
     if linked is None:
         a.add(WARN, area, "capability_manifest_id", f"the use case links no manifest; recorded manifest is "
                                                     f"{cap.get('manifest_id')!r}")
     else:
-        a.equal(area, "capability_manifest_id", linked, cap.get("manifest_id"))
+        a.equal(area, "capability_manifest_id", linked, cap.get("manifest_id"), level=WARN)
     platform, family = _get(uc, "target.platform"), cap.get("platform_family")
     if platform and family and platform != family:
         a.add(WARN, area, "platform", f"use case {platform!r}, device family {family!r}")
@@ -163,8 +176,8 @@ def check_device(a: Audit, dest: str, lock: dict[str, Any], uc: dict[str, Any] |
                                                         f"{channels} cannot be confirmed on the device")
     else:
         absent = [c for c in channels if c not in declared]
-        a.add(FAIL if absent else PASS, area, "sensors cover the channels",
-              f"missing on device: {absent}" if absent else f"all of {channels}")
+        advise(not absent, area, "sensors cover the channels",
+               f"missing on device: {absent}" if absent else f"all of {channels}")
 
 
 # --------------------------------------------------------------------------- dataset
@@ -235,29 +248,34 @@ def check_simulator(a: Audit, dest: str, lock: dict[str, Any], split_hash: str |
 
 
 def check_scaffold(a: Audit, dest: str, lock: dict[str, Any]) -> None:
-    waived = intake.waiver(dest, "scaffold")
-    if waived:
-        a.add(PASS, "use case <-> scaffold", "scaffold", f"waived: {waived['reason']}; M8 uses the default "
-                                                       "template, which writes the package itself (ADR-0026 D-3)")
-        return
+    """Advisory (ADR-0027 D-3). No scaffold: M8 uses the default template. A scaffold that
+    disagrees with the lock was generated from another use case: M8 ignores it, and says so."""
+    area = "use case <-> scaffold"
     path = intake.stored_path(dest, "scaffold")
     if path is None or not os.path.exists(path):
-        a.missing("use case <-> scaffold", "inputs/scaffold: drop it, or waive it to use the default template "
-                                          "(ml_contract.intake)", "M8")
+        a.add(PASS, area, "scaffold", "none provided (optional): " + intake.ABSENT_MEANS["scaffold"]
+                                      + ", which writes the package itself")
         return
     with open(path, "rb") as fh:
         text = intake.scaffold_text(fh.read(), path)
+    ctx: dict[str, Any] = {}
     try:
         ctx = intake.scaffold_context(text)
+        findings = intake.check_scaffold(ctx, text, lock)
     except ValueError as exc:
-        a.add(FAIL, "use case <-> scaffold", "context", str(exc))
-        return
-    for f in intake.check_scaffold(ctx, text, lock):
-        a.add(f["level"], "use case <-> scaffold", f["check"], f["detail"])
+        findings = [{"level": FAIL, "check": "context", "detail": str(exc)}]
+    mismatched = [f["check"] for f in findings if f["level"] == FAIL]
+    for f in findings:
+        a.add(WARN if f["level"] == FAIL else f["level"], area, f["check"], f["detail"])
+    if mismatched:
+        a.add(WARN, area, "scaffold used", f"NOT used: it disagrees with the lock on {mismatched}; "
+                                           + intake.ABSENT_MEANS["scaffold"] + ". Re-download it to use it")
+    else:
+        a.add(PASS, area, "scaffold used", "its context, return writer and MLflow naming are used")
     cap = intake.stored_path(dest, "capability_manifest")
-    if cap and os.path.exists(cap):
+    if ctx and cap and os.path.exists(cap):
         a.equal("scaffold <-> device", "device_profile_id", _get(ctx, "target.device_profile_id"),
-                _json(cap).get("device_profile_id"))
+                _json(cap).get("device_profile_id"), level=WARN)
 
 
 def check_package(a: Audit, dest: str, lock: dict[str, Any]) -> None:

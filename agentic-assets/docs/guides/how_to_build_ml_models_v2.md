@@ -13,14 +13,18 @@ and **resumes**, evaluates on a held-out split you control, and hands you an upl
 **returns the model to the portal**, so Part 3 → Prepare Device → Virtual Run → Deploy continue
 unchanged. v1 remains the deep reference for *why* each step is shaped the way it is; read it once.
 
-**What changed on 2026-09-18 (ADR-0025, ADR-0026):**
+**What changed on 2026-09-18 (ADR-0025, ADR-0026, ADR-0027):**
 
-- **No calls to the portal.** The model project takes the use case, the device's capability manifest
-  and (optionally) the training scaffold as **files you download and drop** into
+- **No calls to the portal.** The model project takes its inputs as **files you download and drop** into
   `<folder>\inputs\incoming\`. The model goes back as a zip **you upload**.
-- **You approve every decision that shapes the model:** the inputs at M0, the train/val/test split at M5,
-  synthetic data (or skipping it) at M6, the model proposal at M7, and the scaffold (or building without
-  one) at M8.
+- **Only the use case is required (ADR-0027).** It is the contract between the portal, the device and the
+  model, so it is confirmed at a gate and locked. The device's **capability manifest** and the portal's
+  **training scaffold** are optional: drop one and it is used, leave it out and the run goes on. Neither
+  has a gate. So you can build for the Jetson, try the model on a laptop or VM, and only then deploy,
+  without re-answering anything.
+- **You approve every decision that shapes the model:** the use case at M0, the transfer scope at M2, the
+  verified data at M4, the train/val/test split at M5, synthetic data (or skipping it) at M6, the model
+  proposal at M7, the KPI result at M10 and the upload at M11.
 - **Gates are enforced in code.** A stage cannot complete, and a later one cannot start, while a gate is
   owed.
 - **`/usecase-audit`** checks at M0, M4, M8 and M11 that the use case, the data, the scaffold, the
@@ -30,7 +34,8 @@ Decisions this guide implements: `docs/decisions/ADR-0021-ml-artifact-destinatio
 live), `docs/decisions/ADR-0022-agentforge-ml-orchestrator-and-model-package-contract.md` (the
 orchestrator and the model-package contract), `ADR-0024` (priced, scoped dataset transfer),
 `ADR-0025` (offline inputs, review gates, enforced gates, `/usecase-audit`), `ADR-0026` (portal inputs
-now; the scaffold is optional; the use-case hash ignores trailing newlines), and NeuroEdge-Web
+now; the use-case hash ignores trailing newlines), `ADR-0027` (only the use case is required; the
+capability manifest and the scaffold are optional and advisory), and NeuroEdge-Web
 `docs/decisions/ADR-0005-*.md` / `ADR-0008-*.md` (the portal side and the use-case lock).
 
 **Contents**
@@ -54,7 +59,7 @@ now; the scaffold is optional; the use-case hash ignores trailing newlines), and
 
 | # | Stage id | What runs | Produces (under the model folder) | Gate |
 |---|---|---|---|---|
-| M0 | `destination` | the orchestrator — resolves the folder, **records the downloaded use case and capability manifest**, locks the use case, audits use case ↔ device | `README.md`, `run.json`, `gates.json`, `inputs/`, `use_case.lock.json`, `audit/M0.md` | **human: each offline input** · **automatic: the lock builds, `audit/M0`** |
+| M0 | `destination` | the orchestrator — resolves the folder, **records the downloaded use case** (and a capability manifest, if you dropped one), locks the use case, audits it (device fit is advisory) | `README.md`, `run.json`, `gates.json`, `inputs/`, `use_case.lock.json`, `audit/M0.md` | **human: the use case** · **automatic: the lock builds, `audit/M0`** |
 | M1 | `scout` | `/dataset-scout` → `ml-data-engineer` | `data/dataset-card.md` | **hard, automatic: licence** |
 | M2 | `plan` | `/dataset-download` phase 1 → `ml-data-engineer` | `data/archive-manifest.tsv`, `data/fetch-plan.json` | **hard, human: scope** |
 | M3 | `download` | `/dataset-download` phase 2 | `data/raw/**` (gitignored) | waits — resumable |
@@ -62,7 +67,7 @@ now; the scaffold is optional; the use-case hash ignores trailing newlines), and
 | M5 | `label` | `/auto-label` (vision zero-shot → review · TS window rule), then `review split` | `data/label-manifest.md`, `data/split-review.md` | **hard, human: split review** |
 | M6 | `synth` | `/synth-data` when chosen, then `review synth` (or a recorded skip) | `data/synthetic-recipe.md`, `data/synth-review.md` | **hard, human: synthetic review (a skip too)** |
 | M7 | `model-select` | `/model-select` → `ml-modeler`, then `review model` | `model_proposed.md` (+ `model_proposed/v<N>.md`) | **hard, human: model proposal — re-run with an alternative on request** |
-| M8 | `model-build` | record the scaffold **or** a waiver (default template), `audit M8`, `/model-build` → `ml-modeler`, then `ml-eval-reviewer` | `inputs/scaffold/` (optional), `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md` | **human: the scaffold, or the waiver** · **automatic: `audit/M8`** · **hard: eval methodology** |
+| M8 | `model-build` | use the scaffold if you dropped one, else the default template; `audit M8`, `/model-build` → `ml-modeler`, then `ml-eval-reviewer` | `inputs/scaffold/` (when provided), `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md` | **automatic: `audit/M8`** · **hard: eval methodology** |
 | M9 | `train` | **you**, on your GPU (laptop / AWS VM) or the portal's trainer | `<arch>/runs/<run_id>/model-package/` | waits for you |
 | M10 | `eval` | the orchestrator runs `eval.py` on the **withheld test split** | `metrics.json` (`eval_split: held_out_test`) | **hard: KPIs + beats the baseline** |
 | M11 | `return` | `audit M11`, build + validate the upload zip; **you upload it in the portal** | `return/upload.zip`, `return.json` | **automatic: `audit/M11`** · **human: upload confirmed** |
@@ -127,14 +132,15 @@ not need to be running while `/agentforge-ml` runs.
 **6. The three portal files, dropped into `<folder>\inputs\incoming\`.** The folder is created at M0,
 with a README listing what goes there. File names don't matter: each file is recognised by its content.
 
-| File | Needed at | Where you get it |
+| File | Read at | Where you get it |
 |---|---|---|
-| the use case (`<use-case-id>.yaml`) | M0 | portal **Step 1 · Edge Use Case Design** → validate the spec → **Download use_case.yaml** |
-| the device capability manifest | M0 | the target device's assessment (`ne-device-agent assess --local` writes `capability_manifest.json`), the file uploaded in **Step 2 · Target Device**. The portal has no download for it yet |
+| the use case (`<use-case-id>.yaml`) — **required** | M0 | portal **Step 1 · Edge Use Case Design** → validate the spec → **Download use_case.yaml** |
+| the device capability manifest — **optional, advisory** | M0 | the target device's assessment (`ne-device-agent assess --local` writes `capability_manifest.json`), the file uploaded in **Step 2 · Target Device**. The portal has no download for it yet |
 | the training scaffold (`neuroedge_train_<id>.py`) — **optional** | M8 | **Step 3 · Prepare Model → Model Strategy → Build my own → Script (.py)**. Without it, M8 uses the default template |
 
-Set the use case's target device and runtime to match the device you record here **before** you
-download. The M0 audit fails on a mismatch.
+If you drop a capability manifest, the M0 audit compares the use case's target device and runtime with
+it and **warns** on a mismatch. It never blocks: the model is built to the use-case lock, so the same
+model can be tried on a laptop or VM before the Jetson. Swap the manifest any time, or leave it out.
 
 **7. Data directory.** Raw downloads land outside git: `$NEUROEDGE_ML_DATA` if set, else
 `<model-folder>/../.data/<dataset-id>/`. Both are gitignored; the `pre-commit-ml-artifact` hook blocks
@@ -161,7 +167,6 @@ The orchestrator asks two kinds of question and nothing else:
   - M5: the split review;
   - M6: synthetic data, or skip it;
   - M7: the model proposal;
-  - M8: the scaffold, or build without one;
   - M10: the KPI decision;
   - M11: confirm your upload.
 
@@ -226,7 +231,7 @@ Stages before the entry point are marked *supplied outside this run* — never f
 |---|---|
 | `"<objective>"` | Plain-language objective. Drives the derived folder name (`<intent>-<modality>`) and the task family. Blank ⇒ you are asked. |
 | `--use-case <file>` | The use-case YAML you downloaded from the portal. **Optional:** the usual way is to drop it into `inputs\incoming\`. Either way M0 does not proceed without it, and it locks it (`use_case.lock.json`). Every later stage reads the lock for channels, rate, window, classes and head (NeuroEdge-Web ADR-0008). |
-| `--capability-manifest <file>` | The target device's `capability_manifest.json`. Optional in the same way: drop it into `inputs\incoming\` instead. |
+| `--capability-manifest <file>` | A target device's `capability_manifest.json`. **Optional and advisory:** with one, the audits warn when the use case doesn't fit that device. Without one the run goes on. You can also drop it into `inputs\incoming\`. |
 | `--dest <folder>` | Use this folder as-is; **no question asked**. Omitted ⇒ derived from the objective and confirmed once. |
 | `--stage <id>` | Join at `destination · scout · plan · download · verify · label · synth · model-select · model-build · train · eval · return · data-simulator · model-card`. |
 | `--status` | One screen: stage, gate, blocker, owner. No changes. |
@@ -247,9 +252,9 @@ delegate it to a subagent.
   inputs/                   the portal's files, as you downloaded them (ADR-0025 D-1)
     incoming/               the drop folder; its README says what goes here and where it comes from
       recorded/             dropped files already recorded, time-stamped
-    inputs.json             per input: path · sha256 · generated_at · findings (or a waiver)
-    use_case.yaml           M0 — the lock is built from this copy
-    capability_manifest.json M0 — the target device
+    inputs.json             per input: path · sha256 · generated_at · findings
+    use_case.yaml           M0 — required; the lock is built from this copy
+    capability_manifest.json M0 — optional, advisory: a target device
     scaffold/<file>         M8 — optional; its context and return writer are used, never its training body
   use_case.lock.json        M0 — the input contract, locked from the use case (ADR-0008)
   audit/                    M0 · M4 · M8 · M11 — the /usecase-audit reports (.md for you, .json for tools)
@@ -296,10 +301,11 @@ Then, in order:
 
 1. **Record the inputs.** `intake check --need use_case,capability_manifest` picks up what you dropped
    into `inputs\incoming\`, copies each file into `inputs\` with its hash, and moves the original to
-   `incoming\recorded\`. If a file is missing it lists it with where to get it, and the run **stops**;
-   `--resume` checks again. Two files of the same kind stop it too: keep one.
-2. **Confirm each input** at its gate. You see the file, its hash, when it was generated, and every
-   finding.
+   `incoming\recorded\`. If the **use case** is missing it says where to get it, and the run **stops**;
+   `--resume` checks again. A missing capability manifest is only reported (`[ABSENT]`), and the run
+   continues. Two files of the same kind stop it: keep one.
+2. **Confirm the use case** at its gate. You see the file, its hash, when it was generated, and every
+   finding. A capability manifest, when provided, is shown for information and has no gate.
 3. **Lock the use case** from the recorded copy. `use_case.lock.json` holds the channels (name, unit,
    per-sample definition, order, reduce), rate, window, stride, classes, head and target. If the YAML is
    incomplete, or disagrees with the objective (for example it names signals you didn't), the run
@@ -412,15 +418,15 @@ your reason as a binding constraint. Repeat until you approve.
 the alternatives considered.
 
 ### M8 — `model-build`
-First the **scaffold decision**, which is optional (ADR-0026 D-3):
-- **You dropped the portal's scaffold:** it is recorded, checked against the lock, and you confirm it.
+First the **scaffold**, which is optional and never asked about (ADR-0027 D-3):
+- **You dropped the portal's scaffold:** it is recorded and checked against the lock, and it is used.
   The check compares use-case id, class order, channel order, rate, window, stride, per-channel
-  unit/reduce, target metric, `min_value` and `at_fpr`. A FAIL means it was generated from another
-  version of the use case: download a fresh one. From it, M8 takes **only** the context (ids, device,
+  unit/reduce, target metric, `min_value` and `at_fpr`. A mismatch means it was generated from another
+  version of the use case: M8 then **ignores it, builds from the default template, and tells you**, so a
+  stale download never stops the run. From a matching scaffold, M8 takes **only** the context (ids, device,
   KPIs), the `neuroedge_return` package writer, and MLflow run naming and tags. It **never** takes its
   data loading, split, model, loss or metrics.
-- **You didn't:** you're asked to drop one or to build with the **default template**. That choice is
-  recorded with your name (`intake waive --kind scaffold --reason "…" --identity <you>`). The default
+- **You didn't:** M8 builds with the **default template**. Nothing is asked. The default
   `train.py` writes the whole model package itself, including the baseline block.
 
 Then `/usecase-audit` runs at **M8**. Then `ml-modeler` generates the code from the lock and the
@@ -609,9 +615,9 @@ Everything crosses as a **file you move by hand**; neither side calls the other 
 | Portal step | What agentforge-ml gives it, or takes from it | Direction |
 |---|---|---|
 | 1 · Edge Use Case Design — *Download use_case.yaml* (shown once the spec validates) | M0 records it and locks it. The portal saves the spec first and downloads its own saved copy, so the file is exactly what the portal holds | you download |
-| 2 · Target Device — the device's `capability_manifest.json` | M0 records it and audits the use case against it. It comes from the device's assessment; the portal has no download yet | you copy it |
+| 2 · Target Device — the device's `capability_manifest.json` | **optional.** M0 records it and the audit warns where the use case doesn't fit it. It comes from the device's assessment; the portal has no download yet | you copy it |
 | 3 · Dataset — *Upload labelled dataset* | `data/portal_upload.zip` — train + val only, YOLO layout with `data.yaml` (vision) or CSV/JSON with `label` + unit columns (TS); class names identical to the use case | you upload |
-| 3 · Prepare Model → Model Strategy — *Build my own → Script (.py)* | **optional.** M8 records the scaffold and checks it against the lock. It uses the scaffold's **context**, its `neuroedge_return` writer and its MLflow naming, never its training body (ADR-0025 D-5, ADR-0026 D-3). Without it, M8 uses the default template | you download |
+| 3 · Prepare Model → Model Strategy — *Build my own → Script (.py)* | **optional.** M8 records the scaffold and checks it against the lock. It uses the scaffold's **context**, its `neuroedge_return` writer and its MLflow naming, never its training body (ADR-0025 D-5, ADR-0027 D-3). Without it, or when it belongs to another version of the use case, M8 uses the default template | you download |
 | 3 · Model Strategy — *Finished training return package* | M11 builds and validates `return/upload.zip`; **you upload it** and confirm the registration id at the `return-upload` gate | you upload |
 | 3 · Optimize | `extras.source = custom_return` ⇒ the export step becomes **validate** (checker, ORT load, opset, shapes); *Re-export ONNX* reads *Re-validate*; FP16/INT8 and runtime-EP projection unchanged | portal |
 | 4–6 · Prepare Device → Virtual Run → Deploy | unchanged — the package entered the same manifests location the portal's own trainer writes | portal |
@@ -657,14 +663,14 @@ Everything the orchestrator asks can be answered outside it:
 
 | Stage | Gate id | Who answers | Pack you read |
 |---|---|---|---|
-| M0 | `inputs/use_case.yaml`, `inputs/capability_manifest.json` | you | the intake summary (hash, generated-at, findings) |
+| M0 | `inputs/use_case.yaml` | you | the intake summary (hash, generated-at, findings) |
 | M0 · M4 · M8 · M11 | `audit/M0` · `audit/M4` · `audit/M8` · `audit/M11` | automatic when no FAIL; otherwise you | `audit/<checkpoint>.md` |
 | M2 | `data/fetch-plan.json` | you | the priced scopes |
 | M4 | `data/profile.json` | you | claimed vs measured, split summary |
 | M5 | `data/split-review.md` | you | per split × class: units, rows, windows, hours; split rationale |
 | M6 | `data/synth-review.md` | you | real + synthetic per class, the cap, fidelity, per-split use (or the skip) |
 | M7 | `model_proposed.md` | you | the proposal; *changes requested* archives it and re-runs M7 |
-| M8 | `inputs/scaffold` (the scaffold, **or** your waiver), `eval-methodology` | you | scaffold findings, or the waiver; the eval-methodology review |
+| M8 | `eval-methodology` | you | the eval-methodology review |
 | M11 | `return-upload` | you | what to upload; paste the registration id |
 
 ### Offline inputs from the portal (ADR-0025 D-1)
@@ -683,13 +689,12 @@ Or drop the files into `inputs\incoming\` and let the run find them:
 ```powershell
 python -m agentforge.src.ml_contract.intake init  --dest <folder>                   # creates the drop folder + README
 python -m agentforge.src.ml_contract.intake check --dest <folder> --need use_case,capability_manifest
-python -m agentforge.src.ml_contract.intake check --dest <folder> --need scaffold    # exit 3 = something missing
-python -m agentforge.src.ml_contract.intake waive --dest <folder> --kind scaffold --reason "…" --identity <you>
+python -m agentforge.src.ml_contract.intake check --dest <folder> --need scaffold    # always 0: a missing scaffold is [ABSENT]
 ```
 
-Re-downloading and re-recording a changed file re-opens its gate, and every audit that compared the old
-file. A changed use case also means a re-lock. Only the scaffold can be waived; the use case and the
-capability manifest are always required.
+`check` exits 3 only when the **use case** is missing. Re-downloading and re-recording a changed use case
+re-opens its gate and every audit, and means a re-lock. The capability manifest and the scaffold are
+optional: recording, replacing or omitting one opens no gate and re-opens no audit (ADR-0027).
 
 - **Wrong stage id?** The CLI names the run's sequence in the error (`ml`). An SDLC stage id against an
   ML run is rejected before anything is written.
@@ -698,10 +703,10 @@ capability manifest are always required.
 
 `python -m agentforge.src.ml_contract.audit --dest <folder>` (or `/usecase-audit`) compares:
 - the use case;
-- the device's capability manifest;
+- the device's capability manifest, when provided (advisory: WARN at most);
 - the contract dataset and splits;
 - the synthetic set (its lock and split stamps);
-- the scaffold;
+- the scaffold, when provided (advisory: WARN at most);
 - the simulator export;
 - and, after M9, the model package.
 
@@ -719,8 +724,8 @@ FAILs.
 # 0. Start (ML root set in .env; use case validated in portal Step 1; target device = the Jetson)
 /agentforge-ml "detect CNC machining drift from spindle-load, x_axis_error and vibration signals"
   → proposes C:\SanjeevE\NeuroEdge-ML-Models\neuroedge-ml-projects\cnc_drift-timeseries — accept
-  → creates inputs\incoming\ and STOPS: use_case and capability_manifest missing
-# drop <use-case-id>.yaml (Step 1 → Download use_case.yaml) and the Jetson's capability_manifest.json
+  → creates inputs\incoming\ and STOPS: use_case missing
+# drop <use-case-id>.yaml (Step 1 → Download use_case.yaml); optionally the Jetson's capability_manifest.json
 /agentforge-ml --resume
   → records both (gate: confirm each) → locks the use case → audit M0: use case ↔ Jetson (gate: automatic)
 
@@ -744,7 +749,7 @@ FAILs.
 # 7. select   → model_proposed.md: 1D-CNN with the reasoning for every size; framing; MiniRocket+ridge
 #               baseline; runner: package; export ONNX; alternatives considered
 #               gate: approve   (or: changes requested "one-class instead" → archived as v1, M7 re-runs)
-# 8. build    → scaffold? drop Step 3 → Build my own → Script (.py), or waive → default template
+# 8. build    → uses the Step 3 scaffold if you dropped one, else the default template (no question)
 #               audit M8 → 1DCNN/train.py eval.py … (MLflow logging); ml-eval-reviewer passes
 # 9. train    → session stops: HANDOFF.md written
 
@@ -772,12 +777,12 @@ If you already had the KIT data on disk: `/agentforge-ml "<objective>" --stage v
 | Symptom | Meaning | Do |
 |---|---|---|
 | A stage asks for a destination | It was run standalone without `--dest`, or the run's `--dest` was lost | Inside a run this is a bug; standalone, pass `--dest` |
-| The run stops with `[MISSING] use_case` / `capability_manifest` / `scaffold` (`intake check` exit 3) | A portal file isn't in `inputs\incoming\` | Drop it there (the README says where each comes from), then `--resume`. For the scaffold you may waive it instead |
+| The run stops with `[MISSING] use_case` (`intake check` exit 3) | The use case isn't in `inputs\incoming\` | Drop it there (the README says where it comes from), then `--resume`. `[ABSENT] capability_manifest` / `scaffold` is information only: both are optional |
 | `[AMBIGUOUS]` in `intake check` | Two files of the same kind were dropped | Delete the one you don't want, then `--resume` |
 | `REFUSED: complete <stage> — gates are not through` | A gate of that stage is pending, rejected, or never opened | `run_state.py status` lists every `Owed:` gate; answer them. Never edit `run.json` by hand |
 | Intake says the use case `differs from the use case the lock was built from` | The use case really changed in the portal (trailing newlines, CRLF and BOM are ignored) | Re-lock (`--force`) and re-run the stages the change affects, or re-download the version you locked |
-| `audit/M0` FAIL on `device_profile_id` or `runtime_profile available` | Usually a **stale manifest**: one assessed by the pre-2026-09-16 device agent still uses the old ids (`nvidia-jetson-orin-devkit`, `ep-jetson-tensorrt`, `ort-cpu`, `cuda`), where the use case uses the current ones (`nvidia-jetson-orin-nano`, `ep-tensorrt`, `ort-core`, `ep-cuda`). Otherwise the use case really targets a different device | Re-assess the device with the current `ne-device-agent assess --local` and record the new manifest. **Don't** change the use case to the old ids. If it really is a different device, fix the target in portal Step 2 and re-download. The alternative is a documented exception at the gate |
-| A scaffold intake FAILs on class order, channels, rate, window, stride, units/reduce, metric or `at_fpr` | The scaffold was generated from another version of the use case | Download a fresh scaffold after the use case is final |
+| `audit/M0` WARN on `device_profile_id` or `runtime_profile available` | Usually a **stale manifest**: one assessed by the pre-2026-09-16 device agent still uses the old ids (`nvidia-jetson-orin-devkit`, `ep-jetson-tensorrt`, `ort-cpu`, `cuda`), where the use case uses the current ones (`nvidia-jetson-orin-nano`, `ep-tensorrt`, `ort-core`, `ep-cuda`). Otherwise the use case really targets a different device | Re-assess the device with the current `ne-device-agent assess --local` and record the new manifest. **Don't** change the use case to the old ids. If it really is a different device you deploy to, fix the target in portal Step 2 and re-download. If it is only a test target (laptop / VM), the WARN is expected and nothing needs doing |
+| A scaffold intake FAILs on class order, channels, rate, window, stride, units/reduce, metric or `at_fpr` | The scaffold was generated from another version of the use case. M8 ignores it and uses the default template | To have it used, download a fresh scaffold after the use case is final and re-run M8 |
 | `UNSTAMPED: the synthetic manifest has no lock_sha256` | The synthetic set predates the stamping rule, or its generator doesn't write the stamps | Re-run `/synth-data`; the generator must write `lock_sha256` and `split_hash` |
 | The generated `train.py` stops with `CLASSES[0] … does not look like the normal class` | The use case lists the anomaly class first, so a single-score head would invert every metric | Put the normal class first in the use case. Or, if the first class really is normal, set `NOMINAL_CLASS_CONFIRMED = True` |
 | `422 baseline_beats_flag` at return | `beats_baseline` is `null` — no baseline was computed | Run the baseline in `train.py`; never hand-write the flag |
@@ -802,7 +807,7 @@ optional) · `KAGGLE_USERNAME` / `KAGGLE_KEY` · `ROBOFLOW_API_KEY` · `HF_TOKEN
 stores, portal side).
 
 **Tools the run calls (`agentforge/src/ml_contract/`):** `lock` (M0 lock, `verify`) · `intake` (`init`,
-`check`, `record`, `waive`, `show`) · `ts_contract` (M4 contract dataset; `--labels-only` for older
+`check`, `record`, `show`) · `ts_contract` (M4 contract dataset; `--labels-only` for older
 folders) · `review` (`split`, `synth`, `model`, `model --archive`) · `audit` (`/usecase-audit`) ·
 `data_simulator` (M12). The state tools are `agentforge/src/state/run_state.py` and `gate_state.py`.
 

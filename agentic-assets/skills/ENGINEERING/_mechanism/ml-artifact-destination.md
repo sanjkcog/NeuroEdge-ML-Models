@@ -107,9 +107,9 @@ gets its own subfolder instead.
     incoming/                the drop folder: put downloads here; README says what and from where (D-1a)
       recorded/              dropped files already recorded, timestamped
     inputs.json              kind · path · sha256 · generated_at · findings, per input
-    use_case.yaml            M0 — the lock is built from this copy
-    capability_manifest.json M0 — the target device
-    scaffold/<file>          M8 — the portal training scaffold (context + return writer only)
+    use_case.yaml            M0 — required; the lock is built from this copy
+    capability_manifest.json M0 — optional, advisory: a target device (ADR-0027)
+    scaffold/<file>          M8 — optional: the portal training scaffold (context + return writer only)
   use_case.lock.json         M0
   audit/<checkpoint>.md|json /usecase-audit at M0, M4, M8, M11
   data/

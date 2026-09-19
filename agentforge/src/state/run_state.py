@@ -154,14 +154,15 @@ ML_STAGE_AGENTS: dict[str, str] = {
 # with no entry still may not complete over a hard gate of its own that is unresolved (the
 # open-on-failure gates: scout licence, eval KPI). Only the "ml" sequence is gate-bound.
 ML_STAGE_GATES: dict[str, tuple[str, ...]] = {
-    "destination": ("inputs/use_case.yaml", "inputs/capability_manifest.json", "audit/M0"),
+    # Only the use case is a required input (ADR-0027 D-1). The capability manifest is optional
+    # and advisory, so it has no gate: a run may swap or drop the device without re-answering one.
+    "destination": ("inputs/use_case.yaml", "audit/M0"),
     "plan": ("data/fetch-plan.json",),
     "verify": ("data/profile.json", "audit/M4"),
     "label": ("data/split-review.md",),
     "synth": ("data/synth-review.md",),
     "model-select": ("model_proposed.md",),
-    # The scaffold is optional (ADR-0026 D-3): when one is recorded its own gate (stage model-build)
-    # must still be resolved, which the "no unresolved hard gate" rule enforces.
+    # The scaffold is optional and ungated (ADR-0027 D-3): used when provided, else the default template.
     "model-build": ("audit/M8", "eval-methodology"),
     "return": ("audit/M11", "return-upload"),
 }
