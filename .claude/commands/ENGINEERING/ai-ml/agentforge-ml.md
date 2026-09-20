@@ -191,6 +191,16 @@ Gate handling, in stage order:
 - **M8 audit checkpoint:** `audit --dest <dest> --checkpoint M8` (+ scaffold, advisory: WARN at most).
 - **M8 eval-methodology:** `ml-eval-reviewer`'s report is the gate (`gate_state.py open eval-methodology --stage
   model-build`); any **leakage** or **wrong-metric** finding loops back to `ml-modeler` before the stage completes.
+- **M8 training package (ADR-0028 D-5):** once the eval-methodology gate is approved, zip what was built, so every
+  runner executes the same thing: `python -m agentforge.src.ml_contract.package build --dest <dest> --arch <arch>
+  [--baseline <dir>] [--data in-package|local|s3://bucket/prefix]`. Ask the human once where the heavy files travel:
+  **in-package** for small data, **local** when the runner is on this machine, **s3://…** for a runner on AWS. For
+  s3 it prints an `aws s3 sync` command; **the human runs it**. Nothing here uploads. The test split is withheld
+  from the package, and the command's output says which files. A refusal (an edited lock, a missing entry script,
+  a secret-looking file) names the problem: fix it and rebuild, never pack around it. Add
+  `--artifact <arch>/training-package.zip` to `complete model-build`. The zip can hold the dataset, so keep it out
+  of git: `git check-ignore <arch>/training-package.zip`, and when it is not ignored, tell the human the one rule
+  to add (`neuroedge-ml-projects/*/*/training-package.zip`). The project owns its `.gitignore`.
 - **M10 KPIs:** compare `metrics.json` to the use case's targets (recall at the fixed FPR / mAP / …) and require
   `beats_baseline: true`; either failing opens a hard gate (`kpi`, stage `eval`) with the numbers side by side.
   The user may accept a documented miss; the acceptance is recorded, never implied.
@@ -198,7 +208,10 @@ Gate handling, in stage order:
 ### `train` (M9) — the external wait
 1. `start train`, then write `<dest>/<arch>/HANDOFF.md`: where the package will be expected
    (`<arch>/runs/<run_id>/model-package/`), the exact command from `RUN_ON_GPU.md`, and the runner recorded in
-   `model_proposed.md` (`package` on laptop/VM, or `portal` when allowed). Set `run.json` gate
+   `model_proposed.md` (`package` on laptop/VM, or `portal` when allowed). Name both ways to run the **same**
+   `<arch>/training-package.zip` (its sha256 included): run it yourself per `RUN_ON_GPU.md`, or upload it in the
+   portal (Step 3 · Model Strategy → Custom development → **Training package**) once the portal's package runner
+   exists (NeuroEdge-Web ADR-0010 R-1). Set `run.json` gate
    `{pending: true, stage: train, reason: waiting_external}` and **stop the session cleanly** — do not poll.
 2. On `--resume`: look for `<arch>/runs/*/model-package/{model.onnx, meta.json, model_artifact.json, metrics.json}`.
    Found → `complete train --artifact <package>` and continue to M10. Not found → print exactly what is awaited and

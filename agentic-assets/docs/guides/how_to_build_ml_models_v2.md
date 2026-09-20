@@ -30,6 +30,23 @@ unchanged. v1 remains the deep reference for *why* each step is shaped the way i
 - **`/usecase-audit`** checks at M0, M4, M8 and M11 that the use case, the data, the scaffold, the
   simulator export, the package and the device all agree.
 
+**What changed on 2026-09-19 (ADR-0028; NeuroEdge-Web ADR-0009, ADR-0010):**
+
+- **M8 also builds a training package** — one zip holding the generated code, the splits, the lock and (by
+  value or by reference) the data. **Every runner executes the same zip**: your GPU box today, the portal's
+  package runner when it lands. See [The training package](#the-training-package--one-zip-every-runner-executes).
+- **The method belongs to `/agentforge-ml`, the compute belongs to whoever runs it** (ADR-0028 D-1). The
+  dataset, the licence, the split, the base model, the recipe, the code and the evaluation method are decided
+  and gated here. A runner executes what M8 produced and changes none of it.
+- **The portal keeps the split you upload** (Web ADR-0009, implemented 2026-09-19). A `portal_upload.zip` laid
+  out as `train/` + `val/` is used as-is — no re-shuffle — for both vision and time series. This is what makes
+  portal fine-tuning safe for the families it supports.
+- **The portal downloads no models, and that is deliberate.** `/model-fetch` (🔜 ADR-0028 D-2) is the only
+  downloader; weights travel inside the training package. The portal's Hugging Face / NGC / AI Hub / GitHub
+  buttons are unchanged and are not the route for those models (Web ADR-0010 R-5).
+- **YOLO and the torchvision/timm classifier trainers in the portal stay exactly as they are** (Web ADR-0010
+  R-3). They work; the package runner is added *beside* them, not instead of them.
+
 Decisions this guide implements: `docs/decisions/ADR-0021-ml-artifact-destination.md` (where artifacts
 live), `docs/decisions/ADR-0022-agentforge-ml-orchestrator-and-model-package-contract.md` (the
 orchestrator and the model-package contract), `ADR-0024` (priced, scoped dataset transfer),
@@ -46,6 +63,9 @@ capability manifest and the scaffold are optional and advisory), and NeuroEdge-W
 - [`/agentforge-ml` arguments](#agentforge-ml-arguments)
 - [Where everything lives](#where-everything-lives)
 - [Stage by stage](#stage-by-stage)
+- [The training package — one zip every runner executes](#the-training-package--one-zip-every-runner-executes)
+- [Who trains what — portal, your GPU, or the package runner](#who-trains-what--portal-your-gpu-or-the-package-runner)
+- [Fine-tuning a pretrained base](#fine-tuning-a-pretrained-base)
 - [The training wait — and how to resume](#the-training-wait--and-how-to-resume)
 - [Integration with the NeuroEdge Web portal](#integration-with-the-neuroedge-web-portal)
 - [Gates, approvals, and working offline](#gates-approvals-and-working-offline)
@@ -67,8 +87,8 @@ capability manifest and the scaffold are optional and advisory), and NeuroEdge-W
 | M5 | `label` | `/auto-label` (vision zero-shot → review · TS window rule), then `review split` | `data/label-manifest.md`, `data/split-review.md` | **hard, human: split review** |
 | M6 | `synth` | `/synth-data` when chosen, then `review synth` (or a recorded skip) | `data/synthetic-recipe.md`, `data/synth-review.md` | **hard, human: synthetic review (a skip too)** |
 | M7 | `model-select` | `/model-select` → `ml-modeler`, then `review model` | `model_proposed.md` (+ `model_proposed/v<N>.md`) | **hard, human: model proposal — re-run with an alternative on request** |
-| M8 | `model-build` | use the scaffold if you dropped one, else the default template; `audit M8`, `/model-build` → `ml-modeler`, then `ml-eval-reviewer` | `inputs/scaffold/` (when provided), `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md` | **automatic: `audit/M8`** · **hard: eval methodology** |
-| M9 | `train` | **you**, on your GPU (laptop / AWS VM) or the portal's trainer | `<arch>/runs/<run_id>/model-package/` | waits for you |
+| M8 | `model-build` | use the scaffold if you dropped one, else the default template; `audit M8`, `/model-build` → `ml-modeler`, then `ml-eval-reviewer`, then **build the training package** | `inputs/scaffold/` (when provided), `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md`, `<arch>/training-package.zip` | **automatic: `audit/M8`** · **hard: eval methodology** |
+| M9 | `train` | **you** run the package — on your GPU (laptop / AWS VM), or by uploading it to the portal's package runner (🔜) | `<arch>/runs/<run_id>/model-package/` | waits for you |
 | M10 | `eval` | the orchestrator runs `eval.py` on the **withheld test split** | `metrics.json` (`eval_split: held_out_test`) | **hard: KPIs + beats the baseline** |
 | M11 | `return` | `audit M11`, build + validate the upload zip; **you upload it in the portal** | `return/upload.zip`, `return.json` | **automatic: `audit/M11`** · **human: upload confirmed** |
 | M12 | `data-simulator` | `/data-simulator` | `sim/<split>/…`, `sim/manifest.json` | — |
@@ -83,7 +103,9 @@ Four rules hold the whole thing together:
    of a 44.58 GB archive to be a derivable duplicate and a further 56% out of scope, before a payload byte
    moved. A download that starts without a recorded scope decision is the bug this prevents.
 3. **The test split never leaves the model folder.** Trainers — yours or the portal's — only ever see
-   train + val. The number you publish is measured at M10 on data no trainer touched.
+   train + val. The number you publish is measured at M10 on data no trainer touched. The training
+   package enforces this in code: a data file travels only when it provably belongs to a train or val
+   unit, and `package.json` lists every file that was held back.
 4. **ONNX is the only deployable artifact.** A model that cannot export (MiniRocket, some TS foundation
    models) is your *baseline*, never the thing you ship.
 
@@ -275,8 +297,13 @@ delegate it to a subagent.
     synth-review.md         M6 — the review pack (or the recorded skip)
   model_proposed.md         M7 — architecture (with reasoning), framing, baseline, runner, export, alternatives
   model_proposed/v<N>.md    M7 — superseded proposals when M7 is re-run with an alternative
+  model/base/               M7 — the pretrained base, when the proposal names one (fine-tuning):
+                                 the weights (GITIGNORED), base-model-card.md (source · revision · sha256 ·
+                                 licence · attribution) and loader.json (the loader family)   🔜 /model-fetch
   <architecture>/           M8 — one folder per architecture, e.g. 1DCNN/, MiniRocket/
     train.py eval.py config.yaml requirements.txt RUN_ON_GPU.md HANDOFF.md
+    training-package.zip            M8 — the one zip every runner executes. GITIGNORED: it can hold the
+                                    dataset, and it rebuilds from the folder in seconds
     runs/<run_id>/model-package/    M9 — model.onnx · meta.json · model_artifact.json · metrics.json · calibration/
     runs/<run_id>/return/upload.zip M11 — what you upload in the portal
     runs/<run_id>/return.json       M11 — the local validation report and the registration id you pasted
@@ -405,9 +432,16 @@ it: a generator only adds the variety you model into it.
 
 ### M7 — `model-select`
 Decides family, backbone, transfer recipe, **baseline** (MiniRocket for TS, gradient-boosted trees for
-tabular, a linear probe for vision), **runner** (`package` = your GPU; `portal` = the portal's own trainer,
-only for families it supports **and** whose split integrity is proven — for NeuroEdge time series that is
-disallowed until Web ADR-0002 V-1/V-2 land), and the export path (ONNX; TensorRT/QNN derived later).
+tabular, a linear probe for vision), **runner** (see
+[Who trains what](#who-trains-what--portal-your-gpu-or-the-package-runner)), and the export path
+(ONNX; TensorRT/QNN derived later).
+
+When the proposal names a **pretrained base**, M7 also acquires it into `model/base/` with a pinned
+revision, a hash, and a `base-model-card.md` carrying its licence — and that licence is a **hard gate**,
+exactly like the dataset's at M1 (🔜 `/model-fetch`, ADR-0028 D-2/D-3; today you download the base
+yourself and record source, revision and licence in the proposal). `loader.json` records the loader
+family — `ultralytics · torchvision · timm · transformers · tao · custom · none` — and the loader family
+is what decides the runner (ADR-0028 D-4).
 It also decides the **framing** for an anomaly head: supervised two-class, or normal-only (one-class).
 All of this goes into `model_proposed.md`, **the page you approve**. It must cover the architecture (a
 layer table with the reasoning for every size), the framing, synthetic use, augmentation, baseline,
@@ -438,11 +472,14 @@ approved `model_proposed.md`:
   target FPR to **MLflow**. Set `MLFLOW_TRACKING_URI` to the portal's MLflow server to see the run there;
   otherwise it logs to `./mlruns`, which `mlflow ui` opens. Test-split numbers never go to MLflow.
 
-Finally `ml-eval-reviewer` reviews the code. A leakage or wrong-metric finding blocks the stage until it
+Then `ml-eval-reviewer` reviews the code. A leakage or wrong-metric finding blocks the stage until it
 is fixed.
-**Verify:** `RUN_ON_GPU.md` exists; `grep test.json <arch>/train.py` returns nothing.
 
-### M9 — `train` — see the next section.
+Finally, once that gate is approved, M8 **builds the training package** — see the next section.
+**Verify:** `RUN_ON_GPU.md` exists; `grep test.json <arch>/train.py` returns nothing;
+`<arch>/training-package.zip` exists and `package verify` reports no problems.
+
+### M9 — `train` — see [The training wait](#the-training-wait--and-how-to-resume).
 
 ### M10 — `eval`
 The orchestrator runs `<arch>/eval.py --package <pkg> --split data/splits/test.json` (CPU is fine) and
@@ -475,6 +512,132 @@ model's. The whole chain is in NeuroEdge-Device `docs/reference/how_to_design_mo
 ### M13 — `model-card`
 Dataset id, licence and **attribution** (CC BY is only satisfied if it reaches the card and the
 product NOTICE), split hash, seed, commit, baseline vs model, threshold, caveats.
+
+---
+
+## The training package — one zip every runner executes
+
+This is how the **dataset and the model code travel together** to whoever supplies the GPU (ADR-0028
+D-5). There is one artifact, not two: you do not upload a dataset in one place and a script in another
+and hope they agree. The package carries the lock, so a runner can refuse a package built for a
+different use case.
+
+M8 builds it after the eval-methodology gate:
+
+```powershell
+python -m agentforge.src.ml_contract.package build --dest <folder> --arch 1DCNN --baseline MiniRocket `
+    --data in-package
+python -m agentforge.src.ml_contract.package verify --zip <folder>\1DCNN\training-package.zip
+```
+
+**What is inside**
+
+| Part | Files |
+|---|---|
+| The contract | `package.json` (schema, `use_case_id`, `lock_sha256`, runtime, entry point, outputs, every file with its sha256, and what was withheld) · `use_case.lock.json` |
+| The code | `<arch>/` and the baseline folder (`train.py`, `config.yaml`, `requirements.txt`), `common/`, and `inputs/scaffold/` when you dropped one |
+| The split | `data/splits/train.json`, `val.json` — **never** `test.json` |
+| The data | `data/contract/` (train + val units only), `data/synthetic/`, `model/base/` — inside the zip, or by reference (below) |
+
+**The entry point is the whole recipe.** `package.json` names the runtime (`pip` + the requirements
+files) and an ordered entry point — baseline first, then the model — each `python train.py --config
+config.yaml` in its own folder. Its `outputs.model_package` says where the result appears:
+`<arch>/runs/*/model-package`. A runner needs to know nothing else, which is exactly why the same zip
+works on a laptop, an AWS VM and the portal.
+
+**Where the heavy files travel — `--data`.** You are asked once.
+
+| `--data` | The data | Use it when |
+|---|---|---|
+| `in-package` (default) | rides inside the zip | the contract dataset is small — a time-series run is usually tens of MB |
+| `local` | stays in the model folder; `package.json` points at its `file://` URI and a `data_manifest.json` carries every hash | the runner is **this machine** (your laptop GPU) |
+| `s3://bucket/prefix` | you upload it once; the package carries the manifest of hashes only | the runner is on **AWS**, or the dataset is a vision set too heavy to zip |
+
+For `s3://…` the command **prints** an `aws s3 sync` line with the withheld files excluded, and **you
+run it**. Nothing in `/agentforge-ml` uploads or calls a network (ADR-0025 D-1).
+
+**The test split is withheld by an allow-list, not by a filter.** A contract data file travels only
+when it provably belongs to a train or val unit (`data/contract/<unit>.<ext>` or
+`data/contract/<unit>/…`). `data/splits/test.json`, test-only units and excluded units stay behind, and
+`package.json` lists them under `withheld`. A unit the builder cannot attribute is a **refusal**, not a
+silent inclusion.
+
+**It refuses rather than guesses.** An edited lock, a missing `train.py` or `requirements.txt`, a
+secret-looking file (`.env`, `*.key`, `*.pem`, `credentials*`, `settings.local.json`), a link that
+leads out of the model folder, or a train/val unit whose files cannot be found — each names the problem.
+Fix it and rebuild; never pack around it.
+
+**Two current limits.** The builder understands the **time-series** contract layout only; a vision run
+is refused with that reason, and you run it yourself per `RUN_ON_GPU.md` (🔜). And the runtime is `pip`
+today — the `container` runtime that NVIDIA TAO needs is 🔜 ADR-0028 D-6.
+
+**Keep it out of git.** The zip can hold the dataset and rebuilds in seconds. The model project's
+`.gitignore` needs one rule:
+
+```gitignore
+neuroedge-ml-projects/*/*/training-package.zip
+```
+
+---
+
+## Who trains what — portal, your GPU, or the package runner
+
+The **loader family** in `loader.json` decides the runner (ADR-0028 D-4), and M7 records the decision in
+`model_proposed.md` §Runner for you to approve.
+
+| Loader family | Trains where, today | Why |
+|---|---|---|
+| `ultralytics` (YOLO detection / segmentation) | **The portal's built-in trainer** | It works, it is one click, and it stays exactly as it is (Web ADR-0010 R-3) |
+| `torchvision`, `timm` (by model name) | **The portal's built-in trainer** | The portal can load these two families by name and swap the head |
+| `transformers`, `tao`, `keras`/TF, `custom`, `none` | **The training package** — your GPU today, the portal's package runner 🔜 | The portal has no code to load these into, and that is not changing |
+| **Any time-series model** | **The training package** | The portal's built-in TS trainer is a fixed small net scored on accuracy, with no calibrated threshold, no held-back test and no baseline. Fine for a rough prototype; not what you ship |
+
+Two things follow, and they are the point of the whole arrangement:
+
+- **The portal is never asked to download a model.** Its Hugging Face / NGC / AI Hub / GitHub source
+  buttons are unchanged and are not the route for those models (Web ADR-0010 R-5). `/model-fetch` does
+  the acquiring, with a pinned revision, a hash and a licence gate, and the weights ride in the package.
+- **Offline is not a dead end.** When the package runner lands, the same zip you run on your laptop is
+  the zip you upload to the portal for compute + MLflow, and Optimize → Prepare Device → Virtual Run →
+  Deploy continue unchanged.
+
+---
+
+## Fine-tuning a pretrained base
+
+Fine-tuning and custom development share **M0–M6 exactly** — the same use case, the same licensed
+dataset, the same leak-safe split, the same withheld test set. They part at M7.
+
+| | Custom development (Track B) | Fine-tuning (Track A) |
+|---|---|---|
+| M7 proposes | an architecture, sized from your data | a **base model** + a transfer recipe: freeze depth, discriminative LRs, schedule, augmentation, data budget |
+| M7 acquires | nothing | `model/base/` — weights, `base-model-card.md`, `loader.json` (🔜 `/model-fetch`) |
+| Extra hard gate | — | the **base model's licence** (ADR-0028 D-3) |
+| M8 generates | model + training code | fine-tune code over the fetched snapshot |
+| M9 runs on | the package | the portal's built-in trainer (`ultralytics`/`torchvision`/`timm`) **or** the package |
+| M10–M13 | identical | identical |
+
+**If the portal trains it** (YOLO, torchvision, timm): upload `data/portal_upload.zip` at Step 3 ·
+Dataset — it is train + val only, laid out as `train/` + `val/`, and **the portal now keeps that split**
+(Web ADR-0009). Pick the model by **name** (`resnet50.a1_in1k`, `yolov8s`), not by URL. Then bring the
+result back and let M10 evaluate it on **your** withheld test split: the portal's own number is the
+trainer's self-report, M10's is independent.
+
+**If the package trains it** (transformers, TAO, Keras, custom): nothing special — M8 builds the
+training package like any other run.
+
+Per-family cautions worth knowing before you commit to one:
+
+| Family | Watch for |
+|---|---|
+| Hugging Face `transformers` | Export through `optimum`. Many transformer graphs need **opset 14+**, and the portal pins **13**. DETR box sets and segmentation masks also need an `output_schema` the device can post-process. Both are open (ADR-0028 D-7 / Web ADR-0010 R-7) — prove one model end to end first |
+| NVIDIA TAO | Needs an NVIDIA GPU, docker with the NVIDIA runtime, and `NGC_API_KEY` from the runner's environment (never in the package). A model that exports only an encrypted `.etlt` **cannot be returned** — M7 refuses it |
+| Qualcomm AI Hub | Its downloads are compiled inference artifacts and **cannot be fine-tuned**. Fine-tune the **upstream** model its page names; use AI Hub afterwards to compile and profile *your* ONNX |
+| Ultralytics YOLO | Code **and** weights are AGPL-3.0. Shipping it can oblige you to open your own code — Ultralytics sells an enterprise licence. The licence gate catches this |
+| TensorFlow / Keras | `/model-build --tf`, export with `tf2onnx` at opset 13 |
+
+The portal-side view of the same two tracks, written for a portal user, is NeuroEdge-Web
+`docs/guides/how_to_manage_model_lifecycle_with_neuroedge.md` — including the vendor and licence primer.
 
 ---
 
@@ -567,19 +730,29 @@ read them when a decision looks arbitrary.
 
 ## The training wait — and how to resume
 
-At M9 the orchestrator writes `<arch>/HANDOFF.md` (where the package is expected, the exact command,
-the runner), sets `run.json` to `waiting_external`, and **stops the session cleanly**. It does not poll.
-While it trains, `train.py` logs to MLflow (see M8), so you can watch the loss and validation KPIs
-live.
+At M9 the orchestrator writes `<arch>/HANDOFF.md` — where the package is expected, the exact command,
+the runner, and **both ways to run the same `training-package.zip`** with its sha256 — sets `run.json`
+to `waiting_external`, and **stops the session cleanly**. It does not poll. While it trains, `train.py`
+logs to MLflow (see M8), so you can watch the loss and validation KPIs live.
 
-**Run training yourself:**
+**Route 1 — run it yourself** (laptop or AWS VM, identical):
 
 ```powershell
-# from RUN_ON_GPU.md — laptop or AWS VM, identical
-cd <folder>\1DCNN
-pip install -r requirements.txt
-python train.py --config config.yaml          # writes runs/<run_id>/model-package/
+# from RUN_ON_GPU.md. Copy the WHOLE model folder (common/ and the gitignored data included),
+# or extract training-package.zip, which already holds exactly what training needs.
+cd <folder>\MiniRocket ; pip install -r requirements.txt ; python train.py --config config.yaml   # baseline first
+cd <folder>\1DCNN      ; pip install -r requirements.txt ; python train.py --config config.yaml   # writes runs/<run_id>/model-package/
 ```
+
+**Route 2 — hand the package to the portal** (🔜 Web ADR-0010 R-1): upload
+`<arch>/training-package.zip` at Step 3 · Model Strategy → Custom development → **Training package**.
+The portal runs it in an isolated container — same code path on a cloud VM or your laptop, no network
+during training — logs to MLflow, and gives you back the same `model-package/` folder. Then download
+that folder into `<arch>/runs/<run_id>/` and resume. **You** move the files; the model project never
+calls the portal.
+
+Either route produces the same result, because it is the same package. Route 2 is what makes "no local
+GPU" a scheduling question rather than a blocker.
 
 The package that comes out is the contract:
 
@@ -616,7 +789,8 @@ Everything crosses as a **file you move by hand**; neither side calls the other 
 |---|---|---|
 | 1 · Edge Use Case Design — *Download use_case.yaml* (shown once the spec validates) | M0 records it and locks it. The portal saves the spec first and downloads its own saved copy, so the file is exactly what the portal holds | you download |
 | 2 · Target Device — the device's `capability_manifest.json` | **optional.** M0 records it and the audit warns where the use case doesn't fit it. It comes from the device's assessment; the portal has no download yet | you copy it |
-| 3 · Dataset — *Upload labelled dataset* | `data/portal_upload.zip` — train + val only, YOLO layout with `data.yaml` (vision) or CSV/JSON with `label` + unit columns (TS); class names identical to the use case | you upload |
+| 3 · Dataset — *Upload labelled dataset* | `data/portal_upload.zip` — train + val only, YOLO layout with `data.yaml` (vision) or CSV/JSON with `label` + unit columns (TS); class names identical to the use case. Laid out as `train/` + `val/`, and **the portal keeps that split** (Web ADR-0009, 2026-09-19) — it no longer re-shuffles, and it carves out no test set, because test stays here. A *flat* upload is still randomly split by the portal, which leaks near-duplicates: always upload the zip M4 built | you upload |
+| 3 · Model Strategy — *Training package* 🔜 | `<arch>/training-package.zip` from M8 — dataset **and** model code in one artifact. The portal supplies compute + MLflow and runs it unchanged (Web ADR-0010 R-1) | you upload |
 | 3 · Prepare Model → Model Strategy — *Build my own → Script (.py)* | **optional.** M8 records the scaffold and checks it against the lock. It uses the scaffold's **context**, its `neuroedge_return` writer and its MLflow naming, never its training body (ADR-0025 D-5, ADR-0027 D-3). Without it, or when it belongs to another version of the use case, M8 uses the default template | you download |
 | 3 · Model Strategy — *Finished training return package* | M11 builds and validates `return/upload.zip`; **you upload it** and confirm the registration id at the `return-upload` gate | you upload |
 | 3 · Optimize | `extras.source = custom_return` ⇒ the export step becomes **validate** (checker, ORT load, opset, shapes); *Re-export ONNX* reads *Re-validate*; FP16/INT8 and runtime-EP projection unchanged | portal |
@@ -634,9 +808,10 @@ and stored for provenance and **never opened**.
 only the JSON files; the portal resolves the URI (S3-compatible endpoints via `AWS_ENDPOINT_URL`) when
 Optimize runs. Validation is deferred until then and is marked as such.
 
-**Portal-trained models.** When `model_proposed.md` records `runner: portal`, train in the portal as usual;
-M8 still evaluates on your withheld split — the portal's numbers are the trainer's self-report, M8's are
-independent.
+**Portal-trained models.** When `model_proposed.md` records a portal runner — its built-in trainer for
+`ultralytics`/`torchvision`/`timm`, or the package runner (🔜) for the rest — train in the portal as
+usual, then bring the result back: **M10 still evaluates on your withheld test split**. The portal's
+numbers are the trainer's self-report; M10's are independent, and they are the ones you publish.
 
 ---
 
@@ -751,9 +926,15 @@ FAILs.
 #               gate: approve   (or: changes requested "one-class instead" → archived as v1, M7 re-runs)
 # 8. build    → uses the Step 3 scaffold if you dropped one, else the default template (no question)
 #               audit M8 → 1DCNN/train.py eval.py … (MLflow logging); ml-eval-reviewer passes
-# 9. train    → session stops: HANDOFF.md written
+#               → package build --arch 1DCNN --baseline MiniRocket --data in-package
+#                 1DCNN/training-package.zip · withheld: data/splits/test.json + the 5 test units
+# 9. train    → session stops: HANDOFF.md written, naming BOTH routes and the zip's sha256
 
-cd …\cnc_drift-timeseries\1DCNN ; python train.py --config config.yaml      # on the RTX laptop
+# route 1 — the RTX laptop
+cd …\cnc_drift-timeseries\MiniRocket ; python train.py --config config.yaml   # baseline first
+cd …\cnc_drift-timeseries\1DCNN      ; python train.py --config config.yaml
+# route 2 (🔜) — upload 1DCNN\training-package.zip in the portal, Step 3 → Training package,
+#                then download runs/<run_id>/model-package/ back into the model folder
 
 /agentforge-ml --resume
 # 10. eval   → eval.py on the withheld experiments: pr_auc, recall@fpr=0.01, event_f1 … beats_baseline
@@ -791,8 +972,11 @@ If you already had the KIT data on disk: `/agentforge-ml "<objective>" --stage v
 | `422 class_names_match` | Order differs between dataset, meta and use case | Fix the order once in `data/dataset-card.md`; regenerate |
 | `single-class held-out set` from `/evaluate` or M8 | Test split has one class | Re-split at M2 with stratification; a single-unit dataset cannot produce a valid split |
 | `--resume` says "waiting for package" | Path or file names differ from the contract | `runs/<run_id>/model-package/` with all four files |
-| Numbers dropped vs the portal's own metrics | Expected: M8 is held-out, the portal's are self-reported validation | Publish M8's; label the split |
-| `runner: portal` refused for time series | Portal TS preprocessor still shuffles overlapping windows (Web ADR-0002) | Use `runner: package` until V-1/V-2 land |
+| Numbers dropped vs the portal's own metrics | Expected: M10 is held-out, the portal's are self-reported validation | Publish M10's; label the split |
+| `package build` refuses: *packaging a `vision` run is not implemented yet* | The builder knows the time-series contract layout only, so it would ship code and no data | Run it yourself per `RUN_ON_GPU.md`; the vision layout is 🔜 |
+| `package build` refuses: *… looks like a secret and must not travel* | A `.env`, key, certificate or `settings.local.json` is inside a folder being packed | Remove it from the model folder. Secrets belong in the **runner's** environment (ADR-0028 D-5) |
+| `package build` refuses: *no valid use-case lock* / a train or val unit whose files cannot be found | The lock was edited, or a contract file is not named for the unit it belongs to (`data/contract/<unit>.<ext>`) | Re-lock from the recorded use case, or re-run M4 so the contract layout matches. Never pack around a refusal — it is the test-split guard talking |
+| The portal randomly re-split your uploaded dataset | The zip was **flat**, with no `train/`+`val/` folders | Upload `data/portal_upload.zip` as M4 built it. Since 2026-09-19 a split upload is kept as-is (Web ADR-0009) |
 
 ---
 
@@ -809,6 +993,7 @@ stores, portal side).
 **Tools the run calls (`agentforge/src/ml_contract/`):** `lock` (M0 lock, `verify`) · `intake` (`init`,
 `check`, `record`, `show`) · `ts_contract` (M4 contract dataset; `--labels-only` for older
 folders) · `review` (`split`, `synth`, `model`, `model --archive`) · `audit` (`/usecase-audit`) ·
+**`package`** (M8 training package: `build --dest --arch [--baseline] [--data]`, `verify --zip`) ·
 `data_simulator` (M12). The state tools are `agentforge/src/state/run_state.py` and `gate_state.py`.
 
 **Skills the run applies:** `agentic-assets/skills/ENGINEERING/_mechanism/ml-artifact-destination.md`,
@@ -819,13 +1004,18 @@ model-architectures, pretrained-and-transfer, model-codegen, time-series-ml, ml-
 `docs/decisions/ADR-0022-agentforge-ml-orchestrator-and-model-package-contract.md`,
 `ADR-0024-dataset-acquisition-and-transfer-planning.md`,
 `ADR-0025-agentforge-ml-offline-inputs-review-gates-and-usecase-audit.md`,
-`ADR-0026-agentforge-ml-input-contracts-portal-artifacts-now-generic-later.md`; NeuroEdge-Web
-`docs/decisions/ADR-0001` (export contract, opset 13), `ADR-0002` (evaluation integrity), `ADR-0003`
-(baseline floor, threshold, upload enforcement), `ADR-0005` (portal side of this flow).
+`ADR-0026-agentforge-ml-input-contracts-portal-artifacts-now-generic-later.md`,
+`ADR-0028-agentforge-ml-owns-the-method-model-fetch-runner-routing-and-the-training-package.md`;
+NeuroEdge-Web `docs/decisions/ADR-0001` (export contract, opset 13), `ADR-0002` (evaluation
+integrity), `ADR-0003` (baseline floor, threshold, upload enforcement), `ADR-0005` (portal side of
+this flow), `ADR-0008` (the use-case lock), `ADR-0009` (the use case is a contract; the split the
+portal keeps), `ADR-0010` (the portal runs a training package beside its built-in trainers).
 
 **Not yet covered** (see `docs/decisions/ADR-0023-*.md`): vision transformers as first-class
 architectures, **visual** anomaly detection (today `anomaly_detection` means time series everywhere),
 image/screen description (VLM), and reinforcement learning.
 
 **Related guides:** [how_to_build_ml_model.md](how_to_build_ml_model.md) (v1 — the per-step deep dive),
-[how_to_run_agentforge.md](how_to_run_agentforge.md) (the SDLC orchestrator this one mirrors).
+[how_to_run_agentforge.md](how_to_run_agentforge.md) (the SDLC orchestrator this one mirrors),
+NeuroEdge-Web `docs/guides/how_to_manage_model_lifecycle_with_neuroedge.md` (the same two tracks from
+the portal's side, with the model-format, vendor and licence primer for beginners).
