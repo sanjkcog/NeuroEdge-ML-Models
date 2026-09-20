@@ -20,6 +20,8 @@ __pycache__/
 *.pyc
 # Trainer upload package (dataset-verify step 6): regenerable from data/raw + data/interim
 neuroedge-ml-projects/*/data/portal_upload.zip
+# Training package (M8, ADR-0028 D-5): regenerable with `ml_contract.package build`; may hold the dataset
+neuroedge-ml-projects/*/*/training-package.zip
 # Contract dataset + simulator exports (ADR-0008): regenerable from data/raw + the lock; manifests stay tracked
 neuroedge-ml-projects/*/data/contract/*.parquet
 neuroedge-ml-projects/*/sim/*/
