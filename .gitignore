@@ -22,6 +22,8 @@ __pycache__/
 neuroedge-ml-projects/*/data/portal_upload.zip
 # Training package (M8, ADR-0028 D-5): regenerable with `ml_contract.package build`; may hold the dataset
 neuroedge-ml-projects/*/*/training-package.zip
+# Sealed test bundle (ADR-0028 D-12): it IS the withheld test data; for the portal's Evaluate step only
+neuroedge-ml-projects/*/data/portal_test.zip
 # Contract dataset + simulator exports (ADR-0008): regenerable from data/raw + the lock; manifests stay tracked
 neuroedge-ml-projects/*/data/contract/*.parquet
 neuroedge-ml-projects/*/sim/*/
