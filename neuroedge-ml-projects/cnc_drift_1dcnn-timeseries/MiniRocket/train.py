@@ -70,7 +70,7 @@ def main(config_path: str) -> None:
         ) from exc
 
     t0 = time.perf_counter()
-    transformer = MiniRocket(num_kernels=cfg["minirocket"]["num_kernels"], random_state=cfg["seed"])
+    transformer = MiniRocket(n_kernels=cfg["minirocket"]["num_kernels"], random_state=cfg["seed"])  # aeon>=1.0 name
     x_train_feat = transformer.fit_transform(train_w.x)  # fit on TRAIN windows only
     x_val_feat = transformer.transform(val_w.x)  # frozen transform applied to val
     fit_s = time.perf_counter() - t0
