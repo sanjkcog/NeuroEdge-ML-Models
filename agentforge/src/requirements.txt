@@ -20,3 +20,8 @@ requests
 
 # ml_contract/lock.py reads the portal use-case YAML at /agentforge-ml M0 (NeuroEdge-Web ADR-0008).
 pyyaml
+
+# ADR-0028 D-2, D-10: optional, and imported only inside the function that needs them, so everything
+# else runs without them. Install one only on the machine that runs that command:
+#   /model-fetch from Hugging Face   -> pip install huggingface_hub   (NGC needs NVIDIA's `ngc` CLI instead)
+#   /aihub-compile                   -> pip install qai-hub, then `qai-hub configure` with your own token

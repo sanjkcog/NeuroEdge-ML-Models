@@ -12,7 +12,7 @@ It has two modes:
 - **Scenario mode** (`--scenario`, [below](#scenario-mode)) serves the external systems a
   use case calls, from a `scenario.yaml` bundle: HTTP stubs, fixtures that answer
   differently per caller, an MCP tool-server face, canned model answers, broker capture,
-  a seeded SQLite database and a timeline of events.
+  an OPC-UA machine-HMI face driven by alerts, a seeded SQLite database and a timeline of events.
 
 This folder is installed into a project by the AgentForge installer and is
 managed by `update`/`clean` like every other asset. Author it in the assets repo
@@ -55,8 +55,8 @@ pip install -r agentforge_simulator/requirements.txt
 ```
 
 Only what a run touches is needed: pandas (csv/xls), opencv (video), paho (mqtt),
-requests (webhook/api), PyYAML (scenario mode). The console transport, JSON input,
-and `gen_input.py` are pure stdlib.
+requests (webhook/api), PyYAML (scenario mode), asyncua (the OPC-UA HMI face, only when
+one is declared). The console transport, JSON input, and `gen_input.py` are pure stdlib.
 
 The set is split into two groups, and `requirements.txt` above composes both, so
 the standalone command is unchanged:
@@ -64,7 +64,7 @@ the standalone command is unchanged:
 | Group | Contains | Who needs it |
 |---|---|---|
 | `requirements-transports.txt` | `paho-mqtt`, `requests` | the simulator **and** any host whose ingress layer consumes the same transports |
-| `requirements-inputs.txt` | `pandas`, `openpyxl`, `xlrd`, `opencv-python`, `PyYAML` | the simulator only — decoding source data and loading scenario bundles are producer-side |
+| `requirements-inputs.txt` | `pandas`, `openpyxl`, `xlrd`, `opencv-python`, `PyYAML`, `asyncua` | the simulator only — decoding source data, loading scenario bundles and serving the OPC-UA HMI face are producer-side |
 
 **Host projects consuming these transports** should reference the transports
 group from their own `requirements.txt` rather than copying its pins:
@@ -258,8 +258,8 @@ On exit the process prints a JSON summary (`scenario`, `endpoints`, `events_emit
 `caller_key`, `entities` (CSV), `timeline` (CSV), `hubs.<id>` and `shared`. A hub or
 `shared` section may carry `port` (declared; `0` lets the OS choose), `sim` (path to its
 `sim.yaml`), `env` (the endpoint overlay the hub's children see, which is how a capability
-is pointed at the simulator and then back at production), `capture_topics`, and the older
-`api:` / `mqtt:` adapters. Unknown keys are refused by name at load. A system `id`
+is pointed at the simulator and then back at production), `capture_topics`, `opcua_face`
+([below](#opc-ua-egress-face-a-simulated-machine-hmi)), and the older `api:` / `mqtt:` adapters. Unknown keys are refused by name at load. A system `id`
 declared by two hubs is also refused, because each external system is simulated exactly once.
 
 Each `sim.yaml` `systems:` entry takes `id`, `description`, and any of `routes`,
@@ -275,6 +275,7 @@ Each `sim.yaml` `systems:` entry takes `id`, `description`, and any of `routes`,
 | **Model** | `models: responses.json` (entries `model_ref`, `prompt_fingerprint`, `returns`) | `POST /models/<model_ref>` | canned answer for `(model_ref, prompt fingerprint)`, else `(model_ref, any prompt)`, else **404** |
 | **SQLite seed** | `seed: <dir>/` of CSVs | read-only DSN in the port map's `database` | one table per CSV, named after its file stem, all merged into `run/scenario.sqlite` |
 | **Broker / queue capture** | hub `capture_topics: [...]` + an `mqtt:` broker | subscribes to each declared topic (wildcards refused) | records every publish per topic in the run log. A publish to an undeclared topic is logged as refused |
+| **OPC-UA egress (HMI)** | hub or `shared` `opcua_face:` + an `mqtt:` broker (or `opcua_face.broker`) | an OPC-UA server at `opcua_face.endpoint`, subscribed to each declared topic (wildcards refused) | writes the HMI nodes from each alert; records every alert and every node write in the run log. See [below](#opc-ua-egress-face-a-simulated-machine-hmi) |
 | **Timeline** | `timeline: events.csv` (`offset_ms, hub, adapter, target, payload`) | `adapter` is `mqtt` (topic), `webhook` (URL) or `feed` (feed name) | raw JSON payloads, played on the virtual clock (`clock.compression`). `--hub` keeps only that hub's rows |
 
 On one hub port, an exact route match is tried first, then `/models/...` and
@@ -311,6 +312,72 @@ Rules:
 | `run/run.<scope>.log.jsonl` | the ordered run log (`seq`, `kind`, ...), one per process like the port map, truncated at start |
 
 All three are generated output; gitignore them.
+
+### OPC-UA egress face (a simulated machine HMI)
+
+Stands in for where a business action **lands** when that is a machine HMI: an edge device
+publishes an alert to MQTT, and the use case's decision is "show the alarm on the machine's HMI via
+OPC-UA". With no machine on the bench, the face is an **OPC-UA server whose nodes are driven by the
+alerts it receives** — a stand-in for the real MQTT→OPC-UA gateway or PLC write. The worked example
+is [`scenarios/cnc_hmi_opcua/`](scenarios/cnc_hmi_opcua/scenario.yaml) (a CNC drift alarm; no real data).
+
+```yaml
+hubs:
+  cnc_line:
+    mqtt: { host: 127.0.0.1, port: 1883 }        # the broker the device publishes alerts to
+    opcua_face:
+      endpoint: opc.tcp://127.0.0.1:4840/neuroedge/cnc-hmi   # default host is loopback; 0.0.0.0 to share
+      namespace: urn:neuroedge:sim:cnc-hmi
+      object: CncHmi                             # node ids are ns=2;s=CncHmi.<name>
+      topics: [ne-bus/cnc-drift-on-powertrain-shop-for-car-prduction/alert]
+      # broker: mqtt://ne-bus:1883               # optional: bridge from a broker other than mqtt:
+      # fields: / nodes:                         # optional: rename payload keys / node names
+```
+
+| Node | Type | Written from |
+|---|---|---|
+| `DriftAlarm` | Boolean | `true` on every accepted alert; cleared by an operator Ack |
+| `DriftScore` | Double | the payload's `score` (default keys tried: `score`, then `drift_score`) |
+| `AlarmText` | String | `message` verbatim, else composed from score, `device_id`, `use_case_id` |
+| `LastAlertTs` | DateTime | `timestamp_ns` as UTC, else the receive time (the run log says which) |
+| `AlertCount` | UInt32 | alerts accepted since start |
+| `Ack` | Boolean | the **only client-writable node** — write `true` to clear `DriftAlarm`; the next alert resets it |
+
+Rules: only the declared topics are bridged, and an alert on any other topic is refused and logged
+(`opcua_alert_refused`). An alert with no readable score is logged as `opcua_alert_malformed` and
+writes **no** node — it is never shown as 0. Every accepted alert logs `opcua_alert_received`, and
+every node write logs `opcua_node_write` (`node`, `node_id`, `value`, `cause: alert|ack`). An operator
+acknowledgement logs `opcua_ack`. So a test asserts "the alert reached the HMI" against the run log.
+The face is unsecured (security policy None) — it is a bench stand-in, not a production server.
+
+A face whose section has no broker still serves its nodes and logs `opcua_bridge_not_started`. A broker
+that is down at start is retried in the background, and `opcua_bridge_not_ready` records that alerts
+published before it connects are lost. Without `asyncua` installed, a scenario that declares a face
+fails at start with the install line; one that declares none never imports it.
+
+**Watch it.** Connect any OPC-UA client (UaExpert: *Add Server* → *Custom Discovery* →
+`opc.tcp://127.0.0.1:4840/neuroedge/cnc-hmi`, security *None*, anonymous) and drag the nodes under
+*Objects → CncHmi* into the Data Access view. The run summary's `opcua_faces` and the run log's
+`opcua_face_started` give the bound endpoint (useful with port `0`).
+
+**Trigger it** with any MQTT publish to a declared topic, for example with Mosquitto's client:
+
+```bash
+mosquitto_pub -h 127.0.0.1 -t ne-bus/cnc-drift-on-powertrain-shop-for-car-prduction/alert \
+  -m '{"score": 0.91, "device_id": "sim-cnc-edge-01", "timestamp_ns": 1790000000000000000}'
+```
+
+**Without a bundle**, the same face runs from the command line (the first argument, like `--scenario`);
+its run log goes to `sim_output/opcua_hmi.log.jsonl`:
+
+```bash
+python agentforge_simulator/simulator.py --opcua-hmi --mqtt-host 127.0.0.1 \
+    --mqtt-topic ne-bus/cnc-drift-on-powertrain-shop-for-car-prduction/alert \
+    --endpoint opc.tcp://127.0.0.1:4840/neuroedge/cnc-hmi --object CncHmi
+```
+
+In a `--play-once` run, an alert still in flight when the timeline ends is written before the process
+exits, so its entries can follow `run_complete` in the log.
 
 ---
 
@@ -360,9 +427,11 @@ agentforge_simulator/
 │   ├── fixtures.py       # fixture manifest + resolution chain (caller, matches)
 │   ├── mcp_face.py       # MCP tool-server face (initialize / tools/list / tools/call)
 │   ├── model_face.py     # canned model answers keyed by prompt fingerprint
+│   ├── opcua_face.py     # OPC-UA machine-HMI face driven by MQTT alerts (--opcua-hmi too)
 │   ├── queue_capture.py  # broker capture sink for declared topics
 │   └── sql_seed.py       # seed CSVs -> SQLite
 ├── scenarios/_base/      # the scenario bundle template (copy beside a use case)
+├── scenarios/cnc_hmi_opcua/  # worked example: a CNC drift alarm reaching a simulated HMI over OPC-UA
 ├── examples/             # ready-made sample inputs to copy into sim_input/
 ├── sim_input/            # you drop / generate inputs here (git-kept, user-owned)
 └── sim_output/           # sent-logs land here (git-kept, user-owned)

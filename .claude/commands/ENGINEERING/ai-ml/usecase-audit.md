@@ -34,6 +34,7 @@ portal, a device re-flashed, a simulator export built on an old lock. This comma
 | use case ↔ dataset (`data/contract/`, splits, synthetic) | the contract's `lock_sha256`, rate, window, stride, channel order, units, reduce; one `split_hash` across contract and splits; the synthetic set stamped with this lock and split hash |
 | use case ↔ scaffold (`inputs/scaffold/`, **optional, advisory**) | use case id, class order, channel order, rate and window equal the lock; the vision defaults and free-text `at_fpr` the lock overrides are listed |
 | use case ↔ simulator (`sim/manifest.json`) | `lock_sha256`, `split_hash`, feature order, rate, units, reduce; test exported only as `acceptance_only` |
+| training package ↔ use case (`<arch>/training-package.zip`, from M8 on, ADR-0028 D-5) | `package.json` carries this run's `lock_sha256` and `use_case_id`, and its runtime is `pip`. No zip is NOT_YET: the M8 audit runs before the build, and the fine-tune path builds none |
 | package ↔ all (`<arch>/runs/*/model-package/meta.json`) | `lock_sha256`, class names, head, opset 13, feature order, window, stride, rate, reduce |
 
 Each check is **PASS**, **WARN**, **FAIL** or **NOT_YET**. NOT_YET means the source does not exist at this
@@ -49,7 +50,7 @@ WARN and as **not used**. Only the use case, the dataset, the simulator export a
 
 | Checkpoint | Point in the run | Why there |
 |---|---|---|
-| `M0` | after the lock is built | the recorded use case must be the one the lock was built from; a device that cannot run it is flagged (WARN) before any data is fetched |
+| `M0` | after the lock is built | the recorded use case must match the lock on every model-contract field (ADR-0030; a file changed only outside the contract is a WARN); a device that cannot run it is flagged (WARN) before any data is fetched |
 | `M4` | after the contract dataset, before the data-verified gate | the data the human approves must be the data the lock describes |
 | `M8` | before code is generated | a provided scaffold is reported as used, or as ignored because it belongs to another use case |
 | `M11` | after M10 eval, before the upload zip | what leaves the folder must agree with the lock, the device and the simulator export |

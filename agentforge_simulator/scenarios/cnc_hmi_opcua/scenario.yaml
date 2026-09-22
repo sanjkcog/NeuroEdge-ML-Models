@@ -1,0 +1,58 @@
+# Example bundle: a simulated CNC machine HMI, reached over OPC-UA (ADR-0029).
+#
+# Use case this rehearses: an edge device scores a composite drift score per 1-second window and,
+# when its business rule fires, publishes an alert to MQTT. The decision action is "show the drift
+# alarm on the CNC machine's HMI via OPC-UA". There is no machine on the bench, so the `opcua_face`
+# below IS the HMI: an OPC-UA server whose nodes the alerts on the declared topic drive -- the stand-in
+# for the real MQTT -> OPC-UA gateway or PLC write.
+#
+# No real data: every value in timeline/events.csv is invented for the rehearsal.
+#
+#   python agentforge_simulator/simulator.py --scenario agentforge_simulator/scenarios/cnc_hmi_opcua/scenario.yaml
+#
+# then watch the nodes with any OPC-UA client (UaExpert: connect to the endpoint below, browse
+# Objects > CncHmi) and assert on run/run.all.log.jsonl (`opcua_alert_received`, `opcua_node_write`).
+
+scenario: cnc-hmi-opcua
+seed: 42
+clock:
+  compression: 1
+
+# Plays the alerts the edge device would publish, so the HMI moves without a device. Delete it when
+# a real device (or `simulator.py --transport mqtt`) publishes to the topic instead.
+timeline: timeline/events.csv
+
+hubs:
+  cnc_line:
+    # The broker the edge device publishes alerts to. `ne-bus` is the device stack's broker host; for
+    # a local Mosquitto on this machine use `host: 127.0.0.1`. The face bridges from this broker
+    # unless `opcua_face.broker` names another (e.g. broker: mqtt://ne-bus:1883).
+    mqtt: { host: ne-bus, port: 1883 }
+
+    opcua_face:
+      # Loopback by default. Use opc.tcp://0.0.0.0:4840/... to let another host's client connect.
+      endpoint: opc.tcp://127.0.0.1:4840/neuroedge/cnc-hmi
+      namespace: urn:neuroedge:sim:cnc-hmi
+      # The nodes hang under Objects/CncHmi; each node id is ns=2;s=CncHmi.<name>.
+      object: CncHmi
+      # Concrete topics only: an alert on any other topic is refused and logged, never shown.
+      topics:
+        - ne-bus/cnc-drift-on-powertrain-shop-for-car-prduction/alert
+      # Which alert JSON key feeds which value. These are the defaults, written out so the mapping
+      # is visible; `score` is required (an alert without one is logged as malformed, never shown
+      # as 0), everything else is optional.
+      fields:
+        score: [score, drift_score]
+        message: message
+        timestamp_ns: timestamp_ns
+        device_id: device_id
+        use_case_id: use_case_id
+      # Node browse names per role -- the defaults. Only `ack` is client-writable: writing True
+      # clears DriftAlarm, which is how an operator acknowledgement is rehearsed.
+      nodes:
+        alarm: DriftAlarm
+        score: DriftScore
+        text: AlarmText
+        last_alert_ts: LastAlertTs
+        alert_count: AlertCount
+        ack: Ack

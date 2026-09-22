@@ -23,13 +23,15 @@ import glob
 import json
 import os
 import sys
+import zipfile
 from datetime import datetime, timezone
 from typing import Any
 
-from ..state.lock_digest import source_matches
 from . import gates as gt
 from . import intake
-from .lock import LockError, normalise_unit, read_lock
+from .kpi import declares_baseline
+from .lock import LockError, compare_use_case, normalise_unit, read_lock
+from .package import PACKAGE_FILE, ZIP_NAME
 
 PASS, WARN, FAIL, NOT_YET = "PASS", "WARN", "FAIL", "NOT_YET"
 CHECKPOINTS = ("M0", "M4", "M8", "M11")
@@ -96,10 +98,13 @@ def check_use_case(a: Audit, dest: str, lock: dict[str, Any]) -> dict[str, Any] 
 
     with open(path, "rb") as fh:
         raw = fh.read()
-    same = source_matches(raw, lock.get("use_case_sha256"))
-    a.add(PASS if same else FAIL, "use case", "input is the use case the lock was built from",
-          f"lock {str(lock.get('use_case_sha256'))[:12]}" + ("" if same else ": the input differs; re-lock"))
     uc = yaml.safe_load(raw.decode("utf-8"))
+    if not isinstance(uc, dict):
+        a.add(FAIL, "use case", "parse", "inputs/use_case.yaml is not a use-case mapping")
+        return None
+    # ADR-0030: the input is held to the lock over the model-contract fields, not the file hash.
+    for level, check, detail in compare_use_case(lock, uc, raw):
+        a.add(level, "use case", check, detail)
     order = None
     for sensor in _get(uc, "ingress.sensors") or []:
         if isinstance(sensor, dict) and sensor.get("feature_order"):
@@ -278,6 +283,30 @@ def check_scaffold(a: Audit, dest: str, lock: dict[str, Any]) -> None:
                 _json(cap).get("device_profile_id"), level=WARN)
 
 
+def check_training_package(a: Audit, dest: str, lock: dict[str, Any]) -> None:
+    """A built ``training-package.zip`` must be for THIS use case (ADR-0028 D-5). The fine-tune path builds none,
+    and the M8 audit runs before the build, so an absent zip is never a finding against the run."""
+    zips = sorted(glob.glob(os.path.join(dest, "*", ZIP_NAME)))
+    if not zips:
+        a.add(NOT_YET, "training package", "present", "none built (built after the eval-methodology gate; the "
+                                                      "fine-tune path has none)")
+        return
+    for zip_path in zips:
+        area = f"training package {os.path.relpath(zip_path, dest)}"
+        try:
+            with zipfile.ZipFile(zip_path) as z:
+                package = json.loads(z.read(PACKAGE_FILE))
+        except (OSError, KeyError, ValueError, zipfile.BadZipFile) as exc:
+            a.add(FAIL, area, "readable", f"{PACKAGE_FILE} cannot be read: {exc}")
+            continue
+        a.equal(area, "lock_sha256", str(package.get("lock_sha256"))[:12], lock["lock_sha256"][:12])
+        a.equal(area, "use_case_id", package.get("use_case_id"), lock.get("use_case_id"))
+        a.equal(area, "runtime.kind", _get(package, "runtime.kind"), "pip")
+        if lock.get("modality") == "timeseries":
+            # D-11: a time-series package always declares one, or M10's beats_baseline gate can never open.
+            a.equal(area, "baseline.declared", declares_baseline(package), True)
+
+
 def check_package(a: Audit, dest: str, lock: dict[str, Any]) -> None:
     metas = sorted(glob.glob(os.path.join(dest, "*", "runs", "*", "model-package", "meta.json")))
     if not metas:
@@ -320,6 +349,7 @@ def run(dest: str, checkpoint: str | None) -> Audit:
         a.add(NOT_YET, "use case <-> dataset", "contract dataset", "built at M4")
     if a.reached("M8"):
         check_scaffold(a, dest, lock)
+        check_training_package(a, dest, lock)
     else:
         a.add(NOT_YET, "use case <-> scaffold", "present", "recorded at M8")
     if a.reached("M11"):

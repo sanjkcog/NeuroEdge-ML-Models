@@ -55,6 +55,8 @@ commands:
   - {name: dataset-download, path: commands/ENGINEERING/ai-ml/dataset-download.md}   # ADR-0024
   - {name: data-simulator, path: commands/ENGINEERING/ai-ml/data-simulator.md}       # NeuroEdge-Web ADR-0008
   - {name: usecase-audit, path: commands/ENGINEERING/ai-ml/usecase-audit.md}         # ADR-0025 D-6
+  - {name: model-fetch,   path: commands/ENGINEERING/ai-ml/model-fetch.md}           # ADR-0028 D-2
+  - {name: aihub-compile, path: commands/ENGINEERING/ai-ml/aihub-compile.md}         # ADR-0028 D-10
 agents_extra:
   - {path: agents/ENGINEERING/ai-ml/ml-data-engineer.md}
   - {path: agents/ENGINEERING/ai-ml/ml-modeler.md}
@@ -78,7 +80,7 @@ stage_realizations:
   test:
     status: phase-2
     owner: ml-eval-reviewer
-    realization: "held-out eval gate: eval.py on the withheld test split, KPIs + beats_baseline (ADR-0022 M8)"
+    realization: "held-out eval gate: eval.py on the withheld test split, KPIs on every path, beats_baseline only when a baseline is declared (ADR-0022 M8, ADR-0028 D-11)"
     builds_on: [model-codegen, ml-model-package]
 artifacts:
   - {name: dataset-card,     status: backlog}

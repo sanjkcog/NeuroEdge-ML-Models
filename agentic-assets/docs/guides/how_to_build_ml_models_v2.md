@@ -52,7 +52,8 @@ live), `docs/decisions/ADR-0022-agentforge-ml-orchestrator-and-model-package-con
 orchestrator and the model-package contract), `ADR-0024` (priced, scoped dataset transfer),
 `ADR-0025` (offline inputs, review gates, enforced gates, `/usecase-audit`), `ADR-0026` (portal inputs
 now; the use-case hash ignores trailing newlines), `ADR-0027` (only the use case is required; the
-capability manifest and the scaffold are optional and advisory), and NeuroEdge-Web
+capability manifest and the scaffold are optional and advisory), `ADR-0030` (only a model-contract edit to
+the use case needs a re-lock; the file hash no longer gates), and NeuroEdge-Web
 `docs/decisions/ADR-0005-*.md` / `ADR-0008-*.md` (the portal side and the use-case lock).
 
 **Contents**
@@ -868,7 +869,8 @@ python -m agentforge.src.ml_contract.intake check --dest <folder> --need scaffol
 ```
 
 `check` exits 3 only when the **use case** is missing. Re-downloading and re-recording a changed use case
-re-opens its gate and every audit, and means a re-lock. The capability manifest and the scaffold are
+re-opens its gate and every audit. It means a re-lock only when a model-contract field changed (ADR-0030);
+otherwise the re-run audit passes with a note. The capability manifest and the scaffold are
 optional: recording, replacing or omitting one opens no gate and re-opens no audit (ADR-0027).
 
 - **Wrong stage id?** The CLI names the run's sequence in the error (`ml`). An SDLC stage id against an
@@ -961,7 +963,8 @@ If you already had the KIT data on disk: `/agentforge-ml "<objective>" --stage v
 | The run stops with `[MISSING] use_case` (`intake check` exit 3) | The use case isn't in `inputs\incoming\` | Drop it there (the README says where it comes from), then `--resume`. `[ABSENT] capability_manifest` / `scaffold` is information only: both are optional |
 | `[AMBIGUOUS]` in `intake check` | Two files of the same kind were dropped | Delete the one you don't want, then `--resume` |
 | `REFUSED: complete <stage> — gates are not through` | A gate of that stage is pending, rejected, or never opened | `run_state.py status` lists every `Owed:` gate; answer them. Never edit `run.json` by hand |
-| Intake says the use case `differs from the use case the lock was built from` | The use case really changed in the portal (trailing newlines, CRLF and BOM are ignored) | Re-lock (`--force`) and re-run the stages the change affects, or re-download the version you locked |
+| Intake, the audit or `lock verify` FAILs on `model contract: <field>: locked …, the use case now says …` | A model-contract field changed in the portal: a unit, the effective `at_fpr`, class names or order, head shape, target metric, or channel names/order, `reduce`, rate, window or stride (ADR-0030) | Re-lock (`--force`) and rebuild the package, or revert the edit in the portal and re-download |
+| `[WARN] lock: the use case changed outside the contract …; the lock still holds` | The file changed (target device, egress, `min_value`, definitions, business text), but nothing the model computes did | Nothing: the run goes on. The note is there so the change stays visible |
 | `audit/M0` WARN on `device_profile_id` or `runtime_profile available` | Usually a **stale manifest**: one assessed by the pre-2026-09-16 device agent still uses the old ids (`nvidia-jetson-orin-devkit`, `ep-jetson-tensorrt`, `ort-cpu`, `cuda`), where the use case uses the current ones (`nvidia-jetson-orin-nano`, `ep-tensorrt`, `ort-core`, `ep-cuda`). Otherwise the use case really targets a different device | Re-assess the device with the current `ne-device-agent assess --local` and record the new manifest. **Don't** change the use case to the old ids. If it really is a different device you deploy to, fix the target in portal Step 2 and re-download. If it is only a test target (laptop / VM), the WARN is expected and nothing needs doing |
 | A scaffold intake FAILs on class order, channels, rate, window, stride, units/reduce, metric or `at_fpr` | The scaffold was generated from another version of the use case. M8 ignores it and uses the default template | To have it used, download a fresh scaffold after the use case is final and re-run M8 |
 | `UNSTAMPED: the synthetic manifest has no lock_sha256` | The synthetic set predates the stamping rule, or its generator doesn't write the stamps | Re-run `/synth-data`; the generator must write `lock_sha256` and `split_hash` |

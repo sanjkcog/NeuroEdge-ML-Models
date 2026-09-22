@@ -6,6 +6,8 @@
     python simulator.py --transport webhook --webhook-url https://example.com/hook
     python simulator.py --transport api --api-url https://api.example.com/ingest \
         --api-method POST --api-bearer $TOKEN --api-header 'X-Source: sim'
+    python simulator.py --scenario path/to/scenario.yaml
+    python simulator.py --opcua-hmi --mqtt-topic plant/line1/alert
 
 Inputs are read from ``sim_input/`` (csv, xls/xlsx, json, images, video) and a
 log of what was sent is written to ``sim_output/`` as json/jsonl/csv.
@@ -16,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import threading
 from pathlib import Path
 
 from .engine import ReplayConfig, ReplayEngine
@@ -119,6 +122,98 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _run_scenario(manifest: Path, hub: str | None, serve: bool) -> dict:
+    """One scenario run, with the OPC-UA faces it declares served beside it (ADR-0029).
+
+    🔴 **Composed here, not inside ``ScenarioRunner``, on purpose.** Installed projects keep a local
+    ``scenario_run.py`` that an update must not overwrite, so a face wired into the runner would
+    reach none of them. Composed around the runner's public surface (``bundle``, ``scope``,
+    ``run_log``, ``run``) it works unchanged over any runner that keeps that surface.
+
+    The faces start first so an alert the timeline publishes at offset 0 already has an HMI, and
+    they stop in ``finally`` so Ctrl-C releases the OPC-UA port as it does the stub ports.
+    """
+    from .opcua_face import start_opcua_faces  # pylint: disable=import-outside-toplevel
+    from .scenario import load_scenario  # pylint: disable=import-outside-toplevel
+    from .scenario_run import ScenarioRunner  # pylint: disable=import-outside-toplevel
+
+    runner = ScenarioRunner(load_scenario(Path(manifest)), hub=hub)
+    faces = start_opcua_faces(runner.bundle, scope=runner.scope, run_log=runner.run_log)
+    endpoints = faces.endpoints()
+    try:
+        summary = runner.run(serve=serve)
+    finally:
+        faces.stop()
+    if endpoints:
+        # Only when a face exists, so a scenario without one prints exactly the summary it always did.
+        summary["opcua_faces"] = endpoints
+    return summary
+
+
+def _run_opcua_hmi(argv: list[str]) -> int:
+    """``--opcua-hmi``: the OPC-UA egress face alone, bridged from one broker -- no bundle needed.
+
+    The quickest way to put a simulated HMI in front of a device that already publishes alerts.
+    Same face, same run-log entries as scenario mode; the log goes to ``sim_output/``.
+    """
+    # pylint: disable=import-outside-toplevel  # asyncua/paho stay lazy for every other mode
+    from .opcua_face import DEFAULT_ENDPOINT
+    from .opcua_face import DEFAULT_NAMESPACE
+    from .opcua_face import DEFAULT_OBJECT
+    from .opcua_face import MqttBridge
+    from .opcua_face import OpcUaFace
+    from .opcua_face import load_opcua_face_config
+    from .simcore import RunLog
+
+    parser = argparse.ArgumentParser(
+        prog="simulator --opcua-hmi",
+        description="Serve a simulated machine HMI over OPC-UA, driven by alerts from an MQTT broker.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument("--opcua-hmi", action="store_true", required=True, help=argparse.SUPPRESS)
+    parser.add_argument("--endpoint", default=DEFAULT_ENDPOINT, help="OPC-UA endpoint the HMI serves on")
+    parser.add_argument("--namespace", default=DEFAULT_NAMESPACE, help="namespace URI of the HMI nodes")
+    parser.add_argument("--object", default=DEFAULT_OBJECT, help="object the nodes hang under (node id prefix)")
+    parser.add_argument("--mqtt-host", default="127.0.0.1")
+    parser.add_argument("--mqtt-port", type=int, default=1883)
+    parser.add_argument(
+        "--mqtt-topic", action="append", required=True, help="alert topic to bridge (repeatable; no wildcards)"
+    )
+    parser.add_argument(
+        "--run-log", type=Path, default=_ROOT / "sim_output" / "opcua_hmi.log.jsonl", help="run log (truncated)"
+    )
+    args = parser.parse_args(argv)
+    try:
+        config = load_opcua_face_config(
+            {"endpoint": args.endpoint, "namespace": args.namespace, "object": args.object, "topics": args.mqtt_topic},
+            where="--opcua-hmi",
+        )
+        run_log = RunLog(args.run_log)
+        face = OpcUaFace(config, name="opcua_hmi", run_log=run_log)
+        endpoint = face.start()
+    except Exception as exc:  # noqa: BLE001 - the CLI boundary reports, it does not trace
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+    bridge = MqttBridge(face, args.mqtt_host, args.mqtt_port, run_log=run_log)
+    try:
+        bridge.start()
+        print(f"[opcua] HMI at {endpoint}  (Ctrl-C to stop)")
+        for role in config.nodes:
+            print(f"[opcua]   {face.node_id(role)}")
+        print(f"[opcua] bridging {list(config.topics)} from mqtt://{args.mqtt_host}:{args.mqtt_port}")
+        print(f"[opcua] run log: {args.run_log}")
+        threading.Event().wait()
+    except KeyboardInterrupt:
+        print("opcua hmi stopped", file=sys.stderr)
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
+    finally:
+        bridge.stop()
+        face.stop()
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     _force_utf8_stdio()
     # `--scenario` short-circuits the replay engine entirely (simulator-mvp Group B, design D-2):
@@ -140,13 +235,12 @@ def main(argv: list[str] | None = None) -> int:
             help="exit when the timeline finishes instead of serving until stopped (batch/test mode)",
         )
         scenario_args = scenario_parser.parse_args(argv)
-        from .scenario_run import run_scenario
 
         try:
             # Serve-until-stopped is the DEFAULT (review C-2): the orchestrator launches this
             # process for the life of a simulated run, and agents call the stubs long after the
             # timeline's last row has played. Ctrl-C (or the orchestrator's terminate) ends it.
-            summary = run_scenario(scenario_args.scenario, hub=scenario_args.hub, serve=not scenario_args.play_once)
+            summary = _run_scenario(scenario_args.scenario, hub=scenario_args.hub, serve=not scenario_args.play_once)
         except KeyboardInterrupt:
             print("scenario stopped", file=sys.stderr)
             return 0
@@ -155,6 +249,9 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         print(json.dumps(summary, indent=2))
         return 0
+    # `--opcua-hmi` short-circuits the same way, and for the same reason: it serves, it does not replay.
+    if argv and argv[0] == "--opcua-hmi":
+        return _run_opcua_hmi(argv)
 
     args = build_parser().parse_args(argv)
 

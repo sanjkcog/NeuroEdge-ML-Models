@@ -47,14 +47,51 @@ Chooses **what model to build** before code is generated (ADR-0014). Spawns `ml-
      to the recommendation, never outputs of it. An architecture that cannot honour the lock's static window
      and head is not a candidate. If the evidence says the window or rate is wrong, stop and send the change
      back to the use case (re-lock), rather than choosing a different window here.
-   - **Runner** — `package` (the generated `train.py` on the user's GPU / VM) or `portal` (the consuming
-     platform's own trainer, only when the family is one it supports **and** its split integrity is proven —
-     for NeuroEdge time series that is disallowed until Web ADR-0002 V-1/V-2 land; ADR-0022 Q-2).
+   - **Loader** (ADR-0028 D-4) — one of `ultralytics` · `torchvision` · `timm` · `transformers` · `tao` · `custom` ·
+     `none` (trained from scratch). It says how the base weights are loaded, and it decides which runners are allowed.
+   - **Runner** (ADR-0028 D-4) — one of three. Take the proposal from
+     `python -m agentforge.src.ml_contract.model_fetch runner --loader <loader> [--path <catalogue path>]`:
+
+     | `runner` | Allowed for | What it means |
+     |---|---|---|
+     | `portal-finetune` | loader `ultralytics`, `torchvision`, `timm` only | the portal's built-in trainer fine-tunes the fetched weights on the prepared dataset, with its own recipe. M8 generates no code |
+     | `portal-package` | any loader a `pip` environment can run | the portal executes `training-package.zip` and changes none of it. A user who wants their own recipe for a YOLO or timm model takes this runner |
+     | `offline` | loader `tao`, and any work that needs a vendor toolchain | the user runs the generated driver on their own machine; the result enters the portal as a return package |
+
+     Running a training package on a laptop outside the portal stays possible. It is a fallback, not the default.
+     A TAO model needs an NVIDIA GPU machine with the container runtime: say so when you propose it. The `tao`
+     template is not built yet (ADR-0028 O-1), so say that too.
+   - **Refuse what cannot deploy** (ADR-0028 D-7) — refuse a proposal whose export cannot meet the pinned opset 13,
+     or that has no `output_schema` the device runs (`anomaly_score`, `class_logits`, `yolo_boxes_v8`). Say which
+     of the two it is. Whether a transformer exports at opset 13 is `unverified` until someone has exported it.
    - **Framing** — for a scalar anomaly head: supervised two-class vs normal-only (one-class /
      reconstruction), with the loss, class weighting, optimiser, schedule, early-stopping metric (on real val,
      per unit) and seed.
    - **Synthetic use** — whether and how the M6 set enters training (cap, the real-only vs real+synthetic
      ablation), or why it does not.
+1a. **Answer the portal's recommendation, when there is one (ADR-0028 D-9).** It is an advisory input: a file the
+   human exported from the portal and dropped in `inputs/incoming/`. Nothing here calls the portal, and **without
+   the file this command runs exactly as before.** `python -m agentforge.src.ml_contract.recommendation show
+   --dest <dest>` prints the pick and every rated candidate. The portal knows the device and its catalogue and
+   never sees the data. You know the data and the task. So the two can disagree, and these rules reconcile them:
+   1. §Alternatives considered **must address the portal's pick**: adopt it, or reject it with the reason.
+   2. A candidate marked **`does_not_fit`** (memory, opset, licence: evidence) is **binding**. Do not choose it.
+      `recommendation check --dest <dest> --model-id <id>` exits 3 for such a choice. Only the human can override
+      it, at the M7 gate, and the override is recorded.
+   3. A candidate marked **`unverified`** binds nothing.
+   4. You may choose another catalogue entry, or a model outside the catalogue. The second reaches the portal as
+      "unlisted".
+   5. **The human decides at the M7 gate**, seeing both opinions. When your choice differs from the pick, the
+      reason travels in `base-model-card.json` `selection_note` (`/model-fetch --selection-note`).
+1b. **Fetch the base model (ADR-0028 D-2, D-3).** When the proposal names a pretrained base, run `/model-fetch
+   --dest <dest>` (`--from-recommendation` when you adopt the pick). It pins the revision, hashes the weights, writes
+   `model/base/` and gates the licence. Take the licence outcome and the allowed runners from
+   `model/base/base-model-card.json` into the proposal. A model trained from scratch (`loader: none`) skips this.
+1c. **A claim about another repo is verified there, or marked `unverified` (ADR-0028 D-8).** When the proposal
+   rests on what the portal, the device or any other repo does (for example "the portal re-splits", "the device
+   runs opset 13"), read the file in **that** repo. Cite the file and the commit you read it at, in the proposal.
+   A claim you could not check is written as `unverified`, never as a fact. Do not verify such a claim inside the
+   model folder: the answer is not there.
 2. **Write the proposal to `<dest>/model_proposed.md`** (ADR-0025 D-3). This is the page the human approves, so
    it explains as well as decides. It must have a heading for each of: **Architecture** (a layer table with
    channels, kernel, dilation, receptive field and parameter count, and **the reasoning for each size choice**),
@@ -72,4 +109,6 @@ Chooses **what model to build** before code is generated (ADR-0014). Spawns `ml-
 
 ## Next step
 
-`/model-build` — generate the `.py`/`.tf` model + training script from the approved `model_proposed.md`.
+`/model-build` — generate the `.py`/`.tf` model + training script from the approved `model_proposed.md`. With
+runner `portal-finetune` it generates no code: the handoff is the dataset zip, the weights and
+`base-model-card.json`.

@@ -40,6 +40,16 @@ and ``sim.yaml`` names them::
         routes: routes/dms.routes.json
         fixtures: fixtures/dms.json
 
+A section may also declare an OPC-UA egress face (ADR-0029) -- an HMI whose nodes the alerts on
+its declared topics drive; see :mod:`neuro_sim.opcua_face` for the full block::
+
+    hubs:
+      plant:
+        mqtt: { host: 127.0.0.1, port: 1883 }
+        opcua_face:
+          endpoint: opc.tcp://127.0.0.1:4840/neuroedge/hmi
+          topics: [plant/line1/alert]
+
 🔴 **An external system is simulated exactly once.** Two hubs declaring the same system ``id`` is
 refused at load, naming both locations: two copies of one system are free to disagree, which is the
 fixture equivalent of a split brain. Loud at load, never mid-run.
@@ -55,6 +65,10 @@ from pathlib import Path
 from typing import Any
 from typing import Optional
 
+from .opcua_face import OpcUaFaceConfig
+from .opcua_face import OpcUaFaceError
+from .opcua_face import load_opcua_face_config
+
 
 class ScenarioError(ValueError):
     """A bundle that cannot run as declared -- always names what is wrong."""
@@ -66,7 +80,7 @@ KNOWN_ADAPTERS = frozenset({"api", "mqtt"})
 
 #: Keys a hub (or the ``shared``) section may carry beyond its adapters: its declared port, the
 #: file naming the systems it simulates, and its endpoint overlay.
-KNOWN_HUB_KEYS = KNOWN_ADAPTERS | frozenset({"port", "sim", "env", "capture_topics"})
+KNOWN_HUB_KEYS = KNOWN_ADAPTERS | frozenset({"port", "sim", "env", "capture_topics", "opcua_face"})
 
 #: Keys one entry of a ``sim.yaml`` ``systems:`` list may carry. Refused by name when misspelled --
 #: a mistyped ``fixtures`` that silently configures nothing is the defect this file exists to catch.
@@ -136,6 +150,9 @@ class HubAdapters:
     #: The endpoint overlay: variable name -> address. The one mechanism that points a capability
     #: at this simulator, and the same field an operator edits to point it back at production.
     env: dict = field(default_factory=dict)
+    #: The OPC-UA egress face (ADR-0029): an HMI whose nodes are driven by the alerts this section's
+    #: broker carries. Per section, like `capture_topics`, so `--hub` serves only its own HMI.
+    opcua_face: Optional[OpcUaFaceConfig] = None
 
 
 @dataclass
@@ -342,10 +359,15 @@ def _load_hub_adapters(section: Any, *, where: str, root: Path) -> HubAdapters:
     unknown = set(section) - KNOWN_HUB_KEYS
     if unknown:
         raise ScenarioError(f"{where} declares unknown key(s) {sorted(unknown)} -- known: {sorted(KNOWN_HUB_KEYS)}")
+    try:
+        opcua_face = load_opcua_face_config(section.get("opcua_face"), where=f"{where}.opcua_face")
+    except OpcUaFaceError as exc:
+        raise ScenarioError(str(exc)) from exc
     adapters = HubAdapters(
         port=int(section.get("port", 0)),
         env=_load_env(section.get("env"), where=where),
         capture_topics=_load_capture_topics(section.get("capture_topics"), where=where),
+        opcua_face=opcua_face,
     )
     if section.get("sim"):
         sim_file = root / str(section["sim"])
@@ -428,6 +450,29 @@ def _refuse_duplicate_systems(bundle: ScenarioBundle) -> None:
         seen[system.id] = location
 
 
+def _refuse_duplicate_opcua_endpoints(bundle: ScenarioBundle) -> None:
+    """Two OPC-UA faces on one fixed ``host:port`` cannot both bind -- refused at load (ADR-0029).
+
+    Loud here rather than as "address already in use" from whichever process starts second, which
+    names neither declaration. ``port 0`` asks the OS and cannot collide, so it is exempt.
+    """
+    seen: dict = {}
+    sections = [(f"hubs.{hub_id}", hub) for hub_id, hub in bundle.hubs.items()] + [("shared", bundle.shared)]
+    for location, adapters in sections:
+        if adapters.opcua_face is None:
+            continue
+        host, port = adapters.opcua_face.host_port()
+        if port == 0:
+            continue
+        if (host, port) in seen:
+            raise ScenarioError(
+                f"{location}.opcua_face and {seen[(host, port)]}.opcua_face both declare "
+                f"{host}:{port}. Two OPC-UA servers cannot bind one port; give one another port, "
+                "or 0 to let the OS choose."
+            )
+        seen[(host, port)] = location
+
+
 def load_scenario(manifest_path: Path) -> ScenarioBundle:
     """Load and validate one bundle from its ``scenario.yaml``.
 
@@ -481,6 +526,7 @@ def load_scenario(manifest_path: Path) -> ScenarioBundle:
         bundle.hubs[str(hub_id)] = _load_hub_adapters(section, where=f"hubs.{hub_id}", root=root)
     bundle.shared = _load_hub_adapters(manifest.get("shared"), where="shared", root=root)
     _refuse_duplicate_systems(bundle)
+    _refuse_duplicate_opcua_endpoints(bundle)
 
     if manifest.get("entities"):
         entities_file = root / str(manifest["entities"])

@@ -23,6 +23,11 @@ def _load(dest: str) -> gate_state.GateState:
     return gate_state.GateState.load(path) if os.path.exists(path) else gate_state.GateState.new()
 
 
+def load(dest: str) -> gate_state.GateState:
+    """Read-only view of ``<dest>/gates.json`` (empty when none exists), for a tool that reports a decision."""
+    return _load(dest)
+
+
 def open_pending(dest: str, gate_id: str, *, stage: str, opened_by: str) -> str:
     """Open ``gate_id`` for a human decision, or re-arm it when it exists. Returns what was done.
 
@@ -60,7 +65,8 @@ def reopen_if_present(dest: str, gate_ids: list[str] | tuple[str, ...]) -> list[
     return reopened
 
 
-def record_automatic(dest: str, gate_id: str, *, stage: str, passed: bool, reason: str) -> str:
+def record_automatic(dest: str, gate_id: str, *, stage: str, passed: bool, reason: str,
+                     identity: str = AUTOMATIC_IDENTITY) -> str:
     """The audit's gate: approved automatically when nothing failed, otherwise left pending.
 
     A failing audit never records a rejection on the human's behalf; it leaves the gate pending,
@@ -74,7 +80,7 @@ def record_automatic(dest: str, gate_id: str, *, stage: str, passed: bool, reaso
         # opened_by is left empty: the audit that opens the gate may also be the one that clears it.
         state.open_gate(gate_id, stage=stage, gate_type="hard")
     if passed:
-        state.record_decision(gate_id, "approved", identity=AUTOMATIC_IDENTITY, reason=reason)
+        state.record_decision(gate_id, "approved", identity=identity, reason=reason)
         outcome = "approved (automatic)"
     else:
         outcome = "pending (needs a human decision)"

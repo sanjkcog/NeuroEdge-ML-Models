@@ -26,8 +26,26 @@ the training run happens elsewhere.** No GPU is assumed here, and no training is
   requirements.txt / environment.yml        # pinned deps (torch / tensorflow, etc.)
   data/README.md                            # how to fetch the dataset (id/URL or synthetic recipe) — NOT the data itself
   RUN_ON_GPU.md                             # step-by-step: provision, install, run train.py, where checkpoints/metrics land
-  eval.py                                   # held-out eval → metrics.json (for the return eval gate)
+  eval.py                                   # held-out eval → metrics.json (for the return eval gate);
+                                            # CLI is fixed: --package --split --config --out (ADR-0028 D-12)
 ```
+
+**Requirements are one environment, and they are checked.** A training package installs every step's
+`requirements.txt` (baseline and model) into ONE environment, on the runner's Linux / Python 3.11, from wheels
+only. So: every line is `package==version` (no ranges, no pip options, no URLs); a package named in two folders
+has the same version in both; and the pins are never written from memory. Before handoff run
+`python -m agentforge.src.ml_contract.package check-env --dest <model folder> --arch <Arch> [--baseline <Dir>]`
+(it asks pip whether the set installs on the runner, and installs nothing) and fix what it names. A baseline
+library's own caps decide shared pins: `aeon==0.11.1` needs `pandas<2.1`; `aeon==1.3.0` installs with
+`pandas==2.3.3` and `scikit-learn==1.7.2`. **`check-env` proves the set installs, not that the code runs
+against it:** a pinned major version can rename what the script calls (`aeon` 1.x: `MiniRocket(n_kernels=…)`,
+not `num_kernels`), and only executing the script finds that. Write each call against the pinned version's
+API, and say in `RUN_ON_GPU.md` when a script has never been executed.
+
+**Stored templates (ADR-0028 D-6).** Most code here is generated from these rules. A Hugging Face fine-tune has
+more fixed parts, so it is stored: `python -m agentforge.src.ml_contract.template write --dest <model folder> --arch
+<Arch> --template transformers-classification`. Adapt its `config.yaml`; do not rewrite its contract block, its
+offline loading or its export. Its `RUN_ON_GPU.md` says what is `unverified`. Keep that text true as you change it.
 
 ## Framework selection
 
@@ -102,4 +120,5 @@ gate.
   to use — pin the value the deployment runtime is proven against.
 - Do not export a raw logit for a score something downstream will threshold, and do not "document"
   the missing activation instead of folding it into the graph.
-- Do not report a model's metrics with no baseline to size them against.
+- Do not report a model's metrics with no baseline to size them against. The one exception is the fine-tune path,
+  where the portal's trainer produces none: there the record says `baseline: not_applicable` (ADR-0028 D-11).

@@ -37,8 +37,8 @@ Do not delegate this command to an agent (D1, same as `/agentforge`): it spawns 
 
 The model project never calls the portal API. The use case (required), and the capability manifest and the
 training scaffold (both optional), arrive as **files the human downloaded**, recorded with a hash by
-`python -m agentforge.src.ml_contract.intake record --dest <dest> --kind <use_case|capability_manifest|scaffold>
---file <downloaded file>`. The model package leaves the same way: M11 builds an upload zip, and the human uploads
+`python -m agentforge.src.ml_contract.intake record --dest <dest> --kind
+<use_case|capability_manifest|scaffold|model_recommendation> --file <downloaded file>`. The model package leaves the same way: M11 builds an upload zip, and the human uploads
 it in the portal. Never fetch a portal file, and never read one from a portal repo's working tree.
 
 **The drop folder (ADR-0025 D-1a).** Every model folder has `<dest>/inputs/incoming/` with a README saying what to
@@ -49,6 +49,7 @@ drop there and where each file comes from:
 | `<use-case-id>.yaml` | M0 | **required**, gated, locked | portal Step 1 · Edge Use Case Design → validate → **Download use_case.yaml** |
 | `capability_manifest.json` | M0 | optional, advisory | the device's `ne-device-agent assess` output (uploaded in portal Step 2 · Target Device) |
 | `neuroedge_train_<id>.py` | M8 | optional: used when provided, else the default template | portal Step 3 · Model Strategy → **Build my own** → **Script (.py)** |
+| `model_recommendation.json` | M7 | optional, advisory: `/model-select` must answer it (ADR-0028 D-9) | portal Step 3 · Model Strategy: pick from the rated list, then export the recommendation |
 
 `python -m agentforge.src.ml_contract.intake check --dest <dest> --need <kinds>` records what was dropped (by
 content, not by name). It opens a gate for the use case only, and **exits 3 only when the use case is missing**.
@@ -67,13 +68,33 @@ the run does without it: relay that line and **carry on**. Two files of one kind
 | M4 | `verify` | `/dataset-verify --dest <dest>` → `ml-data-engineer` | `data/profile.json`, `data/splits/*.json` + `split_hash`, `data/contract/` (TS), `data/portal_upload.zip`, `audit/M4.md` | **automatic:** `audit/M4` · **human: data-verified** `data/profile.json` |
 | M5 | `label` | `/auto-label --dest <dest>` (vision) / TS window rule, then **`review split`** | `data/label-manifest.md`, **`data/split-review.md`** | **human: split review** `data/split-review.md` |
 | M6 | `synth` | `/synth-data --dest <dest>` when chosen, then **`review synth`** (or `review synth --skip-reason`) | `data/synthetic-recipe.md` + `data/synthetic/manifest.json`, **`data/synth-review.md`** | **human: synthetic review** `data/synth-review.md` (a skip is approved too) |
-| M7 | `model-select` | `/model-select --dest <dest>` → `ml-modeler`, then **`review model`** | **`model_proposed.md`** (+ `model_proposed/v<N>.md` for superseded proposals) | **human: model proposal** `model_proposed.md` |
-| M8 | `model-build` | pick up a **scaffold** if one was dropped, `audit M8`, then `/model-build --dest <dest>` → `ml-modeler`, then `ml-eval-reviewer` | `inputs/scaffold/<file>` (when provided), `audit/M8.md`, `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md` | **automatic:** `audit/M8` · **hard:** `eval-methodology` |
-| M9 | `train` | **external** — laptop GPU / AWS VM / platform trainer | `<arch>/runs/<run_id>/model-package/` | dependency-wait |
-| M10 | `eval` | this command runs `<arch>/eval.py` on `data/splits/test.json` | `metrics.json` (`eval_split: held_out_test`) | **hard: KPIs + `beats_baseline`** (opened on a miss) |
+| M7 | `model-select` | pick up a **model recommendation** if one was dropped, `/model-select --dest <dest>` → `ml-modeler`, **`/model-fetch`** when the proposal names a pretrained base, then **`review model`** | **`model_proposed.md`** (+ `model_proposed/v<N>.md` for superseded proposals), `model/base/{loader.json, base-model-card.json, base-model-card.md}` (weights git-ignored) | **human: model proposal** `model_proposed.md` · **hard: base-model licence** `model/base-model-card.md` (opened only when the licence needs a human) |
+| M8 | `model-build` | pick up a **scaffold** if one was dropped, `audit M8`, then `/model-build --dest <dest>` → `ml-modeler`, then `ml-eval-reviewer`. **Fine-tune path: no code is generated** | `inputs/scaffold/<file>` (when provided), `audit/M8.md`, `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md`, `<arch>/training-package.zip` | **automatic:** `audit/M8` · **hard:** `eval-methodology` |
+| M9 | `train` | **external**: the runner approved at M7 (`portal-finetune` · `portal-package` · `offline`) | `<arch>/runs/<run_id>/model-package/` | dependency-wait |
+| M10 | `eval` | this command runs `<arch>/eval.py` on `data/splits/test.json`, or accepts the portal's held-out result | `metrics.json` (`eval_split: held_out_test`), `<arch>/baseline_check.json` | **hard: KPIs on every path; `beats_baseline` only when a baseline is declared** (opened on a miss) |
 | M11 | `return` | `audit M11`, then build + validate the upload zip; **the human uploads it** | `audit/M11.md`, `<arch>/runs/<run_id>/return/upload.zip`, `return.json` | **automatic:** `audit/M11` · **human:** `return-upload` |
 | M12 | `data-simulator` | `/data-simulator --dest <dest>` | `sim/<split>/…` + `sim/manifest.json` (stamped with the lock of the returned model) | none |
 | M13 | `model-card` | `ml-modeler` | `model-card.md` | none |
+
+### The three paths (ADR-0028 D-1, D-4)
+
+The runner is proposed at M7 and approved with the proposal. It decides what M8 and M9 do. A runner executes what
+it is given and changes none of it.
+
+| Stage | `portal-package` (training package) | `portal-finetune` (fine-tune) | `offline` |
+|---|---|---|---|
+| M0–M6 data | as written below | the same | the same |
+| M7 | proposal + runner | proposal + runner + `/model-fetch` + the licence gate | proposal + runner |
+| M8 | code, eval-methodology gate, `training-package.zip` | **no code is generated.** The eval-methodology gate reviews the data and the split only. The handoff is the dataset zip, the weights and `base-model-card.json` | code or vendor specs, plus a driver the user runs |
+| M9 | wait; **the human uploads the package** to the portal, which runs it | wait; **the human uploads the dataset and the weights**; the portal's own trainer fine-tunes | wait; **the human runs the driver** on their own machine |
+| M10 | on the package the human downloads from the portal | the same; `baseline: not_applicable` | on the local package |
+| M11 | as written below | the same | the same; the return zip is what the portal takes as a trained model |
+
+Who owns what: on `portal-package` and `offline`, this run owns the method (architecture, recipe, training code,
+evaluation). On `portal-finetune` it owns the inputs (the dataset, the split, the base-model choice and its
+licence), and the portal's built-in recipe is accepted as it is. `portal-finetune` is allowed for loader
+`ultralytics`, `torchvision` and `timm` only. `tao` is `offline` only. The `tao` template is not built yet
+(ADR-0028 O-1).
 
 State lives **inside the model folder**. Every `run_state.py` / `gate_state.py` call below uses:
 
@@ -136,9 +157,13 @@ work around it, and never mark a stage complete by hand in `run.json`.
    --artifact audit/M0.md`.
 
 **Every later stage reads the lock and never re-derives it**: channels, order, units, per-sample definition, rate,
-window, stride, classes, head, `at_fpr`. If the use case changes, re-record it, re-lock (`--force`) and re-run
-every stage from the first one the change affects. `lock verify --dest <dest> --use-case <dest>/inputs/use_case.yaml`
-tells you whether it changed.
+window, stride, classes, head, `at_fpr`. After the lock the dataset and model are not redone, so only a
+**model-contract** edit needs a re-lock (ADR-0030): a unit, the effective `at_fpr`, the class names or their order,
+the head shape, the target metric (`recall` ≡ `recall_at_fpr`), or the channel names/order, `reduce`, rate, window
+or stride. That is a FAIL naming the field, the locked value and the current value: re-lock (`--force`) and rebuild
+the package, or revert the edit. Any other edit (target device, egress, `min_value`, definitions, business text)
+changes the file hash only; it is a WARN, "the use case changed outside the contract; the lock still holds", and
+the run goes on. `lock verify --dest <dest> --use-case <dest>/inputs/use_case.yaml` runs the same comparison.
 
 ### Stage loop (M1–M13)
 For each stage not yet `complete`, in order: `start <id>` **before** the spawn → run the stage's command with
@@ -171,6 +196,24 @@ Gate handling, in stage order:
   `review synth --dest <dest> [--cap-fraction <f>]`: real train and synthetic aggregated per class, the ratio
   before and after the cap, the fidelity table, and how each split uses it. **Skip** → `review synth --dest <dest>
   --skip-reason "<the human's reason>"`. Either way the gate is asked and recorded. A skip is never implied.
+- **M7 model recommendation pick-up (no gate, ADR-0028 D-9):** before `/model-select`, run `intake check --dest
+  <dest> --need model_recommendation`. It always exits 0 when the file is missing: relay the `[ABSENT]` line and
+  carry on, exactly as before. When one was dropped, show its findings (all WARN at most) and
+  `python -m agentforge.src.ml_contract.recommendation show --dest <dest>`.
+- **M7 base model (ADR-0028 D-2, D-3):** when the proposal names a pretrained base, run `/model-fetch --dest <dest>`
+  before the gate. It pins the revision, hashes the weights and writes `model/base/`. **Exit 3 = the hard licence
+  gate `model/base-model-card.md` is open:** show the card, ask for one of the three outcomes (**approved**,
+  **approved, internal and demo use only**, **rejected**), record it with `gate_state.py decide`, then
+  `model_fetch licence --dest <dest> --outcome <…>`. An AGPL-3.0 (Ultralytics) model does **not** open the gate:
+  it is recorded as approved for internal and demo use, with `distribution: internal_only` as information that
+  travels and is shown. For the MVP nothing refuses on that flag. Say so once. Never guess a licence.
+- **M7 the portal's "does not fit" is binding:** `recommendation check --dest <dest> --model-id <id>` exits 3 when
+  the proposal picks a candidate the portal marked `does_not_fit`. Show the portal's reasons and ask the human.
+  Only their decision lifts it: `recommendation check … --override "<their words>" --identity <user>`. It is
+  recorded in `model/recommendation-override.json`, and you repeat it in the M7 gate's reason. `unverified` binds
+  nothing. The human sees both opinions at the gate and decides. **Exit 4** means a recommendation was recorded
+  but cannot be read: its ratings are unknown, which is not the same as "no file". Show the WARN and ask the human
+  to export it again and drop it in `inputs/incoming/`. Do not go on as if nothing bound.
 - **M7 model proposal (human):** `/model-select` writes `model_proposed.md`. Then `review model --dest <dest>` checks
   it covers architecture (with the reasoning for each size), framing, synthetic use, augmentation, baseline,
   evaluation, export, runner and **alternatives considered**, and opens the gate. Present the architecture table,
@@ -188,40 +231,82 @@ Gate handling, in stage order:
 
   `python -c "from agentforge.src.ml_contract.intake import usable_scaffold; print(usable_scaffold(r'<dest>'))"`
   prints the scaffold to use, or `None` for the default template.
-- **M8 audit checkpoint:** `audit --dest <dest> --checkpoint M8` (+ scaffold, advisory: WARN at most).
+- **M8 on the fine-tune path (`portal-finetune`):** generate **no code** and build **no package**. The scaffold
+  pick-up is skipped. `ml-eval-reviewer` still runs, on the data and the split only (leakage, grouping, class
+  balance), and its report is the `eval-methodology` gate. The handoff is `data/portal_upload.zip`, the weights in
+  `model/base/weights/` and `model/base/base-model-card.json`.
+- **M8 stored template:** for loader `transformers` with a classification head, start from
+  `python -m agentforge.src.ml_contract.template write --dest <dest> --arch <Arch> --template
+  transformers-classification`, then let `ml-modeler` adapt the recipe. Its `RUN_ON_GPU.md` says what is
+  unverified. Repeat that to the human; do not soften it.
+- **M8 audit checkpoint:** `audit --dest <dest> --checkpoint M8` (+ scaffold, advisory: WARN at most). Once a
+  `training-package.zip` exists, the audit also checks its `package.json` against the lock.
 - **M8 eval-methodology:** `ml-eval-reviewer`'s report is the gate (`gate_state.py open eval-methodology --stage
   model-build`); any **leakage** or **wrong-metric** finding loops back to `ml-modeler` before the stage completes.
 - **M8 training package (ADR-0028 D-5):** once the eval-methodology gate is approved, zip what was built, so every
   runner executes the same thing: `python -m agentforge.src.ml_contract.package build --dest <dest> --arch <arch>
-  [--baseline <dir>] [--data in-package|local|s3://bucket/prefix]`. Ask the human once where the heavy files travel:
+  [--baseline <dir>] [--data in-package|local|s3://bucket/prefix] [--catalogue-id <id>]`. Pass `--catalogue-id`
+  when the proposal adopted a portal catalogue entry. **A time-series run always passes `--baseline`**: the build
+  refuses without it, because M10's `beats_baseline` gate could otherwise never open (D-11). Ask the human once where the heavy files travel:
   **in-package** for small data, **local** when the runner is on this machine, **s3://…** for a runner on AWS. For
   s3 it prints an `aws s3 sync` command; **the human runs it**. Nothing here uploads. The test split is withheld
   from the package, and the command's output says which files. A refusal (an edited lock, a missing entry script,
   a secret-looking file) names the problem: fix it and rebuild, never pack around it. Add
   `--artifact <arch>/training-package.zip` to `complete model-build`. The zip can hold the dataset, so keep it out
   of git: `git check-ignore <arch>/training-package.zip`, and when it is not ignored, tell the human the one rule
-  to add (`neuroedge-ml-projects/*/*/training-package.zip`). The project owns its `.gitignore`.
-- **M10 KPIs:** compare `metrics.json` to the use case's targets (recall at the fixed FPR / mAP / …) and require
-  `beats_baseline: true`; either failing opens a hard gate (`kpi`, stage `eval`) with the numbers side by side.
-  The user may accept a documented miss; the acceptance is recorded, never implied.
+  to add (`neuroedge-ml-projects/*/*/training-package.zip`). The project owns its `.gitignore`. The same build
+  writes the **sealed test bundle** `data/portal_test.zip` (ADR-0028 D-12): the withheld test split, for the
+  portal's Evaluate step only. It IS the test data, so it is kept out of git the same way
+  (`neuroedge-ml-projects/*/data/portal_test.zip`) and is never sent to a trainer.
+- **M10 KPIs (ADR-0028 D-11):** compare `metrics.json` to the use case's targets (recall at the fixed FPR / mAP /
+  …) on **every** path. A miss opens the hard gate (`kpi`, stage `eval`) with the numbers side by side.
+  **`beats_baseline` is required only when a baseline is declared.** Run
+  `python -m agentforge.src.ml_contract.kpi baseline --dest <dest> --arch <arch> --model-package <pkg>`: it writes
+  `<arch>/baseline_check.json`, and exit 1 means the same `kpi` gate opens (the model does not beat its declared
+  baseline, or the flag is missing). **The verdict says which split the comparison was measured on.** It prefers
+  the held-out comparison (`eval.py` scored the model and its baseline on the test split, or the portal's accepted
+  result carries it). `beats_baseline_val_only` means only the training script's own validation comparison exists:
+  that is not a clean pass. Repeat its caveat in the KPI gate's text and in the model card. On the fine-tune path there is no training package and no baseline: it
+  records `baseline: not_applicable`, and that is not a miss. Never evaluate the pretrained model as it is and
+  call it a baseline: its classes differ, so it proves nothing. The user may accept a documented miss; the
+  acceptance is recorded, never implied.
 
 ### `train` (M9) — the external wait
-1. `start train`, then write `<dest>/<arch>/HANDOFF.md`: where the package will be expected
-   (`<arch>/runs/<run_id>/model-package/`), the exact command from `RUN_ON_GPU.md`, and the runner recorded in
-   `model_proposed.md` (`package` on laptop/VM, or `portal` when allowed). Name both ways to run the **same**
-   `<arch>/training-package.zip` (its sha256 included): run it yourself per `RUN_ON_GPU.md`, or upload it in the
-   portal (Step 3 · Model Strategy → Custom development → **Training package**) once the portal's package runner
-   exists (NeuroEdge-Web ADR-0010 R-1). Set `run.json` gate
+1. `start train`, then write `<dest>/<arch>/HANDOFF.md`. It names **the runner approved at M7** and says who
+   does what. Nothing here uploads, and nothing here trains.
+   - **`portal-package`: the portal is the runner.** The human uploads `<arch>/training-package.zip` (its sha256
+     included) in the portal (Step 3 · Model Strategy → Custom development → **Training package**). The portal
+     executes it and changes none of it. They upload `data/portal_test.zip` in the portal's Evaluate step only.
+     Running the same zip yourself per `RUN_ON_GPU.md` stays possible as a fallback; its result enters the portal
+     as a return package.
+   - **`portal-finetune`: the portal is the runner, with its own recipe.** The human uploads
+     `data/portal_upload.zip`, the weights file from `model/base/weights/` and `model/base/base-model-card.json`.
+     The portal matches the weights against the card by sha256. **Not built in the portal yet** (NeuroEdge-Web
+     ADR-0011 S-4 and S-5 are designed, not built, as read at Web `456850c`): until they are, say so in
+     `HANDOFF.md`, and offer `portal-package` or `offline` instead.
+   - **`offline`: the human's machine is the runner.** Give the exact command from `RUN_ON_GPU.md`. Say which
+     hardware it needs.
+
+   In every case say where the package will be expected (`<arch>/runs/<run_id>/model-package/`). Set `run.json` gate
    `{pending: true, stage: train, reason: waiting_external}` and **stop the session cleanly** — do not poll.
 2. On `--resume`: look for `<arch>/runs/*/model-package/{model.onnx, meta.json, model_artifact.json, metrics.json}`.
    Found → `complete train --artifact <package>` and continue to M10. Not found → print exactly what is awaited and
-   stop. For `runner: portal`, **the human** downloads the portal run's package (raw model + metadata) into that
-   folder. Nothing here fetches it.
+   stop. For `portal-package` and `portal-finetune`, **the human** downloads the portal run's package (raw model +
+   metadata) into that folder. Nothing here fetches it.
 
 ### `eval` (M10)
 Run `<arch>/eval.py --package <pkg> --split <dest>/data/splits/test.json` (CPU is fine). It writes
 `metrics.json` with `eval_split: held_out_test` and the `split_hash`, and it never reads train or val. Then the KPI
 gate above.
+
+**When the portal already evaluated it** (runner `portal-package`; ADR-0028 D-12): the portal ran this same
+`eval.py` on the sealed `data/portal_test.zip`. The human downloads that result from the portal (Train → Held-out
+evaluation → *Download result*) and this command checks it, offline:
+`python -m agentforge.src.ml_contract.heldout accept --dest <dest> --arch <arch> --evidence <file.json>`. It is
+accepted only when it is about THIS run: `held_out_test`, this run's lock, this run's test files by sha256, and the
+training package in this folder. Accepted → use its metrics for the KPI gate, and repeat its caveats (a unit whose
+file the training package also carried; a test set evaluated on more than once) in the gate's text. Refused → run
+`eval.py` locally as above; never argue a refused result into the gate. Either way the KPI gate is opened here.
 
 ### `return` (M11) — offline (ADR-0025 D-1)
 1. `audit --dest <dest> --checkpoint M11`: the package's `meta.json` against the lock and the simulator export
@@ -255,8 +340,8 @@ approved a deviation. Add the stage-log row to `README.md`. The run is complete;
 - `--status`: `run_state.py status` (prints the gates the next stage is owed) + `gate_state.py audit`, one screen,
   stop.
 - `--resume`: `run_state.py resume` (exits 3 and names every owed gate when one blocks), then the stage loop from
-  the first non-complete stage (train handled above). Resuming at M0 or M8 re-runs `intake check` for that stage's
-  files first, so files dropped since the stop are picked up. A run started before ADR-0025 will be owed the M0
+  the first non-complete stage (train handled above). Resuming at M0, M7 or M8 re-runs `intake check` for that
+  stage's files first, so files dropped since the stop are picked up. A run started before ADR-0025 will be owed the M0
   use-case gate, the M4 audit, and the M5/M6/M7 reviews. Record them in order, as above; each one is a real
   decision. A run started before ADR-0027 may still hold a pending `inputs/capability_manifest.json` or
   `inputs/scaffold` gate: it no longer guards anything, so ask the human once and record their answer to close it.
@@ -278,6 +363,12 @@ approved a deviation. Add the stage-log row to `README.md`. The run is complete;
 - Do not stop, ask, or open a gate for a missing capability manifest or scaffold, and do not treat a device or
   scaffold WARN as a blocker (ADR-0027). Every other human gate (M2, M4, M5, M6, M7, M10, M11) is unchanged.
 - Do not resample, rescale or convert units anywhere except the contract dataset (ADR-0008 L-3).
+- Do not state what the portal, the device or another repo does unless you read it there. Name the file and the
+  commit you read it at. A claim you could not check is written as `unverified`, never as a fact (ADR-0028 D-8).
+- Do not download a model anywhere but `/model-fetch`, never at `latest` or a branch, and never write a key.
+- Do not choose a model the portal marked `does_not_fit` without the human's recorded override.
+- Do not generate training code on the fine-tune path, and do not require `beats_baseline` where no baseline is
+  declared.
 - Do not use the scaffold's training body. Only its context, its return writer and its MLflow tracking
   conventions are used (ADR-0025 D-5, ADR-0027 D-3).
 

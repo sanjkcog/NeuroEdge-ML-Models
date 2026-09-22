@@ -1,0 +1,4 @@
+offset_ms,hub,adapter,target,payload
+2000,cnc_line,mqtt,ne-bus/cnc-drift-on-powertrain-shop-for-car-prduction/alert,"{""score"": 0.87, ""device_id"": ""sim-cnc-edge-01"", ""use_case_id"": ""cnc-drift-on-powertrain-shop-for-car-prduction"", ""timestamp_ns"": 1790000000000000000}"
+8000,cnc_line,mqtt,ne-bus/cnc-drift-on-powertrain-shop-for-car-prduction/alert,"{""device_id"": ""sim-cnc-edge-01"", ""message"": ""deliberately malformed: no score""}"
+14000,cnc_line,mqtt,ne-bus/cnc-drift-on-powertrain-shop-for-car-prduction/alert,"{""score"": 0.93, ""device_id"": ""sim-cnc-edge-01"", ""use_case_id"": ""cnc-drift-on-powertrain-shop-for-car-prduction"", ""timestamp_ns"": 1790000012000000000, ""message"": ""Spindle drift: check tool wear on OP20""}"

@@ -17,3 +17,8 @@ opencv-python>=4.8
 # scenario mode (`simulator.py --scenario`): scenario.yaml / sim.yaml bundle manifests.
 # Producer-side like the decoders above -- a host consuming the transports never loads a bundle.
 PyYAML>=6.0
+
+# scenario mode's OPC-UA egress face (`opcua_face:`, `--opcua-hmi`; ADR-0029): the simulator HOSTS the
+# OPC-UA server a machine HMI would be. Producer-side like PyYAML -- a host consuming the simulator's
+# transports never serves OPC-UA, so it must not inherit this. Imported only when a face is declared.
+asyncua>=1.1

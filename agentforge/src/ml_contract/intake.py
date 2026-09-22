@@ -9,10 +9,13 @@ Only the **use case** is required and gated (ADR-0027 D-1): it is the contract b
 the device and the model. The **capability manifest** and the **training scaffold** are optional.
 When one is provided it is recorded and checked, and its findings are advisory; when it is not,
 the run goes on (no device checks; M8's default template). Neither opens a gate nor re-arms an audit.
+The portal's **model recommendation** (``model_recommendation.json``, ADR-0028 D-9) is the fourth kind, optional
+and advisory in the same way: every finding on it is a WARN at most, and ``/model-select`` runs without it.
 
     python -m agentforge.src.ml_contract.intake record --dest <dest> --kind use_case --file <yaml>
     python -m agentforge.src.ml_contract.intake record --dest <dest> --kind capability_manifest --file <json>
     python -m agentforge.src.ml_contract.intake record --dest <dest> --kind scaffold --file <py|ipynb>
+    python -m agentforge.src.ml_contract.intake record --dest <dest> --kind model_recommendation --file <json>
     python -m agentforge.src.ml_contract.intake show   --dest <dest>
 
 The drop folder (ADR-0025 D-1a). ``init`` creates ``<dest>/inputs/incoming/`` with a README saying
@@ -24,6 +27,7 @@ run continues:
     python -m agentforge.src.ml_contract.intake init  --dest <dest>
     python -m agentforge.src.ml_contract.intake check --dest <dest> --need use_case,capability_manifest
     python -m agentforge.src.ml_contract.intake check --dest <dest> --need scaffold
+    python -m agentforge.src.ml_contract.intake check --dest <dest> --need model_recommendation
 """
 from __future__ import annotations
 
@@ -37,9 +41,8 @@ import sys
 from datetime import datetime, timezone
 from typing import Any
 
-from ..state.lock_digest import source_matches
 from . import gates as gt
-from .lock import LOCK_FILE, LockError, normalise_unit, read_lock
+from .lock import LOCK_FILE, LockError, compare_use_case, normalise_unit, read_lock
 
 INPUTS_DIR = "inputs"
 INPUTS_FILE = "inputs.json"
@@ -50,12 +53,13 @@ KINDS: dict[str, tuple[str, str, str]] = {
     "use_case": ("inputs/use_case.yaml", "inputs/use_case.yaml", "destination"),
     "capability_manifest": ("inputs/capability_manifest.json", "inputs/capability_manifest.json", "destination"),
     "scaffold": ("inputs/scaffold/{name}", "inputs/scaffold", "model-build"),
+    "model_recommendation": ("inputs/model_recommendation.json", "inputs/model_recommendation.json", "model-select"),
 }
 
 # Only the use case is required, gated, and able to fail an audit (ADR-0027 D-1). The other kinds
 # are optional: recorded and checked when provided, never a reason to stop.
 REQUIRED = ("use_case",)
-OPTIONAL = ("capability_manifest", "scaffold")
+OPTIONAL = ("capability_manifest", "scaffold", "model_recommendation")
 
 # The audit gates whose checks can FAIL on an input of each kind. A changed input re-arms them, so
 # an approval computed against the previous file cannot keep a stage satisfied (ADR-0025 D-4). An
@@ -65,12 +69,17 @@ DEPENDENT_AUDITS: dict[str, tuple[str, ...]] = {
     "use_case": ("audit/M0", "audit/M4", "audit/M8", "audit/M11"),
     "capability_manifest": (),
     "scaffold": (),
+    "model_recommendation": (),
 }
 
 PASS, WARN, FAIL = "PASS", "WARN", "FAIL"
 _CONTEXT_RE = re.compile(r"NEUROEDGE_CONTEXT\s*=\s*json\.loads\(\s*r?(?:'''|\"\"\")(.*?)(?:'''|\"\"\")\s*\)", re.S)
 # A manifest older than this is reported: the device may have been re-flashed since it was measured.
 MANIFEST_MAX_AGE_DAYS = 30
+# The portal's exported pick (NeuroEdge-Web ADR-0011 S-3). Older than this, the catalogue may have moved on.
+RECOMMENDATION_SCHEMA = "model-recommendation/1"
+RECOMMENDATION_MAX_AGE_DAYS = 30
+RECOMMENDATION_STATES = ("fits", "does_not_fit", "unverified")
 
 
 def _now() -> str:
@@ -210,11 +219,9 @@ def check_use_case(raw: bytes, lock: dict[str, Any] | None) -> list[dict[str, st
         return [_finding(FAIL, "parse", "not a use-case mapping with an id")]
     out = [_finding(PASS, "parse", f"use case {data['id']!r}")]
     if lock is not None:
-        if source_matches(raw, lock.get("use_case_sha256")):
-            out.append(_finding(PASS, "lock", "identical to the use case the lock was built from"))
-        else:
-            out.append(_finding(FAIL, "lock", "differs from the use case the lock was built from; "
-                                              "re-lock (--force) and re-run every stage the change affects"))
+        # ADR-0030: the dataset and model are not redone after the lock, so only a model-contract field
+        # FAILs here; an edit outside the contract (device, egress, prose) is a WARN, the lock still holds.
+        out += [_finding(level, check, detail) for level, check, detail in compare_use_case(lock, data, raw)]
     return out
 
 
@@ -241,6 +248,75 @@ def check_capability_manifest(raw: bytes) -> list[dict[str, str]]:
         out.append(_finding(WARN, "age", "no generated_at"))
     out.append(_finding(PASS, "alignment", "compared with the use case by /usecase-audit at M0"))
     return out
+
+
+def _age_finding(generated: Any, max_days: int) -> dict[str, str]:
+    if not generated:
+        return _finding(WARN, "age", "no generated_at")
+    try:
+        made = datetime.fromisoformat(str(generated).replace("Z", "+00:00"))
+    except ValueError:
+        return _finding(WARN, "age", f"unreadable generated_at {generated!r}")
+    if made.tzinfo is None:
+        made = made.replace(tzinfo=timezone.utc)
+    age = (datetime.now(timezone.utc) - made).days
+    detail = f"generated {generated} ({age} days ago)"
+    if age > max_days:
+        return _finding(WARN, "age", f"{detail}; older than {max_days} days, export it again")
+    return _finding(PASS, "age", detail)
+
+
+def check_model_recommendation(raw: bytes, lock: dict[str, Any] | None,
+                               manifest_id: str | None) -> list[dict[str, str]]:
+    """The portal's recommendation against this run (ADR-0028 D-9). Advisory: WARN at most, never a refusal."""
+    try:
+        data = json.loads(raw.decode("utf-8"))
+    except ValueError as exc:
+        return [_finding(WARN, "parse", f"not readable JSON ({exc}); /model-select runs without it")]
+    if not isinstance(data, dict) or data.get("schema") != RECOMMENDATION_SCHEMA:
+        got = data.get("schema") if isinstance(data, dict) else None
+        return [_finding(WARN, "schema", f"schema is {got!r}, expected {RECOMMENDATION_SCHEMA!r}; "
+                                         "/model-select runs without it")]
+    pick = data.get("pick") if isinstance(data.get("pick"), dict) else None
+    candidates = [c for c in data.get("candidates") or [] if isinstance(c, dict)]
+    out = [_finding(PASS, "schema", f"{RECOMMENDATION_SCHEMA}, catalogue {data.get('catalogue_version')!r}, "
+                                    f"{len(candidates)} candidate(s)")]
+    if pick:
+        out.append(_finding(PASS, "pick", f"{pick.get('id')!r} ({pick.get('loader')}, {pick.get('path')})"))
+    else:
+        out.append(_finding(WARN, "pick", "the user exported without picking; only the ratings are used"))
+    odd = sorted({str(c.get("state")) for c in candidates} - set(RECOMMENDATION_STATES))
+    if odd:
+        out.append(_finding(WARN, "candidate states", f"unknown state(s) {odd}; those candidates bind nothing"))
+    if lock is None:
+        out.append(_finding(WARN, "use_case_id", "no use-case lock yet; not compared"))
+    elif data.get("use_case_id") != lock.get("use_case_id"):
+        out.append(_finding(WARN, "use_case_id", f"the recommendation is for {data.get('use_case_id')!r}, the lock "
+                                                 f"is for {lock.get('use_case_id')!r}: it was exported for another "
+                                                 "use case"))
+    else:
+        out.append(_finding(PASS, "use_case_id", f"{data.get('use_case_id')!r}"))
+    theirs = data.get("capability_manifest_id")
+    if theirs == manifest_id:
+        out.append(_finding(PASS, "capability_manifest_id", f"{theirs!r}"))
+    else:
+        out.append(_finding(WARN, "capability_manifest_id", f"the recommendation was rated against {theirs!r}, this "
+                                                            f"run recorded {manifest_id!r}: 'does not fit' may be "
+                                                            "about another device"))
+    out.append(_age_finding(data.get("generated_at"), RECOMMENDATION_MAX_AGE_DAYS))
+    return out
+
+
+def _recorded_manifest_id(dest: str) -> str | None:
+    path = stored_path(dest, "capability_manifest")
+    if path is None or not os.path.exists(path):
+        return None
+    try:
+        with open(path, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return None
+    return data.get("manifest_id") if isinstance(data, dict) else None
 
 
 # --------------------------------------------------------------------------- record
@@ -298,6 +374,12 @@ def record(dest: str, kind: str, src: str, *, open_gate: bool = True) -> dict[st
         try:
             generated_at = json.loads(raw.decode("utf-8")).get("generated_at")
         except ValueError:
+            pass
+    elif kind == "model_recommendation":
+        findings = check_model_recommendation(raw, lock, _recorded_manifest_id(dest))
+        try:
+            generated_at = json.loads(raw.decode("utf-8")).get("generated_at")
+        except (ValueError, AttributeError):
             pass
     else:
         text = scaffold_text(raw, name)
@@ -359,6 +441,7 @@ MISSING_EXIT = 3  # "a human must drop a file": distinct from 1 (a check failed)
 ABSENT_MEANS = {
     "capability_manifest": "no device-fit checks here; the device is assessed at deployment",
     "scaffold": "M8 builds from the default template",
+    "model_recommendation": "/model-select proposes from the data and the task alone, exactly as before",
 }
 
 INCOMING_README = """# Drop portal files here
@@ -367,7 +450,7 @@ INCOMING_README = """# Drop portal files here
 drop them in this folder. The run records each one with its hash, then moves it to `recorded/`.
 
 Only the **use case** is required: the run stops at M0 until it is here, and asks you to confirm it
-at a gate. The other two are **optional**. Drop one and it is used. Leave it out and the run goes
+at a gate. The others are **optional**. Drop one and it is used. Leave it out and the run goes
 on without it. They can be added or replaced at any time without re-answering a gate.
 
 | File | Needed from | Where to get it | Recognised as |
@@ -375,11 +458,13 @@ on without it. They can be added or replaced at any time without re-answering a 
 | the use case (`<use-case-id>.yaml`), **required** | M0 | Portal **Step 1 · Edge Use Case Design** → validate the spec → **Download use_case.yaml** | any `*.yaml` / `*.yml` with a top-level `id:` and `task:` |
 | the device capability manifest, *optional* (advisory device-fit warnings) | M0 | The target device's assessment: `ne-device-agent assess --local` writes `capability_manifest.json`, the same file uploaded to the portal in **Step 2 · Target Device** | any `*.json` with `manifest_id` or `device_profile_id` |
 | the training scaffold (`neuroedge_train_<id>.py`), *optional* (without it M8 uses the default template) | M8 | Portal **Step 3 · Model Strategy** → *Build my own* → **Script (.py)** (a notebook also works) | any `*.py` / `*.ipynb` containing `NEUROEDGE_CONTEXT` |
+| the portal's model recommendation (`model_recommendation.json`), *optional* (advisory; `/model-select` must answer it) | M7 | Portal **Step 3 · Model Strategy**: pick from the rated list, then export the recommendation | any `*.json` whose `schema` is `model-recommendation/1` |
 
 Check what is here and what is missing:
 
     python -m agentforge.src.ml_contract.intake check --dest <this model folder> --need use_case,capability_manifest
     python -m agentforge.src.ml_contract.intake check --dest <this model folder> --need scaffold
+    python -m agentforge.src.ml_contract.intake check --dest <this model folder> --need model_recommendation
 
 One file per kind. If two files of the same kind are here, `check` stops and names both; remove the
 one you do not want. A newer download of a file already recorded replaces it. For the use case, its
@@ -419,6 +504,8 @@ def classify(path: str) -> str | None:
             data = json.loads(raw.decode("utf-8"))
         except ValueError:
             return None
+        if isinstance(data, dict) and str(data.get("schema", "")).startswith("model-recommendation/"):
+            return "model_recommendation"
         ok = isinstance(data, dict) and (data.get("manifest_id") or data.get("device_profile_id"))
         return "capability_manifest" if ok else None
     if name.endswith((".py", ".ipynb")):
@@ -479,6 +566,7 @@ def check(dest: str, need: list[str]) -> tuple[int, list[str]]:
             "use_case": "portal Step 1 Edge Use Case Design -> Download use_case.yaml",
             "capability_manifest": "the device's `ne-device-agent assess` output (the file uploaded in portal Step 2 Target Device)",
             "scaffold": "portal Step 3 Model Strategy -> Build my own -> Script (.py)",
+            "model_recommendation": "portal Step 3 Model Strategy: pick from the rated list, then export the recommendation",
         }[kind]
         if kind in REQUIRED:
             lines.append(f"[MISSING] {kind}: drop it into {folder} (from {where})")

@@ -161,6 +161,10 @@ ML_STAGE_GATES: dict[str, tuple[str, ...]] = {
     "verify": ("data/profile.json", "audit/M4"),
     "label": ("data/split-review.md",),
     "synth": ("data/synth-review.md",),
+    # The base-model licence gate "model/base-model-card.md" is not listed here on purpose (ADR-0028 D-3).
+    # /model-fetch opens it, hard and for this stage, only when a licence needs a human. A model trained from
+    # scratch has no base model, so a required gate would block every such run. Once it is open, the rule that
+    # no hard gate of a stage may stay unresolved (stage_gate_problems) is what stops the run.
     "model-select": ("model_proposed.md",),
     # The scaffold is optional and ungated (ADR-0027 D-3): used when provided, else the default template.
     "model-build": ("audit/M8", "eval-methodology"),

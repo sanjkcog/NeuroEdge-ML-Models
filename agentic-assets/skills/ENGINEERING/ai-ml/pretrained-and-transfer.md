@@ -27,6 +27,46 @@ the transfer recipe; [`model-codegen`](model-codegen.md) then emits the actual c
 | **NVIDIA TAO Toolkit** | export→TensorRT | fine-tune NVIDIA pretrained nets and export for edge (Jetson) inference |
 | **ONNX Model Zoo** | framework-neutral | when you need an ONNX starting point for cross-EP deployment |
 
+## Where the weights come from: `/model-fetch` only (ADR-0028 D-2)
+
+`/model-fetch` is the only downloader. The portal downloads no model, and nothing calls the portal.
+
+| Hub | How it resolves | Revision (always pinned, never `latest` or a branch) | Key |
+|---|---|---|---|
+| Hugging Face | `snapshot_download` of the named repo | a commit hash, or a tag | `HF_TOKEN`, for gated repos only |
+| NVIDIA NGC | `ngc registry model download-version` | the version in `org/team/model:version` | `NGC_API_KEY` |
+| GitHub | a named release asset | the release tag | none |
+| Ultralytics | a release asset of `ultralytics/assets` | the release tag that holds the file | none |
+| torchvision | the weights file from `download.pytorch.org` | the file name; its suffix is the start of its sha256, checked after download | none |
+| Qualcomm AI Hub | **the upstream source, never the AI Hub download** | as the upstream hub requires | none |
+
+**The AI Hub upstream rule.** What AI Hub gives you is a compiled inference artifact. It cannot be fine-tuned.
+Look the model up in the open-source `qai_hub_models` package, read which upstream repo and weights it loads, and
+fetch that. If you did not read it there, write the source as `unverified`.
+
+A key is read from the environment. Its value is never written to a file or a log; only the variable's name is.
+
+## Loader families and runners (ADR-0028 D-4)
+
+`loader.json` names how the weights are loaded. The loader decides which runners are allowed.
+
+| `loader` | Typical source | Runners allowed |
+|---|---|---|
+| `ultralytics` | an Ultralytics `.pt` | `portal-finetune` · `portal-package` · `offline` |
+| `torchvision` | a torchvision model name and its weights file | `portal-finetune` · `portal-package` · `offline` |
+| `timm` | a timm model name | `portal-finetune` · `portal-package` · `offline` |
+| `transformers` | a Hugging Face snapshot folder | `portal-package` · `offline` (stored M8 template: `transformers-classification`) |
+| `tao` | an NGC TAO model | `offline` only. The template is not built yet (ADR-0028 O-1) |
+| `custom` | anything else a `pip` environment can load | `portal-package` · `offline` |
+| `none` | trained from scratch, nothing to fetch | `portal-package` · `offline` |
+
+## Licence (ADR-0028 D-3)
+
+Read the licence at the source and record where you read it. **Never guess.** Permissive with evidence: approved.
+AGPL-3.0 (every Ultralytics model): approved for internal and demo use without a gate (owner's MVP decision,
+2026-09-21); `distribution: internal_only` travels as information and nothing refuses on it. Non-commercial,
+unverifiable, missing, or per-model terms (NGC, AI Hub): the hard gate `model/base-model-card.md` opens at M7.
+
 ## Choosing a backbone (the trade-off)
 
 Match three things: **task** (classification / detection / segmentation head), **data size** (less
@@ -58,3 +98,6 @@ freeze/LR/augmentation recipe, and the deployment-target export path. This is th
   first.
 - Do not pick weights whose license/usage terms conflict with the product (same license discipline as
   dataset sourcing).
+- Do not download weights outside `/model-fetch`, and do not fetch `latest` or a branch.
+- Do not evaluate the pretrained model as it is and call that a baseline: its classes differ from the use case's,
+  so it is beaten trivially and proves nothing (ADR-0028 D-11).

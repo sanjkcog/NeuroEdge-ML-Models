@@ -28,6 +28,31 @@ assemble a **training-ready handoff package** the user carries to a cloud GPU to
 does NOT run training** and assumes no local GPU. Spawns `ml-modeler` (applies `model-codegen`), then
 `ml-eval-reviewer` for a pre-handoff review.
 
+## The runner decides what is built (ADR-0028 D-1, D-4)
+
+Read §Runner in the approved `model_proposed.md` first.
+
+- **`portal-package`** or **`offline`** → the procedure below.
+- **`portal-finetune`** → **generate no code.** The portal's built-in trainer owns the recipe. Spawn
+  `ml-eval-reviewer` on the **data and the split only**, then stop. The handoff is `data/portal_upload.zip`, the
+  weights in `model/base/weights/` and `model/base/base-model-card.json`. There is no baseline on this path, and
+  M10 records `baseline: not_applicable` (ADR-0028 D-11).
+
+**A stored template (ADR-0028 D-6).** For loader `transformers` with a classification head, do not write the code
+from nothing:
+
+```
+python -m agentforge.src.ml_contract.template write --dest <dest> --arch <Arch> --template transformers-classification
+```
+
+It needs the base model `/model-fetch` wrote, and a multiclass vision lock. It writes `train.py` (fine-tune over
+the local snapshot with no network, a linear-probe baseline, ONNX export through `optimum` at opset 13 with the
+normalisation in the graph, `output_schema: class_logits`), `eval.py`, `tf_common.py`, `config.yaml` filled from the
+lock, pinned `requirements.txt` and `RUN_ON_GPU.md`. `ml-modeler` then adapts the recipe in `config.yaml`. It does
+not change the `contract` block. **`RUN_ON_GPU.md` lists what is unverified** (the scripts have never been run;
+a transformer may not export at opset 13). Repeat that to the human. Do not soften it. The `tao` template is not
+built yet (ADR-0028 O-1).
+
 ## Procedure
 
 0. **Resolve the destination** — apply `ml-artifact-destination`: use `--dest`, or propose `<ML_ROOT>/<intent>-<modality>` and **ask the user to confirm before writing anything**. Call the confirmed absolute path `<dest>` and pass it to every spawned agent. Inside an `/agentforge-ml` run `--dest` is always passed — **do not ask**; the orchestrator already confirmed it (ADR-0022 D-2).
@@ -96,6 +121,9 @@ does NOT run training** and assumes no local GPU. Spawns `ml-modeler` (applies `
    to the target format · config-driven, no hardcoded hyperparameters/seed · **task-correct metrics**,
    ranking metrics for recommenders · **package-complete**: every `ml-model-package` field present, threshold
    chosen on validation, baseline emitted with `beats_baseline`, class order identical everywhere).
+   Also run `python -m agentforge.src.ml_contract.package check-env --dest <model folder> --arch <Arch>
+   [--baseline <Dir>]`: every step's `requirements.txt` must install TOGETHER on the runner (one environment,
+   Linux / Python 3.11, wheels only). A set that does not install is a blocker — loop back to `ml-modeler`.
 3. Spawn **`ml-eval-reviewer`** on the generated code. A **leakage** or **wrong-metric** finding is a
    blocker — loop back to `ml-modeler` to fix before handoff.
 4. Present the package path + `RUN_ON_GPU.md` summary. **This command stops here** — the user runs `train.py`

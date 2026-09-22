@@ -38,6 +38,16 @@ does not run training and assumes no local GPU.
    honesty floor — a deep model that cannot beat it is not earning its inference cost), then a
    **1D-CNN / InceptionTime** trained from scratch, and a **frozen TSFM encoder** (MOMENT, MIT) only
    when labels are scarce.
+   **Loader and runner (ADR-0028 D-4).** Name the loader family (`ultralytics` · `torchvision` · `timm` ·
+   `transformers` · `tao` · `custom` · `none`) and propose one of three runners: `portal-finetune` (those first
+   three loaders only; the portal's recipe, no generated code), `portal-package` (the portal executes the training
+   package), `offline` (`tao`, or any vendor toolchain; the user runs the driver).
+   `python -m agentforge.src.ml_contract.model_fetch runner --loader <loader>` prints the proposal.
+
+   **The portal's recommendation (ADR-0028 D-9).** When `model_recommendation.json` was recorded, §Alternatives
+   must address the portal's pick: adopt it, or reject it with the reason. A candidate the portal marked
+   `does_not_fit` is binding: never choose it on your own. Only the human overrides it at the M7 gate. `unverified`
+   binds nothing. Without the file, select exactly as before.
 2. **Generate** — apply `model-codegen`: emit the framework the objective mandates (`.py` PyTorch by
    default, or `.tf`/Keras), producing `model`, `train`, `eval`, `config.yaml`, `requirements`,
    `data/README`, and `RUN_ON_GPU.md`. Reuse `agentic-assets/skills/SOFTWARE/pytorch/pytorch-patterns.md` idioms.
@@ -54,6 +64,14 @@ does not run training and assumes no local GPU.
    files; `eval.py` is the only code that opens `test.json`.
 
 ## Hard rules
+
+- **A claim about another repo is verified in that repo, or marked `unverified` (ADR-0028 D-8).** If the proposal
+  rests on what the portal, the device or any other repo does, read the file there, and cite the file and the
+  commit you read it at. A claim you could not check is written as `unverified`, never as a fact. The model folder
+  cannot tell you what another repo does.
+- **Never download a model yourself.** `/model-fetch` is the only downloader: it pins the revision, hashes the
+  weights and gates the licence. Never guess a licence.
+- **On runner `portal-finetune`, generate no code.** The portal's built-in trainer owns the recipe there.
 
 - **Never run training** or assume a GPU — the run is external; you stop at package assembly.
 - **Write only under the destination you are given** — the absolute `<dest>` path the command passes
