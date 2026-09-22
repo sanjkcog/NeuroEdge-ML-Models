@@ -101,6 +101,20 @@ S0–S17 pipeline / `run.json`. Use `/fix` standalone; use `/agentforge --fix` i
 orchestrator mindset. Pass `--no-pr` to `/fix` to stop after review: the fix is committed, but no
 PR is opened.
 
+**Every run leaves an audit record** at `<project_related>/<fix-slug>/runlog.md`. `<project_related>`
+is `neuroedge/docs/project_related/` or `docs/project_related/`, whichever the project has.
+`<fix-slug>` is the design document's file name when you pass a DD or ADR, else
+`fix-<date>-<slug>`. The record is written phase by phase and holds:
+
+- the base commit and baseline failing ids
+- each phase's agent, outcome, evidence and tokens
+- any edits the main session made itself
+- the gate decision
+- a files-touched table with commit SHAs taken from git
+
+It is committed with the fix, and re-runs append `## Run N`. See the **Audit run log** section of
+`skills/SDLC/development/defect-fix.md`.
+
 If the fix turns out to need an **architectural** change, it isn't a fast-lane defect fix — escalate to
 `/agentforge "<objective>"` for the full gated pipeline.
 

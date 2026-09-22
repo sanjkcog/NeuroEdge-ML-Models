@@ -107,12 +107,121 @@ one.
 Ship via the PRP tail: **`/prp-commit`** then **`/prp-pr`**. `/prp-pr` opens the PR behind the same
 hard PR gate as the full pipeline — `AskUserQuestion` in the main session, no bypass. Show the
 triage classification + the failing-test-now-green evidence + the reviewer verdict as part of the ask,
-so the human approves with the full picture.
+so the human approves with the full picture. Then complete the audit run log's ship section and
+files-touched table (see **Audit run log** below). That happens whatever the answer is.
+
+## Audit run log — every phase, every run
+
+Every fast-lane run leaves a **committed audit record**: what was asked, what each phase found, which
+agent did it, which files changed, and which commit shipped it. It is written **as the run goes**, one
+update per phase, never reconstructed at the end — the same rule `run.json` follows in the full pipeline.
+
+### Where it lives
+
+`<project_related>/<fix-slug>/runlog.md`, where:
+
+- **`<project_related>`** is the first that exists of `neuroedge/docs/project_related/` and
+  `docs/project_related/`; if neither exists, create `docs/project_related/`. Never a repo-root path.
+- **`<fix-slug>`** names what authorised the fix:
+  - the argument is a design document (a design decision, ADR, or any `.md` under `docs/`) → its file
+    name without `.md`, lower-cased — e.g. `2026-09-21-capability-manifest-2.0-device-facts-only`,
+    `adr-0029-simulator-opcua-egress-face`;
+  - otherwise → `fix-<YYYY-MM-DD>-<defect-slug>` (kebab-case, at most 60 characters).
+
+This is the one standalone output that **does** get a `project_related/` folder: the audit record belongs
+beside the decision it implements, not in a shared `runs/` pile. No `run.json` or `gates.json` is created.
+
+**Re-runs append, never overwrite.** A second fix against the same document adds `## Run 2` (then
+`## Run 3` …) to the same `runlog.md`; earlier runs stay intact as history.
+
+### When to write
+
+| Moment | Write |
+|---|---|
+| Before phase 1 | Create the file (or append the next `## Run N`) with the **run header** |
+| After each phase 1–5 | Append that phase's row to the phase table **and** its detail section |
+| Stopped early (flake/env at triage, architectural escalation, round-2 blocking review, gate rejected) | Record the stop: phase, reason, evidence. A stopped run is still an audited run |
+| After the ship gate | Record the gate decision, commit SHA(s), push state, PR URL or why there is none, and the files-touched table |
+
+### Run header
+
+```markdown
+## Run <N> — <YYYY-MM-DD HH:MM UTC>
+
+| Field | Value |
+|---|---|
+| Command | `/agentforge --fix <argument>` or `/fix <argument>` — exactly as invoked |
+| Authorised by | `<path to design doc>` @ `<git log -1 --format=%h -- <path>>`, or "defect report" |
+| Repository · branch | `<repo folder>` · `<git branch --show-current>` |
+| Base commit | `<git rev-parse --short HEAD>` at the start of the run |
+| Operator | `<git config user.name>` |
+| Baseline suite | `<command>` → `<N passed, M failed>`; failing ids: `<list, or none>` |
+```
+
+Record the **baseline failing test ids** before any change — phase 4 compares ids against them, never
+counts (a pre-existing failure is not a regression, and a count can hide a swap).
+
+### Phase table (one row per phase, appended as it completes)
+
+```markdown
+| # | Phase | Agent | Outcome | Evidence | Tokens (source) |
+|---|---|---|---|---|---|
+| 1 | Triage | test-triage | product bug | <one line> | 27,236 (measured) |
+```
+
+Tokens come from the spawn's reported usage (`measured`); work the main session did itself is
+`estimated` with the method stated, or `unrecorded`. Never invent a figure.
+
+### Detail sections (one per phase)
+
+1. **Triage** — the class, the evidence, anything triage flagged about the test itself.
+2. **Failing test** — the test ids added or changed, the red count, and **why each is the right red**
+   (the assertion that fails, not an import or fixture error). Tests that already passed, and why.
+3. **Fix** — the agent, the prior findings handed to it (or "none recorded"), and the change in one line
+   per file.
+4. **Verify** — suite before → after, the red tests now green, and the failing ids after the change
+   compared with the baseline ids. Name what could not be verified here (e.g. a C++ test not compiled).
+5. **Review** — reviewer(s), rounds, verdict, and findings by severity; each finding fixed or deferred,
+   with the reason.
+6. **Ship** — the gate question as shown, the answer, who answered, and when.
+
+**Main-session corrections.** When the main session edits anything itself, outside a spawned agent (for
+example, fixing an agent's output after verifying it), list each edit under the phase it happened in,
+with the reason. An audit record that credits the agents with the main session's changes is wrong.
+
+### Files touched and commits
+
+After the ship commit, append a table built from git, not from memory:
+
+```bash
+git show --name-status --format="%h %s" <sha>    # per commit: A/M/D/R + path
+git show --stat --format= <sha>                   # lines changed per file
+git status --short                                # anything left uncommitted
+```
+
+```markdown
+| Commit | Status | File | +/- |
+|---|---|---|---|
+| 6d22f1d | M | ne-device-agent/ne_device_agent/assess.py | +9 −118 |
+```
+
+State the push state plainly: `pushed to <remote>/<branch>`, `committed locally, not pushed`, or
+`not committed (gate: <answer>)`, plus the PR URL, or why there is none (for example, a direct-to-main
+workflow).
+
+### Committing the log
+
+The log is part of the fix: stage `runlog.md` into the fix commit with the phase 1–5 sections. The ship
+section needs the commit's own SHA, so append it afterwards and commit it on its own as
+`docs(fix-log): record <sha> for <fix-slug>`. **Never amend** the fix commit to fold it in. When the
+gate is rejected, the log is still committed (alone), so the rejected run stays on record.
 
 ## Hard rules
 
 - **Never skip triage** (phase 1) or **the failing test** (phase 2) — they are what make this a *fix*
   and not a guess.
+- **Write the audit run log as you go** — created before phase 1, one update per phase, committed with
+  the fix, and never overwritten by a later run.
 - **Never mark done** until the red test is green and the whole suite passes (phase 4).
 - **Minimal diff** — a defect fix changes as little as possible; architectural change escalates to
   `/agentforge`.
@@ -121,4 +230,5 @@ so the human approves with the full picture.
 ## Output
 
 A one-screen fix summary: defect → triage class → the regression test added → the fix (files touched +
-which agent) → suite result → reviewer verdict → PR URL.
+which agent) → suite result → reviewer verdict → commit SHA(s) and PR URL (or why none) → the path of
+the audit run log.

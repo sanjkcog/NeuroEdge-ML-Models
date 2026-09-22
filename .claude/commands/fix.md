@@ -36,6 +36,12 @@ Execute the `defect-fix` skill's phases in order (read it first):
 6. **Ship** — `/prp-commit` then `/prp-pr` (unless `--no-pr`); the PR clears the hard gate via
    `AskUserQuestion` in the main session, with the triage + test + review evidence shown.
 
+**Throughout: keep the audit run log** at `<project_related>/<fix-slug>/runlog.md`. Create it before
+phase 1 and append after every phase, per the skill's **Audit run log** section. It covers each phase's
+agent, outcome, evidence and tokens, any main-session corrections, the files-touched table and commit
+SHA(s) from git, and the gate decision and push state. It is committed with the fix, and a later run
+appends `## Run N` rather than overwriting.
+
 ## Run in the main session
 
 Do **not** delegate `/fix` to a subagent — it spawns agents and opens the PR gate, which only the main

@@ -314,6 +314,14 @@ the two are interchangeable:
    product code for a non-bug.
 3. If the fix would need an **architectural** change, stop and tell the user to run `/agentforge`
    proper — the fast lane is minimal-diff only.
+4. **Keep the audit run log** at `<project_related>/<fix-slug>/runlog.md`. `<fix-slug>` is the design
+   document's file name when the argument is a DD or ADR, else `fix-<date>-<slug>`. Follow the skill's
+   **Audit run log** section exactly: create it before triage and append after every phase, covering
+   triage, failing test, fix, verify, review and ship. It records the base commit, the baseline failing
+   ids, the agents, tokens and main-session corrections, and closes with a files-touched table and
+   commit SHA(s) taken from git. It is committed with the fix, and re-runs append `## Run N` rather
+   than overwriting. This is the one exception to "standalone state lives under `runs/`": a fix's audit
+   record sits beside the decision it implements.
 
 `--fix` is deliberately outside the stage machine (like the PRP fast lane): one defect in, one PR out,
 no `run.json`. For a change that warrants the full gated pipeline, use `/agentforge "<objective>"`.
