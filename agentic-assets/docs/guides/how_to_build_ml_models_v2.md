@@ -16,7 +16,7 @@ unchanged. v1 remains the deep reference for *why* each step is shaped the way i
 **What changed on 2026-09-18 (ADR-0025, ADR-0026, ADR-0027):**
 
 - **No calls to the portal.** The model project takes its inputs as **files you download and drop** into
-  `<folder>\inputs\incoming\`. The model goes back as a zip **you upload**.
+  `<folder>\from-neuroedge\`. The model goes back as a zip **you upload**.
 - **Only the use case is required (ADR-0027).** It is the contract between the portal, the device and the
   model, so it is confirmed at a gate and locked. The device's **capability manifest** and the portal's
   **training scaffold** are optional: drop one and it is used, leave it out and the run goes on. Neither
@@ -66,6 +66,7 @@ the use case needs a re-lock; the file hash no longer gates), and NeuroEdge-Web
 - [Stage by stage](#stage-by-stage)
 - [The training package — one zip every runner executes](#the-training-package--one-zip-every-runner-executes)
 - [Who trains what — portal, your GPU, or the package runner](#who-trains-what--portal-your-gpu-or-the-package-runner)
+- [Running the package on the portal](#running-the-package-on-the-portal)
 - [Fine-tuning a pretrained base](#fine-tuning-a-pretrained-base)
 - [The training wait — and how to resume](#the-training-wait--and-how-to-resume)
 - [Integration with the NeuroEdge Web portal](#integration-with-the-neuroedge-web-portal)
@@ -89,7 +90,7 @@ the use case needs a re-lock; the file hash no longer gates), and NeuroEdge-Web
 | M6 | `synth` | `/synth-data` when chosen, then `review synth` (or a recorded skip) | `data/synthetic-recipe.md`, `data/synth-review.md` | **hard, human: synthetic review (a skip too)** |
 | M7 | `model-select` | `/model-select` → `ml-modeler`, then `review model` | `model_proposed.md` (+ `model_proposed/v<N>.md`) | **hard, human: model proposal — re-run with an alternative on request** |
 | M8 | `model-build` | use the scaffold if you dropped one, else the default template; `audit M8`, `/model-build` → `ml-modeler`, then `ml-eval-reviewer`, then **build the training package** | `inputs/scaffold/` (when provided), `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md`, `<arch>/training-package.zip` | **automatic: `audit/M8`** · **hard: eval methodology** |
-| M9 | `train` | **you** run the package — on your GPU (laptop / AWS VM), or by uploading it to the portal's package runner (🔜) | `<arch>/runs/<run_id>/model-package/` | waits for you |
+| M9 | `train` | **you** run the package — on your GPU (laptop / AWS VM), or by uploading it to the portal's package runner (**landed**, off by default) | `<arch>/runs/<run_id>/model-package/` | waits for you |
 | M10 | `eval` | the orchestrator runs `eval.py` on the **withheld test split** | `metrics.json` (`eval_split: held_out_test`) | **hard: KPIs + beats the baseline** |
 | M11 | `return` | `audit M11`, build + validate the upload zip; **you upload it in the portal** | `return/upload.zip`, `return.json` | **automatic: `audit/M11`** · **human: upload confirmed** |
 | M12 | `data-simulator` | `/data-simulator` | `sim/<split>/…`, `sim/manifest.json` | — |
@@ -152,7 +153,7 @@ never runs inside AgentForge.
 case, to download files, and at M11 to upload the model. The model project never calls it, so it does
 not need to be running while `/agentforge-ml` runs.
 
-**6. The three portal files, dropped into `<folder>\inputs\incoming\`.** The folder is created at M0,
+**6. The three portal files, dropped into `<folder>\from-neuroedge\`.** The folder is created at M0,
 with a README listing what goes there. File names don't matter: each file is recognised by its content.
 
 | File | Read at | Where you get it |
@@ -198,7 +199,7 @@ without you.
 
 It **stops** in three places:
 
-- when a portal file it needs is not yet in `inputs\incoming\`;
+- when a portal file it needs is not yet in `from-neuroedge\`;
 - at M9, to wait for your training run;
 - at M11, to wait for your upload.
 
@@ -253,8 +254,8 @@ Stages before the entry point are marked *supplied outside this run* — never f
 | Argument | Meaning |
 |---|---|
 | `"<objective>"` | Plain-language objective. Drives the derived folder name (`<intent>-<modality>`) and the task family. Blank ⇒ you are asked. |
-| `--use-case <file>` | The use-case YAML you downloaded from the portal. **Optional:** the usual way is to drop it into `inputs\incoming\`. Either way M0 does not proceed without it, and it locks it (`use_case.lock.json`). Every later stage reads the lock for channels, rate, window, classes and head (NeuroEdge-Web ADR-0008). |
-| `--capability-manifest <file>` | A target device's `capability_manifest.json`. **Optional and advisory:** with one, the audits warn when the use case doesn't fit that device. Without one the run goes on. You can also drop it into `inputs\incoming\`. |
+| `--use-case <file>` | The use-case YAML you downloaded from the portal. **Optional:** the usual way is to drop it into `from-neuroedge\`. Either way M0 does not proceed without it, and it locks it (`use_case.lock.json`). Every later stage reads the lock for channels, rate, window, classes and head (NeuroEdge-Web ADR-0008). |
+| `--capability-manifest <file>` | A target device's `capability_manifest.json`. **Optional and advisory:** with one, the audits warn when the use case doesn't fit that device. Without one the run goes on. You can also drop it into `from-neuroedge\`. |
 | `--dest <folder>` | Use this folder as-is; **no question asked**. Omitted ⇒ derived from the objective and confirmed once. |
 | `--stage <id>` | Join at `destination · scout · plan · download · verify · label · synth · model-select · model-build · train · eval · return · data-simulator · model-card`. |
 | `--status` | One screen: stage, gate, blocker, owner. No changes. |
@@ -270,12 +271,23 @@ delegate it to a subagent.
 
 ```
 <NEUROEDGE_ML_ROOT>/<intent>-<modality>/          e.g. cnc_drift-timeseries/
+  00-START-HERE.md          generated on every stage transition: M0–M13, each one's status, and where its
+                            output landed. Read this first (ADR-0031 D-5)
   README.md                 objective · modality · stage log (one row per command run)
   run.json  gates.json      orchestrator state — the run resumes from these alone
-  inputs/                   the portal's files, as you downloaded them (ADR-0025 D-1)
-    incoming/               the drop folder; its README says what goes here and where it comes from
-      recorded/             dropped files already recorded, time-stamped
-    inputs.json             per input: path · sha256 · generated_at · findings
+  from-neuroedge/           WHAT THE PORTAL GIVES THIS RUN — drop downloads here as they are (ADR-0031 D-1)
+    README.md               what to drop · which milestone needs it · which portal screen it comes from
+    recorded/               dropped files already recorded, time-stamped
+  to-neuroedge/             WHAT THIS RUN GIVES THE PORTAL — copies, numbered in upload order (ADR-0031 D-3)
+    README.md               what to upload · to which screen · in what order
+    01-M8-training-package.zip   02-M9-test-bundle.zip   03-M9-dataset-upload.zip (fine-tune only)
+    04-M11-return-package.zip    05-M12-simulator-data.zip   06-M12-demo-simulator-data.zip
+    handoff.json            per artifact: source · sha256 · staged_at · portal screen · sent_at · registration id
+    sent/                   moved here once you record the portal's registration id
+  guides/                   the prose (ADR-0031 D-6), written by ml-docs-writer, never over your edits
+    dataset.md  model.md  demo.md      M4 · M8 · M12
+  inputs/                   the portal's files, as recorded (ADR-0025 D-1)
+    inputs.json             per input: path · sha256 · generated_at · findings (and the run a package unpacked to)
     use_case.yaml           M0 — required; the lock is built from this copy
     capability_manifest.json M0 — optional, advisory: a target device
     scaffold/<file>         M8 — optional; its context and return writer are used, never its training body
@@ -306,11 +318,28 @@ delegate it to a subagent.
     training-package.zip            M8 — the one zip every runner executes. GITIGNORED: it can hold the
                                     dataset, and it rebuilds from the folder in seconds
     runs/<run_id>/model-package/    M9 — model.onnx · meta.json · model_artifact.json · metrics.json · calibration/
+                                    unpacked by `intake` from the portal's zip; <run_id> is read FROM the package
+    runs/<run_id>/portal_held_out.json  M10 — the portal's held-out result, matched to the package by the model's hash
     runs/<run_id>/return/upload.zip M11 — what you upload in the portal
     runs/<run_id>/return.json       M11 — the local validation report and the registration id you pasted
   sim/                      M12 — simulator data per split + manifest.json (lock hash, purpose per file)
+  sim-demo/                 M12 — optional demo replay, weighted toward the event class. demo_only: never evidence
   model-card.md             M13
 ```
+
+**Two folders name the boundary with the portal.** `from-neuroedge/` is everything you carry *in*,
+`to-neuroedge/` everything you carry *out*. Nothing else in the tree is about the portal.
+`/agentforge-ml handoff` stages what is ready and prints the walk-through for **this project's runner**
+(approved at M7): what to upload, to which screen, in which order, and what to download back. The other
+runners' routes are shown too, greyed, so someone handed the project knows there is another route. The files in
+`to-neuroedge/` are **copies**. The originals stay where the code reads them, and `handoff verify` names any copy
+whose source changed since it was staged. When you drop the portal's model package in `from-neuroedge/`, the run
+unpacks it and reads the run id from the package. Never unzip it yourself, and never pick a run id.
+
+**The folders are not renumbered to match the milestones.** They hold paths code reads (`data/contract/`,
+`<arch>/train.py`, `sim/manifest.json`). `00-START-HERE.md` gives you the order instead: which milestone is done,
+which is waiting on you, and which folder each one wrote. The old drop folder `inputs/incoming/` is still read
+for one release.
 
 Folder name = `<intent>-<modality>`, derived from the objective: intent is 1–3 `snake_case` words for
 *what is judged* (`cnc_drift`, `casting_crack`, `bearing_rul`); modality is `vision · timeseries ·
@@ -328,8 +357,8 @@ like the same objective are offered first, so a second run reuses rather than du
 Then, in order:
 
 1. **Record the inputs.** `intake check --need use_case,capability_manifest` picks up what you dropped
-   into `inputs\incoming\`, copies each file into `inputs\` with its hash, and moves the original to
-   `incoming\recorded\`. If the **use case** is missing it says where to get it, and the run **stops**;
+   into `from-neuroedge\`, copies each file into `inputs\` with its hash, and moves the original to
+   `from-neuroedge\recorded\`. If the **use case** is missing it says where to get it, and the run **stops**;
    `--resume` checks again. A missing capability manifest is only reported (`[ABSENT]`), and the run
    continues. Two files of the same kind stop it: keep one.
 2. **Confirm the use case** at its gate. You see the file, its hash, when it was generated, and every
@@ -510,6 +539,15 @@ Train is for smoke tests (the model has seen it), val for device debugging and s
 on-device acceptance, and only after M10. The device refuses a simulator file whose lock hash isn't the deployed
 model's. The whole chain is in NeuroEdge-Device `docs/reference/how_to_design_model_simulator_web_in_sync.md`.
 
+**For a demo, add `--profile demo`** (ADR-0031 D-7). The unweighted export can replay for tens of minutes and
+show nothing happening: the CNC run's is about 41 minutes at 10 Hz, with the one worn unit as one file of
+five. The demo profile composes a short replay (5 minutes by default) from the same val rows, weighted toward
+the class the use case exists to catch (70% of windows by default). It starts with nominal data, so you see the
+score sitting low, then interleaves the event. It goes to its own `sim-demo/`, with its own manifest, and every
+file is `demo_only`. **Weighting the classes changes the class prior, so every rate you measure on it is
+meaningless as a measurement of the model.** The audit never accepts it as M12, and the portal replays it
+labelled as a demonstration and refuses it as acceptance evidence. `sim/` stays the evidence.
+
 ### M13 — `model-card`
 Dataset id, licence and **attribution** (CC BY is only satisfied if it reaches the card and the
 product NOTICE), split hash, seed, commit, baseline vs model, threshold, caveats.
@@ -590,7 +628,7 @@ The **loader family** in `loader.json` decides the runner (ADR-0028 D-4), and M7
 |---|---|---|
 | `ultralytics` (YOLO detection / segmentation) | **The portal's built-in trainer** | It works, it is one click, and it stays exactly as it is (Web ADR-0010 R-3) |
 | `torchvision`, `timm` (by model name) | **The portal's built-in trainer** | The portal can load these two families by name and swap the head |
-| `transformers`, `tao`, `keras`/TF, `custom`, `none` | **The training package** — your GPU today, the portal's package runner 🔜 | The portal has no code to load these into, and that is not changing |
+| `transformers`, `tao`, `keras`/TF, `custom`, `none` | **The training package** — your GPU, or the portal's package runner | The portal has no code to load these into, and that is not changing |
 | **Any time-series model** | **The training package** | The portal's built-in TS trainer is a fixed small net scored on accuracy, with no calibrated threshold, no held-back test and no baseline. Fine for a rough prototype; not what you ship |
 
 Two things follow, and they are the point of the whole arrangement:
@@ -598,9 +636,50 @@ Two things follow, and they are the point of the whole arrangement:
 - **The portal is never asked to download a model.** Its Hugging Face / NGC / AI Hub / GitHub source
   buttons are unchanged and are not the route for those models (Web ADR-0010 R-5). `/model-fetch` does
   the acquiring, with a pinned revision, a hash and a licence gate, and the weights ride in the package.
-- **Offline is not a dead end.** When the package runner lands, the same zip you run on your laptop is
-  the zip you upload to the portal for compute + MLflow, and Optimize → Prepare Device → Virtual Run →
-  Deploy continue unchanged.
+- **Offline is not a dead end.** The same zip you run on your laptop is the zip you upload to the
+  portal for compute + MLflow, and Optimize → Prepare Device → Virtual Run → Deploy continue unchanged.
+  The runner landed with Web ADR-0011 S-6; see [Running the package on the portal](#running-the-package-on-the-portal)
+  for what the screens do and what they refuse.
+
+---
+
+## Running the package on the portal
+
+Landed 2026-09-22 (Web ADR-0011 S-6). This is the M9 `train` route that does not need your own GPU. It
+runs the **same zip** — nothing is rebuilt, nothing is re-exported.
+
+**Which file.** `<arch>/training-package.zip`, next to the code M8 generated — e.g.
+`neuroedge-ml-projects/cnc_drift_1dcnn-timeseries/1DCNN/training-package.zip`. Not `return/upload.zip`:
+that one is the *finished model* and belongs to M11, on a different card.
+
+**Where.** Step 3 · Prepare Model → **Model Strategy** → *Train a custom model* → **Upload training
+package (.zip)**.
+
+1. **Upload.** Intake opens the zip, checks `package.json` against the use-case lock, and shows what it
+   holds — entrypoints, the runtime, the files, and what the package declares `withheld`. Nothing runs.
+2. **Approve.** A person approves exactly one zip, by its whole sha256. Train runs only an approved
+   package, and a later upload is a new record needing its own approval.
+3. **Train.** The package runs in a locked-down container with no network and none of the portal's
+   secrets. The model it produces is registered through the same checks an uploaded return package
+   passes, so it is refused by name in the same way.
+
+Three things worth knowing before you go looking for them:
+
+- **There is no dataset to upload on this path.** `package.json`'s `data.location` is either
+  `in_package` (the data is in the zip) or a `file://` reference to a folder on the training host. The
+  Dataset step still appears — it says the package brought its own data and its own train/val split, and
+  that anything uploaded there would be ignored.
+- **A result from this runner is never `held_out_test`.** Intake refuses a package carrying the test
+  split, so the code never saw it. The held-out number comes from the separate evaluation step with the
+  sealed bundle, which is what M10 reads back.
+- **The runner ships off.** A deployment switches it on; until then the card says so and points at the
+  NeuroEdge admin team, and you train the package yourself and upload the finished model under *Bring a
+  trained model*. The setting lives on the training host, not in the portal UI.
+
+**Whose run is it.** A package or a model counts as yours only if a signed-in portal user uploaded,
+approved or registered it through the portal (`run_provenance`, 2026-09-22). Artefacts left in the data
+root by a script or a test driver are listed but never adopted: they are not trained from, and never
+shown as a step already done. This is why a use case can show "no model" while files sit on disk.
 
 ---
 
@@ -748,9 +827,12 @@ cd <folder>\1DCNN      ; pip install -r requirements.txt ; python train.py --con
 **Route 2 — hand the package to the portal** (🔜 Web ADR-0010 R-1): upload
 `<arch>/training-package.zip` at Step 3 · Model Strategy → Custom development → **Training package**.
 The portal runs it in an isolated container — same code path on a cloud VM or your laptop, no network
-during training — logs to MLflow, and gives you back the same `model-package/` folder. Then download
-that folder into `<arch>/runs/<run_id>/` and resume. **You** move the files; the model project never
-calls the portal.
+during training — logs to MLflow, and gives you back the same four files as one zip (Step 3 · Optimize →
+Downloads → **Download all as .zip**). Drop that zip in `from-neuroedge/` as it is, then resume: the run
+unpacks it into `<arch>/runs/<run_id>/model-package/`, with `<run_id>` read from the package's own
+`model_artifact.json`. It refuses a package trained under another lock (ADR-0031 D-2). **You** carry the file;
+the model project never calls the portal. `/agentforge-ml handoff` prints these steps in order for your
+runner.
 
 Either route produces the same result, because it is the same package. Route 2 is what makes "no local
 GPU" a scheduling question rather than a blocker.
@@ -774,8 +856,9 @@ runs/<run_id>/model-package/
 
 `--resume` looks for `<arch>/runs/*/model-package/{model.onnx, meta.json, model_artifact.json,
 metrics.json}`. Found ⇒ `train` completes and M10 runs. Not found ⇒ it prints exactly what it is waiting
-for and stops again. For `runner: portal`, **you** download the portal run's model and metadata into
-that folder. The model project never fetches it.
+for and stops again. For a portal runner, `--resume` first runs `intake check --need model_package`, which
+unpacks a zip you dropped in `from-neuroedge/`. Never unzip it by hand, and never choose the run id. The
+model project never fetches it.
 
 Session breaks at any other stage resume the same way — state is `run.json` + `gates.json`, never the
 transcript. `--status` tells you where you are.
@@ -860,7 +943,7 @@ python -m agentforge.src.ml_contract.intake record --dest <folder> --kind scaffo
 python -m agentforge.src.ml_contract.intake show   --dest <folder>
 ```
 
-Or drop the files into `inputs\incoming\` and let the run find them:
+Or drop the files into `from-neuroedge\` and let the run find them:
 
 ```powershell
 python -m agentforge.src.ml_contract.intake init  --dest <folder>                   # creates the drop folder + README
@@ -901,7 +984,7 @@ FAILs.
 # 0. Start (ML root set in .env; use case validated in portal Step 1; target device = the Jetson)
 /agentforge-ml "detect CNC machining drift from spindle-load, x_axis_error and vibration signals"
   → proposes C:\SanjeevE\NeuroEdge-ML-Models\neuroedge-ml-projects\cnc_drift-timeseries — accept
-  → creates inputs\incoming\ and STOPS: use_case missing
+  → creates from-neuroedge\ and STOPS: use_case missing
 # drop <use-case-id>.yaml (Step 1 → Download use_case.yaml); optionally the Jetson's capability_manifest.json
 /agentforge-ml --resume
   → records both (gate: confirm each) → locks the use case → audit M0: use case ↔ Jetson (gate: automatic)
@@ -935,8 +1018,9 @@ FAILs.
 # route 1 — the RTX laptop
 cd …\cnc_drift-timeseries\MiniRocket ; python train.py --config config.yaml   # baseline first
 cd …\cnc_drift-timeseries\1DCNN      ; python train.py --config config.yaml
-# route 2 (🔜) — upload 1DCNN\training-package.zip in the portal, Step 3 → Training package,
-#                then download runs/<run_id>/model-package/ back into the model folder
+# route 2 — /agentforge-ml handoff: upload to-neuroedge\01-M8-training-package.zip (Step 3 → Training
+#            package) and 02-M9-test-bundle.zip; download the model package zip and drop it in
+#            from-neuroedge\ as it is — the run unpacks it into runs/<run_id>/, reading the id from the zip
 
 /agentforge-ml --resume
 # 10. eval   → eval.py on the withheld experiments: pr_auc, recall@fpr=0.01, event_f1 … beats_baseline
@@ -960,7 +1044,7 @@ If you already had the KIT data on disk: `/agentforge-ml "<objective>" --stage v
 | Symptom | Meaning | Do |
 |---|---|---|
 | A stage asks for a destination | It was run standalone without `--dest`, or the run's `--dest` was lost | Inside a run this is a bug; standalone, pass `--dest` |
-| The run stops with `[MISSING] use_case` (`intake check` exit 3) | The use case isn't in `inputs\incoming\` | Drop it there (the README says where it comes from), then `--resume`. `[ABSENT] capability_manifest` / `scaffold` is information only: both are optional |
+| The run stops with `[MISSING] use_case` (`intake check` exit 3) | The use case isn't in `from-neuroedge\` | Drop it there (the README says where it comes from), then `--resume`. `[ABSENT] capability_manifest` / `scaffold` is information only: both are optional |
 | `[AMBIGUOUS]` in `intake check` | Two files of the same kind were dropped | Delete the one you don't want, then `--resume` |
 | `REFUSED: complete <stage> — gates are not through` | A gate of that stage is pending, rejected, or never opened | `run_state.py status` lists every `Owed:` gate; answer them. Never edit `run.json` by hand |
 | Intake, the audit or `lock verify` FAILs on `model contract: <field>: locked …, the use case now says …` | A model-contract field changed in the portal: a unit, the effective `at_fpr`, class names or order, head shape, target metric, or channel names/order, `reduce`, rate, window or stride (ADR-0030) | Re-lock (`--force`) and rebuild the package, or revert the edit in the portal and re-download |

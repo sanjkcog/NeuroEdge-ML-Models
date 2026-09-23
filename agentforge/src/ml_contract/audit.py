@@ -250,6 +250,14 @@ def check_simulator(a: Audit, dest: str, lock: dict[str, Any], split_hash: str |
     wrong = [f["path"] for f in m.get("files", []) if f.get("split") == "test" and f.get("purpose") != "acceptance_only"]
     a.add(FAIL if wrong else PASS, area, "test exported only for acceptance",
           f"not marked acceptance_only: {wrong}" if wrong else "no test file without acceptance_only")
+    # ADR-0031 D-8: a demo weights the class prior, so it never stands in for M12's unweighted export.
+    demo = [f.get("path") for f in m.get("files", []) if f.get("purpose") == "demo_only"]
+    if m.get("purpose") == "demo_only" or demo:
+        which = ", ".join(str(p) for p in demo) if demo else "the whole manifest"
+        a.add(FAIL, area, "unweighted export", f"sim/manifest.json holds a demo_only export ({which}); a demo "
+              "belongs in sim-demo/ and never satisfies M12: re-run /data-simulator without --profile demo")
+    else:
+        a.add(PASS, area, "unweighted export", "no demo_only file in sim/ (a demo, if any, is in sim-demo/)")
 
 
 def check_scaffold(a: Audit, dest: str, lock: dict[str, Any]) -> None:

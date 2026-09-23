@@ -1,6 +1,6 @@
 ---
 description: Orchestrate the ML model lifecycle — record the portal's offline inputs and lock the use case, dataset scout, acquire/verify, label, synth, model proposal, model build, external training wait, held-out eval, offline return to the platform, simulator data, model card — with a human gate at every data and model decision, a use-case alignment audit at four checkpoints, and state persisted to <dest>/run.json after every transition (ADR-0022, ADR-0025). Only the use case is a required input; the device capability manifest and the portal training scaffold are optional and advisory (ADR-0027).
-argument-hint: "<objective>" [--use-case <file>] [--capability-manifest <file>] [--dest <folder>] [--stage <id>] | --status | --resume | --dry-run
+argument-hint: "<objective>" [--use-case <file>] [--capability-manifest <file>] [--dest <folder>] [--stage <id>] | handoff [--dest <folder>] | --status | --resume | --dry-run
 ---
 
 ## Arguments
@@ -9,7 +9,7 @@ argument-hint: "<objective>" [--use-case <file>] [--capability-manifest <file>] 
 - `"<objective>"` — the ML objective for a new or continuing run, e.g. `"detect CNC machining drift from
   spindle-load, x_axis_error and vibration signals"`. If blank, ask for one before doing anything else.
 - `--use-case <file>` — the use-case YAML **the human downloaded from the portal** (NeuroEdge-Web ADR-0008 L-1,
-  ADR-0025 D-1). Optional: the usual way is to drop it into `<dest>/inputs/incoming/`; either way a new run does
+  ADR-0025 D-1). Optional: the usual way is to drop it into `<dest>/from-neuroedge/`; either way a new run does
   not proceed without it. It is the source of truth for channels, rate, window, classes and
   head; M0 records it as `<dest>/inputs/use_case.yaml` and locks it into `<dest>/use_case.lock.json`, and every
   later stage reads the lock.
@@ -27,6 +27,13 @@ argument-hint: "<objective>" [--use-case <file>] [--capability-manifest <file>] 
 - `--resume` — restore stage and gate state from `<dest>/run.json` + `gates.json` after a session break or an
   external training run, with no transcript replay, then continue if nothing blocks.
 - `--dry-run` — print the remaining stages and which command/agent each would use; write nothing, spawn nothing.
+- `handoff [--dest <folder>]` — what to carry to and from the portal next, for **this project's runner**
+  (ADR-0031 D-4). Stage what is ready, then show the walk-through, then stop:
+  `python -m agentforge.src.ml_contract.handoff stage --dest <dest>` and `… handoff show --dest <dest>`. Relay the
+  walk-through as printed: this project's route, numbered in upload order, then the other routes, greyed. When
+  the human reports an upload, record it with `… handoff sent --dest <dest> --artifact <NN> --registration
+  "<the portal's id, or its refusal, verbatim>"`. Before telling anyone to upload, run `… handoff verify --dest
+  <dest>`: a `STALE` copy is re-staged first, never uploaded.
 
 ## You run in the main session — never as a subagent
 
@@ -41,15 +48,34 @@ training scaffold (both optional), arrive as **files the human downloaded**, rec
 <use_case|capability_manifest|scaffold|model_recommendation> --file <downloaded file>`. The model package leaves the same way: M11 builds an upload zip, and the human uploads
 it in the portal. Never fetch a portal file, and never read one from a portal repo's working tree.
 
-**The drop folder (ADR-0025 D-1a).** Every model folder has `<dest>/inputs/incoming/` with a README saying what to
-drop there and where each file comes from:
+**Two folders name the boundary (ADR-0031 D-1).** At the top of every model folder:
+`<dest>/from-neuroedge/` is what the portal (or the device) gives this run, and `<dest>/to-neuroedge/` is what
+this run gives the portal. Each has a README. `from-neuroedge/` is the drop folder of ADR-0025 D-1a under a new
+name. The old `inputs/incoming/` is still read for one release; `intake check` says so when it finds one.
 
-| Drop | Read at | Required? | Where it comes from |
+| Drop in `from-neuroedge/` | Read at | Required? | Where it comes from |
 |---|---|---|---|
 | `<use-case-id>.yaml` | M0 | **required**, gated, locked | portal Step 1 · Edge Use Case Design → validate → **Download use_case.yaml** |
 | `capability_manifest.json` | M0 | optional, advisory | the device's `ne-device-agent assess` output (uploaded in portal Step 2 · Target Device) |
 | `neuroedge_train_<id>.py` | M8 | optional: used when provided, else the default template | portal Step 3 · Model Strategy → **Build my own** → **Script (.py)** |
 | `model_recommendation.json` | M7 | optional, advisory: `/model-select` must answer it (ADR-0028 D-9) | portal Step 3 · Model Strategy: pick from the rated list, then export the recommendation |
+| `<use-case-id>-model-package.zip` | M9 | required once asked for (portal runners) | portal Step 3 · Optimize → Downloads → **Download all as .zip** |
+| the held-out result `*.json` | M10 | required once asked for (`portal-package`) | portal Step 3 · Train → Held-out evaluation → **Download result** |
+
+**The two return kinds are unpacked by the run, never by hand (ADR-0031 D-2).** `intake check --need
+model_package` reads the run id from the package's own `model_artifact.json` (`extras.package_run_id`, else
+`extras.package_run.run_id`, else its `created_at` as `YYYYMMDDTHHMMSSZ`) and writes the four files to
+`<arch>/runs/<run_id>/model-package/`. It refuses a package whose `lock_sha256` is not this project's lock,
+naming both hashes. The file stays in `from-neuroedge/` and nothing is written. `--need held_out_result` matches
+the result to that package by the sha256 of the `model.onnx` it evaluated, and writes it beside the package as
+`portal_held_out.json`. **Never choose a run id, and never unzip a package yourself**: a run id chosen by hand
+is provenance invented by hand.
+
+**`to-neuroedge/` is a staging view, never a new home (ADR-0031 D-3).** `handoff stage` copies each artifact
+from a path that does not move, numbered in upload order: `01-M8-training-package.zip`, `02-M9-test-bundle.zip`,
+`03-M9-dataset-upload.zip` (fine-tune only), `04-M11-return-package.zip`, `05-M12-simulator-data.zip`,
+`06-M12-demo-simulator-data.zip`. `handoff.json` records each source and its sha256, so `handoff verify`
+catches a stale copy. Nothing reads from `to-neuroedge/`, and no tool learns a new path.
 
 `python -m agentforge.src.ml_contract.intake check --dest <dest> --need <kinds>` records what was dropped (by
 content, not by name). It opens a gate for the use case only, and **exits 3 only when the use case is missing**.
@@ -171,6 +197,19 @@ For each stage not yet `complete`, in order: `start <id>` **before** the spawn �
 ask its gate → `complete <id> --artifact <path>…` only after the artifact exists and the gates are through, or
 `fail <id>` (two consecutive failures escalate to you).
 
+**On every stage transition** (after each `start`, `complete` and `fail`), regenerate the index:
+`python -m agentforge.src.ml_contract.handoff index --dest <dest>`. It writes `<dest>/00-START-HERE.md`: the
+M0–M13 table with each milestone's status (done · gated · awaiting you · not started) and the folder its output
+landed in (ADR-0031 D-5). The folders keep their names, because code reads them; this page is the map. **After
+`complete` of M8, M11 and M12**, also run `handoff stage --dest <dest>`, so what goes to the portal is waiting in
+`to-neuroedge/` without anyone zipping by hand.
+
+**The guides (ADR-0031 D-6).** After `complete verify` (M4), `complete model-build` (M8) and
+`complete data-simulator` (M12), spawn `ml-docs-writer` with `--dest <dest>` and the guide it owes:
+`guides/dataset.md`, `guides/model.md` and `guides/demo.md`. It writes a draft and places it with
+`handoff guide --dest <dest> --name <guide> --file <draft>`. A guide a person has edited is never overwritten:
+the draft lands beside it as `<name>.proposed.md`. Relay that line, and let the human merge.
+
 Gate handling, in stage order:
 - **M1 licence (automatic):** the card's pick must carry a licence compatible with the product. `unverifiable` or
   non-commercial ⇒ `gate_state.py open data/dataset-card.md --stage scout --type hard` and stop; the run does not
@@ -213,7 +252,7 @@ Gate handling, in stage order:
   recorded in `model/recommendation-override.json`, and you repeat it in the M7 gate's reason. `unverified` binds
   nothing. The human sees both opinions at the gate and decides. **Exit 4** means a recommendation was recorded
   but cannot be read: its ratings are unknown, which is not the same as "no file". Show the WARN and ask the human
-  to export it again and drop it in `inputs/incoming/`. Do not go on as if nothing bound.
+  to export it again and drop it in `from-neuroedge/`. Do not go on as if nothing bound.
 - **M7 model proposal (human):** `/model-select` writes `model_proposed.md`. Then `review model --dest <dest>` checks
   it covers architecture (with the reasoning for each size), framing, synthetic use, augmentation, baseline,
   evaluation, export, runner and **alternatives considered**, and opens the gate. Present the architecture table,
@@ -287,12 +326,22 @@ Gate handling, in stage order:
    - **`offline`: the human's machine is the runner.** Give the exact command from `RUN_ON_GPU.md`. Say which
      hardware it needs.
 
-   In every case say where the package will be expected (`<arch>/runs/<run_id>/model-package/`). Set `run.json` gate
-   `{pending: true, stage: train, reason: waiting_external}` and **stop the session cleanly** — do not poll.
-2. On `--resume`: look for `<arch>/runs/*/model-package/{model.onnx, meta.json, model_artifact.json, metrics.json}`.
-   Found → `complete train --artifact <package>` and continue to M10. Not found → print exactly what is awaited and
-   stop. For `portal-package` and `portal-finetune`, **the human** downloads the portal run's package (raw model +
-   metadata) into that folder. Nothing here fetches it.
+   In every case end with the output of `handoff stage` and `handoff show` (ADR-0031 D-4): what is staged in
+   `to-neuroedge/`, which portal screen each file goes to, and what is awaited back in `from-neuroedge/`. Set
+   `run.json` gate `{pending: true, stage: train, reason: waiting_external}` and **stop the session cleanly** — do
+   not poll.
+2. On `--resume`, by runner:
+   - **`portal-package` / `portal-finetune`:** `intake check --dest <dest> --need model_package`. It unpacks a
+     dropped package to `<arch>/runs/<run_id>/model-package/`, with the run id read from the package (ADR-0031 D-2).
+     Exit 0 → `complete train --artifact <arch>/runs/<run_id>/model-package` and continue to M10. Exit 3 → relay
+     the `[MISSING]` line (where to download it in the portal) and stop. Exit 1 `[REFUSED]` → relay every problem.
+     A lock mismatch means the portal trained another use case's package, or one from before a re-lock: re-upload
+     `to-neuroedge/01-M8-training-package.zip`. Never unpack it by hand to get past a refusal.
+   - **`offline`:** look for `<arch>/runs/*/model-package/{model.onnx, meta.json, model_artifact.json,
+     metrics.json}`, which the driver in `RUN_ON_GPU.md` writes. Found → complete as above. Not found → print what
+     is awaited and stop.
+
+   Nothing here fetches a package.
 
 ### `eval` (M10)
 Run `<arch>/eval.py --package <pkg> --split <dest>/data/splits/test.json` (CPU is fine). It writes
@@ -301,8 +350,12 @@ gate above.
 
 **When the portal already evaluated it** (runner `portal-package`; ADR-0028 D-12): the portal ran this same
 `eval.py` on the sealed `data/portal_test.zip`. The human downloads that result from the portal (Train → Held-out
-evaluation → *Download result*) and this command checks it, offline:
-`python -m agentforge.src.ml_contract.heldout accept --dest <dest> --arch <arch> --evidence <file.json>`. It is
+evaluation → *Download result*) and drops it in `from-neuroedge/`. `intake check --dest <dest> --need
+held_out_result` places it beside the package it scored, as `<arch>/runs/<run_id>/portal_held_out.json`,
+matched by the model's sha256, never by a run id someone typed (ADR-0031 D-2). Then this command checks it,
+offline:
+`python -m agentforge.src.ml_contract.heldout accept --dest <dest> --arch <arch> --evidence
+<arch>/runs/<run_id>/portal_held_out.json`. It is
 accepted only when it is about THIS run: `held_out_test`, this run's lock, this run's test files by sha256, and the
 training package in this folder. Accepted → use its metrics for the KPI gate, and repeat its caveats (a unit whose
 file the training package also carried; a test set evaluated on more than once) in the gate's text. Refused → run
@@ -316,11 +369,12 @@ file the training package also carried; a test set evaluated on more than once) 
    `metrics.json` and `calibration/` when present. Run `neuroedge_return.validate_package` on it locally when the
    package is installed (from a local path or wheel, never fetched). Record its report in `return.json`, or record
    that it was not available.
-3. Tell the human exactly what to upload and where (portal **Step 3 · Model Strategy → Finished training return package**). Open the
+3. `handoff stage --dest <dest>` copies it to `to-neuroedge/04-M11-return-package.zip`. Tell the human exactly
+   what to upload and where (portal **Step 3 · Model Strategy → Finished training return package**). Open the
    gate: `gate_state.py open return-upload --stage return`. Ask them to confirm the upload and paste the
    registration id or the portal's refusal. Record it: `approved` with the id in the reason, or
-   `changes_requested` with the refusal. A portal refusal (422) is a defect in M8/M10 to fix, not a second opinion
-   to argue with.
+   `changes_requested` with the refusal, **and** `handoff sent --dest <dest> --artifact 04 --registration "<the
+   same words>"`. A portal refusal (422) is a defect in M8/M10 to fix, not a second opinion to argue with.
 
 ### `data-simulator` (M12)
 `/data-simulator --dest <dest>` exports simulator data from the **same split data** the model was trained and
@@ -329,6 +383,15 @@ exported only when the user asks for on-device acceptance, and is marked accepta
 It is generic: the lock's modality decides the format (time series → CSV at the contract rate; vision → an image
 folder per split). Complete with `--artifact sim/manifest.json`. `/usecase-audit --dest <dest>` (standalone)
 confirms the export against the lock.
+
+**Then offer the demo replay (ADR-0031 D-7, D-8).** `/data-simulator --dest <dest> --profile demo
+[--event-share 0.7] [--minutes 5]` composes a short replay from the same val rows, weighted toward the lock's
+non-nominal class and interleaved, so the event is seen within the first minute. It is written to its own
+`sim-demo/`, with its own manifest, and every file in it is `purpose: demo_only`. **It is an addition, never a
+replacement.** `sim/` is untouched, stays the export the audit reads, and stays M12's artifact. Any rate
+measured on the demo is meaningless as a measurement of the model. Say that whenever you mention the demo, and
+never quote a number from it. The portal replays it labelled as a demonstration, and refuses it as acceptance
+evidence.
 
 ### `model-card` (M13)
 `ml-modeler` writes `<dest>/model-card.md`: dataset id + licence + attribution, split hash, seed, commit, baseline vs
@@ -371,6 +434,12 @@ approved a deviation. Add the stage-log row to `README.md`. The run is complete;
   declared.
 - Do not use the scaffold's training body. Only its context, its return writer and its MLflow tracking
   conventions are used (ADR-0025 D-5, ADR-0027 D-3).
+- Do not choose a `<run_id>`, and do not unzip a portal package by hand. `intake check --need model_package`
+  reads the run id from the package (ADR-0031 D-2).
+- Do not make `to-neuroedge/` a path anything reads, and do not rename a load-bearing folder to match the
+  milestone numbers. `00-START-HERE.md` is the navigation (ADR-0031 D-3, D-5).
+- Do not cite, compare or gate on a number measured on a `demo_only` export, and do not complete M12 with one
+  (ADR-0031 D-8).
 
 ## NeuroEdge Assets
 

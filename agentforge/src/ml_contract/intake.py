@@ -18,8 +18,9 @@ and advisory in the same way: every finding on it is a WARN at most, and ``/mode
     python -m agentforge.src.ml_contract.intake record --dest <dest> --kind model_recommendation --file <json>
     python -m agentforge.src.ml_contract.intake show   --dest <dest>
 
-The drop folder (ADR-0025 D-1a). ``init`` creates ``<dest>/inputs/incoming/`` with a README saying
-what to put there and where each file comes from. ``check`` picks up what was dropped and records
+The drop folder (ADR-0025 D-1a; renamed ``from-neuroedge/`` by ADR-0031 D-1). ``init`` creates
+``<dest>/from-neuroedge/`` with a README saying what to put there and where each file comes from.
+The old ``inputs/incoming/`` is still read, for one release, so an in-flight project does not break. ``check`` picks up what was dropped and records
 it. It exits ``3`` only when a **required** input (the use case) is still missing, so the
 orchestrator stops until the human has put it there. A missing optional input is reported and the
 run continues:
@@ -28,6 +29,14 @@ run continues:
     python -m agentforge.src.ml_contract.intake check --dest <dest> --need use_case,capability_manifest
     python -m agentforge.src.ml_contract.intake check --dest <dest> --need scaffold
     python -m agentforge.src.ml_contract.intake check --dest <dest> --need model_recommendation
+
+What comes back after training (ADR-0031 D-2) is recognised in the same folder and unpacked by the
+run itself: the portal's **model package** (M9) to ``<arch>/runs/<run_id>/model-package/`` and its
+**held-out result** (M10) beside it as ``portal_held_out.json``. ``<run_id>`` is read from the
+package, never chosen by the operator, and a package built under another lock is refused:
+
+    python -m agentforge.src.ml_contract.intake check --dest <dest> --need model_package
+    python -m agentforge.src.ml_contract.intake check --dest <dest> --need held_out_result
 """
 from __future__ import annotations
 
@@ -38,6 +47,7 @@ import os
 import re
 import shutil
 import sys
+import zipfile
 from datetime import datetime, timezone
 from typing import Any
 
@@ -434,9 +444,33 @@ def record(dest: str, kind: str, src: str, *, open_gate: bool = True) -> dict[st
 
 # --------------------------------------------------------------------------- the drop folder
 
-INCOMING_DIR = "inputs/incoming"
-RECORDED_DIR = "inputs/incoming/recorded"
+#: ADR-0031 D-1: the folder is named for the product the operator carries files from. The old name
+#: is still read (never created) for one release, so a project mid-run does not break.
+INCOMING_DIR = "from-neuroedge"
+RECORDED_DIR = "from-neuroedge/recorded"
+LEGACY_INCOMING_DIR = "inputs/incoming"
 MISSING_EXIT = 3  # "a human must drop a file": distinct from 1 (a check failed) and 0 (all present)
+
+#: What comes back after training (ADR-0031 D-2). Not in KINDS: neither is copied to one stored
+#: path. Each is unpacked into the run it belongs to, and that run is read from the file itself.
+RETURN_KINDS = ("model_package", "held_out_result")
+#: The four files the run reads from a portal model package. Anything else in the zip
+#: (held_out_test.json, LICENCE-NOTICE.txt, package.json) is recorded and ignored, never refused.
+PACKAGE_FILES = ("model.onnx", "meta.json", "model_artifact.json", "metrics.json")
+PACKAGE_DIR = "model-package"
+HELD_OUT_FILE = "portal_held_out.json"
+HELD_OUT_SCHEMA = "portal-held-out-result/1"
+#: A ceiling on what one package member may decompress to. The sizes in a zip are its author's
+#: claim, so the read itself is bounded too.
+MAX_MEMBER_BYTES = 2 * 1024 ** 3
+WHERE = {
+    "use_case": "portal Step 1 Edge Use Case Design -> Download use_case.yaml",
+    "capability_manifest": "the device's `ne-device-agent assess` output (the file uploaded in portal Step 2 Target Device)",
+    "scaffold": "portal Step 3 Model Strategy -> Build my own -> Script (.py)",
+    "model_recommendation": "portal Step 3 Model Strategy: pick from the rated list, then export the recommendation",
+    "model_package": "portal Step 3 Optimize -> Downloads -> Download all as .zip",
+    "held_out_result": "portal Step 3 Train -> Held-out evaluation -> Download result",
+}
 # What the run does without each optional input (ADR-0027 D-2, D-3).
 ABSENT_MEANS = {
     "capability_manifest": "no device-fit checks here; the device is assessed at deployment",
@@ -444,10 +478,11 @@ ABSENT_MEANS = {
     "model_recommendation": "/model-select proposes from the data and the task alone, exactly as before",
 }
 
-INCOMING_README = """# Drop portal files here
+INCOMING_README = """# What NeuroEdge gives this run
 
 `/agentforge-ml` never calls the portal. Download these files from the portal (or the device) and
 drop them in this folder. The run records each one with its hash, then moves it to `recorded/`.
+What this run gives back to the portal is staged in `../to-neuroedge/`.
 
 Only the **use case** is required: the run stops at M0 until it is here, and asks you to confirm it
 at a gate. The others are **optional**. Drop one and it is used. Leave it out and the run goes
@@ -469,11 +504,27 @@ Check what is here and what is missing:
 One file per kind. If two files of the same kind are here, `check` stops and names both; remove the
 one you do not want. A newer download of a file already recorded replaces it. For the use case, its
 gate and every audit are then asked again, and the lock must be rebuilt.
+
+## What comes back after training
+
+| File | Needed by | Where to get it | Recognised as |
+|---|---|---|---|
+| the portal's model package (`<use-case-id>-model-package.zip`) | M9 | Portal **Step 3 · Optimize** → *Downloads* → **Download all as .zip** | a `*.zip` holding `model_artifact.json` (and `model.onnx`, `meta.json`, `metrics.json`) |
+| the held-out result (`*.json`) | M10 | Portal **Step 3 · Train** → *Held-out evaluation* → **Download result** | a `*.json` whose `eval_split` is `held_out_test` |
+
+Drop either here as it is: **never unzip the package yourself, and never pick a run id.** The run
+reads the run id from the package's own `model_artifact.json` and unpacks it to
+`<arch>/runs/<run_id>/model-package/`; the held-out result goes beside it as `portal_held_out.json`,
+matched to its package by the model's hash. A package whose `lock_sha256` is not this project's lock
+is refused, naming both hashes, and left here; nothing is written under `<arch>/runs/`.
+
+    python -m agentforge.src.ml_contract.intake check --dest <this model folder> --need model_package
+    python -m agentforge.src.ml_contract.intake check --dest <this model folder> --need held_out_result
 """
 
 
 def init_incoming(dest: str) -> str:
-    """Create ``<dest>/inputs/incoming/`` and its README. Idempotent; returns the folder path."""
+    """Create ``<dest>/from-neuroedge/`` and its README. Idempotent; returns the folder path."""
     folder = os.path.join(dest, INCOMING_DIR)
     os.makedirs(folder, exist_ok=True)
     readme = os.path.join(folder, "README.md")
@@ -483,9 +534,37 @@ def init_incoming(dest: str) -> str:
     return folder
 
 
+def drop_folders(dest: str) -> list[str]:
+    """Every folder a human may have dropped a file into: ``from-neuroedge/``, then the old name."""
+    folders = [init_incoming(dest)]
+    legacy = os.path.join(dest, LEGACY_INCOMING_DIR)
+    if os.path.isdir(legacy):
+        folders.append(legacy)
+    return folders
+
+
+def _held_out_evidence(data: Any) -> dict[str, Any] | None:
+    """The evidence block of a portal held-out result, or None when ``data`` is not one.
+
+    The portal's download nests it under ``evidence``; a bare evidence block is accepted too. The
+    split is required whatever the schema says: a number measured on val, the split the threshold
+    was chosen on, is never filed as held-out evidence (ml-eval review, HIGH).
+    """
+    if not isinstance(data, dict):
+        return None
+    evidence = data.get("evidence") if isinstance(data.get("evidence"), dict) else data
+    return evidence if evidence.get("eval_split") == "held_out_test" else None
+
+
 def classify(path: str) -> str | None:
     """Which input kind a dropped file is, from its content (never its name alone), or None."""
     name = os.path.basename(path).lower()
+    if name.endswith(".zip"):
+        try:
+            with zipfile.ZipFile(path) as zf:
+                return "model_package" if "model_artifact.json" in zf.namelist() else None
+        except (OSError, zipfile.BadZipFile):
+            return None
     try:
         with open(path, "rb") as fh:
             raw = fh.read()
@@ -506,6 +585,8 @@ def classify(path: str) -> str | None:
             return None
         if isinstance(data, dict) and str(data.get("schema", "")).startswith("model-recommendation/"):
             return "model_recommendation"
+        if _held_out_evidence(data) is not None:
+            return "held_out_result"
         ok = isinstance(data, dict) and (data.get("manifest_id") or data.get("device_profile_id"))
         return "capability_manifest" if ok else None
     if name.endswith((".py", ".ipynb")):
@@ -517,27 +598,273 @@ def classify(path: str) -> str | None:
     return None
 
 
+# --------------------------------------------------------------------------- after training (ADR-0031 D-2)
+
+
+class ReturnRefused(ValueError):
+    """A model package or held-out result this run will not unpack. Nothing was written."""
+
+    def __init__(self, problems: list[str]):
+        super().__init__("; ".join(problems))
+        self.problems = problems
+
+
+_SAFE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
+
+
+def _run_folder_stamp(created_at: Any) -> str | None:
+    """``2026-09-23T06:47:11.83+00:00`` -> ``20260923T064711Z``, the portal's run-folder form."""
+    try:
+        made = datetime.fromisoformat(str(created_at).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if made.tzinfo is None:
+        made = made.replace(tzinfo=timezone.utc)
+    return made.astimezone(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
+def _extras(artifact: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    extras = artifact.get("extras") if isinstance(artifact.get("extras"), dict) else {}
+    run = extras.get("package_run") if isinstance(extras.get("package_run"), dict) else {}
+    return extras, run
+
+
+def package_run_id(artifact: dict[str, Any]) -> str | None:
+    """The run a portal package belongs to, read from its own ``model_artifact.json``.
+
+    ``extras.package_run_id``, else the portal runner's ``extras.package_run.run_id``, else
+    ``created_at`` in the portal's run-folder form. Never the operator's choice: an operator
+    choosing a run id is an operator inventing provenance (ADR-0031 D-2). An id that is not a plain
+    folder name is refused rather than sanitised -- it names a folder this run writes into.
+    """
+    extras, run = _extras(artifact)
+    for value in (extras.get("package_run_id"), run.get("run_id")):
+        if isinstance(value, str) and value:
+            return value if _SAFE_ID.match(value) else None
+    return _run_folder_stamp(artifact.get("created_at")) if artifact.get("created_at") else None
+
+
+def _package_lock(artifact: dict[str, Any]) -> str | None:
+    extras, run = _extras(artifact)
+    value = extras.get("lock_sha256") or run.get("lock_sha256")
+    return value if isinstance(value, str) and value else None
+
+
+def _package_arch(dest: str, artifact: dict[str, Any]) -> str | None:
+    """The architecture folder the package was trained from: as the portal recorded it, else the project's own."""
+    from .handoff import architecture_of  # noqa: PLC0415 - handoff imports nothing from here
+
+    extras, run = _extras(artifact)
+    named = run.get("arch") or extras.get("arch")
+    if isinstance(named, str) and _SAFE_ID.match(named) and os.path.isdir(os.path.join(dest, named)):
+        return named
+    return architecture_of(dest)
+
+
+def _read_member(zf: zipfile.ZipFile, name: str) -> bytes:
+    info = zf.getinfo(name)
+    if info.file_size > MAX_MEMBER_BYTES:
+        raise ReturnRefused([f"{name} declares {info.file_size} bytes, over the {MAX_MEMBER_BYTES}-byte ceiling"])
+    with zf.open(info) as fh:
+        data = fh.read(MAX_MEMBER_BYTES + 1)
+    if len(data) > MAX_MEMBER_BYTES:
+        raise ReturnRefused([f"{name} decompresses past the {MAX_MEMBER_BYTES}-byte ceiling"])
+    return data
+
+
+def sha256_path(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _write_entry(dest: str, kind: str, entry: dict[str, Any]) -> dict[str, Any]:
+    inputs = _read_inputs(dest)
+    previous = inputs["inputs"].get(kind)
+    if previous and previous.get("sha256"):
+        entry["replaces_sha256"] = previous["sha256"]
+    inputs["inputs"][kind] = dict(entry)
+    os.makedirs(os.path.join(dest, INPUTS_DIR), exist_ok=True)
+    with open(os.path.join(dest, INPUTS_DIR, INPUTS_FILE), "w", encoding="utf-8") as fh:
+        json.dump(inputs, fh, indent=2, ensure_ascii=False)
+        fh.write("\n")
+    entry["unchanged"] = bool(previous) and previous.get("sha256") == entry["sha256"]
+    return entry
+
+
+def unpack_model_package(dest: str, src: str) -> dict[str, Any]:
+    """Unpack the portal's model package into ``<arch>/runs/<run_id>/model-package/`` (ADR-0031 D-2).
+
+    The zip is never trusted beyond its bytes: only the four named members are read (never
+    ``extractall``), their hashes are recorded, and the unpack is refused -- with nothing written --
+    when the package's ``lock_sha256`` is not this project's lock. Raises :class:`ReturnRefused`.
+    """
+    lock, lock_error = _lock_or_none(dest)
+    if lock is None:
+        raise ReturnRefused([lock_error or "no use_case.lock.json: a package cannot be checked against a lock "
+                                           "that does not exist (M0 locks the use case)"])
+    try:
+        zf = zipfile.ZipFile(src)
+    except (OSError, zipfile.BadZipFile) as exc:
+        raise ReturnRefused([f"{os.path.basename(src)} is not a readable zip ({exc})"]) from exc
+    with zf:
+        names = zf.namelist()
+        missing = [n for n in PACKAGE_FILES if n not in names]
+        if missing:
+            raise ReturnRefused([f"the package has no {', '.join(missing)}; a model package carries "
+                                 f"{', '.join(PACKAGE_FILES)} at its top level"])
+        blobs = {n: _read_member(zf, n) for n in PACKAGE_FILES}
+        extra = sorted(n for n in names if n not in PACKAGE_FILES and not n.endswith("/"))
+    try:
+        artifact = json.loads(blobs["model_artifact.json"].decode("utf-8"))
+    except ValueError as exc:
+        raise ReturnRefused([f"model_artifact.json is not readable JSON ({exc})"]) from exc
+    if not isinstance(artifact, dict):
+        raise ReturnRefused(["model_artifact.json is not a JSON object"])
+
+    problems = []
+    theirs = _package_lock(artifact)
+    if theirs is None:
+        problems.append("the package's model_artifact.json carries no lock_sha256, so nothing says which "
+                        "contract it was trained under")
+    elif theirs != lock["lock_sha256"]:
+        problems.append(f"the package was trained under lock {theirs}, this project's lock is "
+                        f"{lock['lock_sha256']}: it is another use case's model, or one trained before a re-lock")
+    if artifact.get("use_case_id") and artifact["use_case_id"] != lock.get("use_case_id"):
+        problems.append(f"the package is for use case {artifact['use_case_id']!r}, the lock is for "
+                        f"{lock.get('use_case_id')!r}")
+    run_id = package_run_id(artifact)
+    if run_id is None:
+        problems.append("the package names no usable run (no extras.package_run_id, extras.package_run.run_id "
+                        "or readable created_at); a run id is never chosen by hand")
+    arch = _package_arch(dest, artifact)
+    if arch is None:
+        problems.append("cannot tell which architecture folder the package belongs to: the portal recorded none "
+                        "that exists here, and the project holds more than one (see `handoff show`)")
+    if problems:
+        raise ReturnRefused(problems)
+
+    rel = f"{arch}/runs/{run_id}/{PACKAGE_DIR}"
+    target = os.path.join(dest, rel)
+    os.makedirs(target, exist_ok=True)
+    for name, data in blobs.items():
+        with open(os.path.join(target, name), "wb") as fh:
+            fh.write(data)
+    findings = [_finding(PASS, "lock_sha256", f"{theirs[:12]} is this project's lock"),
+                _finding(PASS, "run_id", f"{run_id!r}, read from the package's model_artifact.json")]
+    if extra:
+        findings.append(_finding(PASS, "extra files", f"recorded and not read: {extra}"))
+    return _write_entry(dest, "model_package", {
+        "kind": "model_package",
+        "path": rel,
+        "sha256": sha256_path(src),
+        "source_name": os.path.basename(src),
+        "generated_at": artifact.get("created_at"),
+        "recorded_at": _now(),
+        "gate": None,
+        "run_id": run_id,
+        "arch": arch,
+        "lock_sha256": theirs,
+        "files": {n: hashlib.sha256(d).hexdigest() for n, d in blobs.items()},
+        "ignored": extra,
+        "findings": findings,
+    })
+
+
+def record_held_out(dest: str, src: str) -> dict[str, Any]:
+    """Place the portal's held-out result beside the model package it scored (ADR-0031 D-2).
+
+    The result carries the evaluation's own run id, which is not the package's. It is matched to the
+    recorded package by the hash of the ONNX model it evaluated, so no run id is chosen by hand.
+    Raises :class:`ReturnRefused` with nothing written.
+    """
+    with open(src, "rb") as fh:
+        raw = fh.read()
+    try:
+        evidence = _held_out_evidence(json.loads(raw.decode("utf-8")))
+    except ValueError as exc:
+        raise ReturnRefused([f"{os.path.basename(src)} is not readable JSON ({exc})"]) from exc
+    if evidence is None:
+        raise ReturnRefused(["not a held-out result: its eval_split is not held_out_test"])
+    lock, lock_error = _lock_or_none(dest)
+    problems = []
+    if lock is None:
+        problems.append(lock_error or "no use_case.lock.json to check the result against")
+    elif evidence.get("lock_sha256") != lock["lock_sha256"]:
+        problems.append(f"the result was measured under lock {evidence.get('lock_sha256')}, this project's lock "
+                        f"is {lock['lock_sha256']}")
+    package = read_inputs(dest).get("model_package")
+    onnx = evidence.get("model_onnx_sha256")
+    if not package:
+        problems.append("no model package is recorded yet: drop the portal's model package first (M9), so the "
+                        "result has a run to belong to")
+    elif not onnx:
+        problems.append("the result names no model_onnx_sha256, so it cannot be tied to a model package")
+    elif (package.get("files") or {}).get("model.onnx") != onnx:
+        problems.append(f"the result evaluated model.onnx {onnx[:12]}, the recorded package's model.onnx is "
+                        f"{str((package.get('files') or {}).get('model.onnx'))[:12]} (run {package.get('run_id')}): "
+                        "download the package that was evaluated, or the result for this package")
+    if problems:
+        raise ReturnRefused(problems)
+
+    rel = f"{package['arch']}/runs/{package['run_id']}/{HELD_OUT_FILE}"
+    target = os.path.join(dest, rel)
+    os.makedirs(os.path.dirname(target), exist_ok=True)
+    with open(target, "wb") as fh:
+        fh.write(raw)
+    headline = evidence.get("headline") if isinstance(evidence.get("headline"), dict) else {}
+    meets = headline.get("meets_target")
+    return _write_entry(dest, "held_out_result", {
+        "kind": "held_out_result",
+        "path": rel,
+        "sha256": hashlib.sha256(raw).hexdigest(),
+        "source_name": os.path.basename(src),
+        "generated_at": evidence.get("evaluated_at"),
+        "recorded_at": _now(),
+        "gate": None,
+        "run_id": package["run_id"],
+        "arch": package["arch"],
+        "evaluation_run_id": evidence.get("evaluation_run_id"),
+        "findings": [_finding(PASS, "model", f"model.onnx {onnx[:12]} is run {package['run_id']}'s"),
+                     _finding(PASS if meets else WARN, "meets_target",
+                              f"{meets!r} -- a held-out number is reported at M10, never tuned against")],
+    })
+
+
+def _unpack(dest: str, kind: str, path: str) -> dict[str, Any]:
+    return unpack_model_package(dest, path) if kind == "model_package" else record_held_out(dest, path)
+
+
 def check(dest: str, need: list[str]) -> tuple[int, list[str]]:
     """Record every needed input that was dropped, and report what is still missing.
 
     Returns ``(exit_code, lines)``: 0 when every **required** kind asked for is recorded,
     ``MISSING_EXIT`` when a human still has to drop one, 1 when a drop is ambiguous (two files of
-    one kind). A missing optional kind is reported as ``[ABSENT]`` and never stops the run.
+    one kind) or refused. A missing optional kind is reported as ``[ABSENT]`` and never stops the
+    run. A return kind (model package, held-out result) is required whenever it is asked for: the
+    milestone that asks for it cannot go on without it.
     """
-    unknown = [k for k in need if k not in KINDS]
+    unknown = [k for k in need if k not in KINDS and k not in RETURN_KINDS]
     if unknown:
-        raise ValueError(f"unknown kind(s) {unknown}, expected some of {sorted(KINDS)}")
-    folder = init_incoming(dest)
+        raise ValueError(f"unknown kind(s) {unknown}, expected some of {sorted([*KINDS, *RETURN_KINDS])}")
+    folders = drop_folders(dest)
+    folder = folders[0]
     dropped: dict[str, list[str]] = {}
-    for name in sorted(os.listdir(folder)):
-        path = os.path.join(folder, name)
-        if os.path.isfile(path) and name != "README.md":
-            kind = classify(path)
-            if kind:
-                dropped.setdefault(kind, []).append(path)
+    for where in folders:
+        for name in sorted(os.listdir(where)):
+            path = os.path.join(where, name)
+            if os.path.isfile(path) and name != "README.md":
+                kind = classify(path)
+                if kind:
+                    dropped.setdefault(kind, []).append(path)
     lines: list[str] = []
+    if len(folders) > 1:
+        lines.append(f"[NOTE] {LEGACY_INCOMING_DIR}/ is the old name of {INCOMING_DIR}/ and is read for one "
+                     f"more release; drop new files in {INCOMING_DIR}/")
     missing: list[str] = []
-    ambiguous = False
+    ambiguous = refused = False
     recorded = read_inputs(dest)
     for kind in need:
         files = dropped.get(kind, [])
@@ -546,7 +873,17 @@ def check(dest: str, need: list[str]) -> tuple[int, list[str]]:
             lines.append(f"[AMBIGUOUS] {kind}: {', '.join(os.path.basename(f) for f in files)} — keep one")
             continue
         if files:
-            entry = record(dest, kind, files[0])
+            if kind in RETURN_KINDS:
+                try:
+                    entry = _unpack(dest, kind, files[0])
+                except (OSError, ReturnRefused) as exc:
+                    refused = True
+                    lines.append(f"[REFUSED] {kind}: {os.path.basename(files[0])} is left where it is; "
+                                 "nothing was written")
+                    lines += [f"  - {p}" for p in getattr(exc, "problems", [str(exc)])]
+                    continue
+            else:
+                entry = record(dest, kind, files[0])
             lines.append(format_entry(entry))
             stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
             try:
@@ -556,26 +893,20 @@ def check(dest: str, need: list[str]) -> tuple[int, list[str]]:
                 # Recorded already (inputs.json, gate): say so, instead of letting a file lock
                 # (Defender, OneDrive, an open editor) abort the check and hide that it happened.
                 lines.append(f"  recorded, but could not move {os.path.basename(files[0])} to recorded/ ({exc}); "
-                             "remove it from incoming/ by hand")
+                             "remove it from the drop folder by hand")
         elif kind in recorded and recorded[kind].get("path"):  # a pre-ADR-0027 waiver has no path: absent
             lines.append(f"[PRESENT] {kind}: {recorded[kind]['path']} (sha256 {recorded[kind]['sha256'][:12]})")
         else:
             missing.append(kind)
     for kind in missing:
-        where = {
-            "use_case": "portal Step 1 Edge Use Case Design -> Download use_case.yaml",
-            "capability_manifest": "the device's `ne-device-agent assess` output (the file uploaded in portal Step 2 Target Device)",
-            "scaffold": "portal Step 3 Model Strategy -> Build my own -> Script (.py)",
-            "model_recommendation": "portal Step 3 Model Strategy: pick from the rated list, then export the recommendation",
-        }[kind]
-        if kind in REQUIRED:
-            lines.append(f"[MISSING] {kind}: drop it into {folder} (from {where})")
+        if kind in REQUIRED or kind in RETURN_KINDS:
+            lines.append(f"[MISSING] {kind}: drop it into {folder} (from {WHERE[kind]})")
         else:
             lines.append(f"[ABSENT] {kind}: optional, not provided ({ABSENT_MEANS[kind]}). "
-                         f"To use one, drop it into {folder} (from {where})")
-    if ambiguous:
+                         f"To use one, drop it into {folder} (from {WHERE[kind]})")
+    if ambiguous or refused:
         return 1, lines
-    required_missing = [k for k in missing if k in REQUIRED]
+    required_missing = [k for k in missing if k in REQUIRED or k in RETURN_KINDS]
     if required_missing:
         lines.append(f"STOP: {len(required_missing)} required input(s) missing. Drop them into {folder}, "
                      "then run check again.")
@@ -592,6 +923,9 @@ def format_entry(entry: dict[str, Any]) -> str:
         f"  source        {entry['source_name']}",
         f"  generated_at  {entry.get('generated_at') or '-'}",
     ]
+    if entry.get("run_id"):
+        where = f"{entry['arch']}/runs/" if entry.get("arch") else ""
+        lines.append(f"  run           {where}{entry['run_id']} (read from the file, never chosen)")
     if entry.get("replaces_sha256"):
         change = "unchanged" if entry.get("unchanged") else "CHANGED"
         lines.append(f"  replaces      {entry['replaces_sha256']} ({change})")
@@ -599,6 +933,8 @@ def format_entry(entry: dict[str, Any]) -> str:
         lines.append(f"  [{f['level']}] {f['check']}: {f['detail']}")
     if entry.get("gate_action"):
         lines.append(f"  gate {entry['gate']!r} {entry['gate_action']} — answer it before the input is used")
+    elif entry.get("kind") in RETURN_KINDS:
+        lines.append("  returned by the portal: unpacked by the run, no gate of its own")
     elif not entry.get("gate"):
         lines.append("  optional input: no gate, and its findings are advisory")
     elif entry.get("unchanged"):
@@ -618,11 +954,12 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--no-gate", action="store_true", help="record without opening a gate (tests, re-hash only)")
     s = sub.add_parser("show", help="print every recorded input and its findings")
     s.add_argument("--dest", required=True)
-    i = sub.add_parser("init", help="create inputs/incoming/ (the drop folder) and its README")
+    i = sub.add_parser("init", help="create from-neuroedge/ (the drop folder) and its README")
     i.add_argument("--dest", required=True)
     c = sub.add_parser("check", help="record dropped files; exit 3 naming each REQUIRED input still missing")
     c.add_argument("--dest", required=True)
-    c.add_argument("--need", required=True, help="comma-separated kinds, e.g. use_case,capability_manifest")
+    c.add_argument("--need", required=True, help="comma-separated kinds, e.g. use_case,capability_manifest "
+                                                 "or model_package,held_out_result")
     args = p.parse_args(argv)
 
     if args.cmd == "init":

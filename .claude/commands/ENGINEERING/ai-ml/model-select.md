@@ -70,7 +70,7 @@ Chooses **what model to build** before code is generated (ADR-0014). Spawns `ml-
    - **Synthetic use** — whether and how the M6 set enters training (cap, the real-only vs real+synthetic
      ablation), or why it does not.
 1a. **Answer the portal's recommendation, when there is one (ADR-0028 D-9).** It is an advisory input: a file the
-   human exported from the portal and dropped in `inputs/incoming/`. Nothing here calls the portal, and **without
+   human exported from the portal and dropped in `from-neuroedge/`. Nothing here calls the portal, and **without
    the file this command runs exactly as before.** `python -m agentforge.src.ml_contract.recommendation show
    --dest <dest>` prints the pick and every rated candidate. The portal knows the device and its catalogue and
    never sees the data. You know the data and the task. So the two can disagree, and these rules reconcile them:

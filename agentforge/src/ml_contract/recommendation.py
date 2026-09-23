@@ -1,7 +1,7 @@
 """The portal's model recommendation, and how M7 must answer it (ADR-0028 D-9).
 
 The portal rates its catalogue against the use case and the device, the user picks, and the portal exports
-``model_recommendation.json``. A human drops it in ``inputs/incoming/``; ``intake`` records it. Nothing here calls
+``model_recommendation.json``. A human drops it in ``from-neuroedge/``; ``intake`` records it. Nothing here calls
 the portal (ADR-0025 D-1), and ``/model-select`` runs without the file exactly as it did before.
 
 The two can disagree, because they know different things: the portal knows the device and its catalogue, and
@@ -171,7 +171,7 @@ def main(argv: list[str] | None = None) -> int:
     recommendation, problem = load(a.dest)
     if problem:
         print(f"[WARN] a model recommendation was recorded but cannot be used: {problem}. Its does_not_fit ratings "
-              "are unknown, so nothing is assumed to fit. Ask the human to export it again and drop it in inputs/incoming/.")
+              "are unknown, so nothing is assumed to fit. Ask the human to export it again and drop it in from-neuroedge/.")
         return UNUSABLE_EXIT
     if recommendation is None:
         print("no model recommendation is recorded: /model-select proposes from the data and the task alone")
