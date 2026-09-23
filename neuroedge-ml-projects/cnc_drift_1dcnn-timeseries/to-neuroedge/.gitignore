@@ -1,0 +1,3 @@
+# Copies of artifacts whose originals live elsewhere (ADR-0031 D-3). They can hold the dataset and the
+# sealed test split, and `handoff stage` rebuilds them in seconds: never commit them.
+*.zip

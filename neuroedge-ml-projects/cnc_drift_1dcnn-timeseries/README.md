@@ -17,6 +17,13 @@
 Layout per `ml-artifact-destination`: `data/` for cards, manifests and splits; `model-select.md`;
 one `<architecture>/` subfolder per built model.
 
+**Start at [`00-START-HERE.md`](00-START-HERE.md)** (generated; AgentForge ADR-0031 D-5): each milestone's
+status and where its output landed. Realigned to ADR-0031 on 2026-09-23. `from-neuroedge/` is what the portal
+gives this run (formerly `inputs/incoming/`), and `to-neuroedge/` is what it gives the portal, in upload order.
+`/agentforge-ml handoff` prints the walk-through. `DATA_README.md` is now
+[`guides/dataset.md`](guides/dataset.md). Records written before the move (the M5 review packs,
+`data/profile.json`) still cite it by its old name and were left as approved.
+
 ## Stage log
 
 | Date | Stage | Command | Artifact | Note |
@@ -43,3 +50,4 @@ one `<architecture>/` subfolder per built model.
 | 2026-09-19 | M8 `model-build` close | `/agentforge-ml` (main session) | `common/metrics.py`, `1DCNN/{train.py,eval.py,config.yaml}`, `MiniRocket/{train.py,eval.py,config.yaml}` | ml-eval-reviewer round 3 PASS, code-reviewer APPROVE. Human decision at the eval-methodology gate: `fpr_tolerance` set to 0 (the KPI is exactly FPR <= 0.01), with `fpr_tolerance` and `effective_fpr_bound` written beside `meets_fpr`; the val headline now carries `headline_positive_units` and a single-trial caveat (val has one worn unit, A04); `eval.py` carries the package's LOWO `cross_validation` spread into the test report. Smoke checks re-run, all pass. Gate `eval-methodology` approved; M8 complete. |
 | 2026-09-19 | M9 `train` | external (runner `package`) | `1DCNN/HANDOFF.md` | Waiting on the external training run (`run.json` gate `waiting_external`). Expected package: `1DCNN/runs/<run_id>/model-package/`. Resume with `/agentforge-ml --resume`. |
 | 2026-09-19 | M7 `model-select` correction (doc-only) | `/agentforge-ml` (main session) | `model_proposed.md` §Runner, `data/label-manifest.md` requirement #2, `1DCNN/HANDOFF.md` | The recorded reason for `runner: package` was stale: the portal's `ts_preprocessor.py` was fixed on 2026-09-18 (NeuroEdge-Web `1197d27`) and no longer windows before splitting. The decision stands for other reasons, read from the portal code: a random unit shuffle that cannot take the approved split, test not kept withheld, a TS trainer with no calibrated threshold or recall@FPR, and no baseline. No gate re-opened: the approved decision is unchanged. |
+| 2026-09-23 | Realign to AgentForge ADR-0031 (D-9), still at M9 | `handoff stage`/`index`, `intake check`, `data_simulator --profile demo`, AgentForge Assets `774d72e` installed | `from-neuroedge/` (was `inputs/incoming/`), `to-neuroedge/` (01, 02, 05, 06 staged), `00-START-HERE.md`, `guides/dataset.md` (was `DATA_README.md`, Part 2 rewritten from files on disk: trial taxonomy, 500 Hz to 10 Hz, real windows, splits with test counts, synthetic, unconfirmed list), `guides/model.md` (new), `sim-demo/` | No load-bearing path moved; nothing re-gated. `1DCNN/portal_held_out.json` (2026-09-21) stays where it is until its model package is dropped in `from-neuroedge/` and `intake` places both under `1DCNN/runs/<run_id>/`. The staged 01 and 02 match the hashes the portal's held-out result names, so they already reached the portal; they are not recorded as sent. |

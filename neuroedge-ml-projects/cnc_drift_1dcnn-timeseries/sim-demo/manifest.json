@@ -1,0 +1,143 @@
+{
+  "lock_sha256": "b7a3765f48f6c07e73e553928f8ff40371d87286824e85d8dad48cb401d15f0d",
+  "use_case_id": "cnc-drift-on-powertrain-shop-for-car-prduction",
+  "split_hash": "47871db08ccc16d34f4947407ec731a9988afdfb00ac890baf645df45f07baad",
+  "sample_rate_hz": 10.0,
+  "feature_order": [
+    "spindle_load",
+    "x_axis_error",
+    "vibration_rms"
+  ],
+  "units": {
+    "spindle_load": "Nm",
+    "x_axis_error": "um",
+    "vibration_rms": "g"
+  },
+  "definitions": {
+    "spindle_load": "100 ms mean of spindle torque (SINUMERIK TORQUE|6)",
+    "x_axis_error": "100 ms mean of X-axis following error (SINUMERIK CTRL_DIFF|1), in micrometres",
+    "vibration_rms": "exact 100 ms RMS of the mean-removed 3-axis spindle acceleration magnitude (unit g assumed, unconfirmed)"
+  },
+  "reduce": {
+    "spindle_load": "mean",
+    "x_axis_error": "mean",
+    "vibration_rms": "rms"
+  },
+  "window_samples": 64,
+  "stride_samples": 10,
+  "replay": {
+    "target_fps": 10.0,
+    "note": "rows are 1/sample_rate_hz apart; the device counts rows"
+  },
+  "purpose": "demo_only",
+  "caveat": "The class balance of this replay is deliberately weighted toward the event class, so every rate measured on it (false-alarm rate, precision, recall) is meaningless as a measurement of the model. It is a demonstration; the unweighted export in sim/ is the evidence.",
+  "files": [
+    {
+      "path": "demo.csv",
+      "split": "val",
+      "unit": "composed",
+      "rows": 3000,
+      "purpose": "demo_only",
+      "labels": {
+        "tool_wear": 2100,
+        "normal": 900
+      }
+    }
+  ],
+  "demo": {
+    "event_class": "tool_wear",
+    "event_share": 0.7,
+    "event_share_windows": 0.7,
+    "minutes": 5.0,
+    "composed_from": {
+      "splits": [
+        "val"
+      ],
+      "unit_of_composition": "windows",
+      "windows_by_class": {
+        "tool_wear": 168,
+        "normal": 72
+      },
+      "rows_per_stretch": 300,
+      "available_windows_by_class": {
+        "normal": 1244,
+        "tool_wear": 1204
+      }
+    },
+    "first_event_at_s": 30.0,
+    "order": [
+      {
+        "class": "normal",
+        "unit": "IM-01F",
+        "split": "val",
+        "block_start": 3881700,
+        "rows": 300
+      },
+      {
+        "class": "tool_wear",
+        "unit": "IM-01R-A04",
+        "split": "val",
+        "block_start": 5260450,
+        "rows": 300
+      },
+      {
+        "class": "tool_wear",
+        "unit": "IM-01R-A04",
+        "split": "val",
+        "block_start": 5275450,
+        "rows": 300
+      },
+      {
+        "class": "tool_wear",
+        "unit": "IM-01R-A04",
+        "split": "val",
+        "block_start": 5290450,
+        "rows": 300
+      },
+      {
+        "class": "normal",
+        "unit": "IM-01F",
+        "split": "val",
+        "block_start": 3896700,
+        "rows": 300
+      },
+      {
+        "class": "tool_wear",
+        "unit": "IM-01R-A04",
+        "split": "val",
+        "block_start": 5305450,
+        "rows": 300
+      },
+      {
+        "class": "tool_wear",
+        "unit": "IM-01R-A04",
+        "split": "val",
+        "block_start": 5320450,
+        "rows": 300
+      },
+      {
+        "class": "normal",
+        "unit": "IM-01F",
+        "split": "val",
+        "block_start": 3911700,
+        "rows": 300
+      },
+      {
+        "class": "tool_wear",
+        "unit": "IM-01R-A04",
+        "split": "val",
+        "block_start": 5335450,
+        "rows": 300
+      },
+      {
+        "class": "tool_wear",
+        "unit": "IM-01R-A04",
+        "split": "val",
+        "block_start": 5350450,
+        "rows": 300
+      }
+    ],
+    "repeated_classes": [],
+    "paths": "relative to this manifest"
+  }
+}

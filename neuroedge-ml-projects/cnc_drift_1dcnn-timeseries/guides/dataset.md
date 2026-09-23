@@ -1,8 +1,15 @@
 # Reading the KIT CNC milling data — a beginner's guide
 
-What this data is, where each number comes from, and how to open every file. Everything below
-was checked against the files actually on disk in `data/raw/`, not copied from the dataset's
-description.
+What this data is, where each number comes from, how to open every file, and how it becomes the
+windows a model is trained on. Everything below was checked against the files on disk in this
+folder, not copied from a dataset description or a textbook. What could not be checked is marked
+**unconfirmed** where it is said, and collected in §17.
+
+**Part 1 (§1–§10) is the raw data.** Start here if you want to know what the numbers are.
+**Part 2 (§11–§17) is the dataset the model reads.** Which trials are used, how 500 Hz becomes
+10 Hz windows, the splits, the synthetic data, and what is still unconfirmed.
+**Training and the result** are in [`model.md`](model.md): epochs, folds, and how to read the
+number.
 
 Source: **"A Multimodal Dataset for Process Monitoring and Anomaly Detection in Industrial CNC
 Milling"**, Ströbel et al. 2025, KIT. DOI `10.35097/hvvwn1kfwf7qt48z`, **CC BY 4.0** — free to
@@ -319,7 +326,7 @@ than the controller log. Drop them rather than filling them.
 
 ### Still open
 
-- **Units.** The dataset doesn't state the acceleration unit. Values (peaks around ±30, 0.1 s
+- **Units** (collected in §17). The dataset doesn't state the acceleration unit. Values (peaks around ±30, 0.1 s
   RMS of 2–5 while cutting) are plausible in *g*, but that's unconfirmed. Settle it before the
   model card quotes a threshold.
 - **Deployment.** This accelerometer was bolted on for the experiment, and §1 notes a typical
@@ -516,15 +523,16 @@ The edge device is to emit a `drift_score` (0–1, alert above 0.7) from three c
 
 Two open questions this data does **not** settle, both recorded in `data/profile.json`:
 
-- **The channel list was never specified.** The use case (`intent.yaml`) says "vibration,
-  temperature, dimensional accuracy, spindle load, etc." — `x_axis_error` is a stand-in for
-  "dimensional accuracy", and **this dataset has no temperature channel at all**.
+- **The channel list was never specified.** The original objective (`intent.yaml`, as recorded in
+  `data/profile.json` at M2) says "vibration, temperature, dimensional accuracy, spindle load,
+  etc." — `x_axis_error` is a stand-in for "dimensional accuracy", and **this dataset has no
+  temperature channel at all**. The three channels are now fixed in `use_case.lock.json` (§12).
 - **Only 5 of the 15 anomaly trials are genuine tool wear.** Six are commanded parameter
   changes (the "anomaly" is also an input column — a model would learn to read the commanded
   feedrate and detect nothing on a real line), and four are workpiece defects belonging to a
   different use case.
 
-## 10. Quick start — verified, runs as written
+## 10. Quick start — verified, runs as written (re-run 2026-09-23, 4.5 s)
 
 ```python
 import pandas as pd
@@ -543,6 +551,269 @@ for trial, label in [("IM-01R", "normal"), ("IM-01R-A03", "worn"), ("IM-01R-A05"
 depth and toolpath. The only difference is that the A-trials ran a worn tool. Any difference in
 those numbers is the drift signal, with nothing else to explain it. That is the pair to build
 the demo on — while keeping section 8's caveats in view.
+
+---
+
+# Part 2 — from the raw files to what the model reads
+
+Part 1 ended with three channels worth using. Part 2 follows them from the 33 trials KIT recorded to
+the windows the model is trained on. Every number here was read from a file in this folder on
+**2026-09-23**: `data/profile.json`, `data/contract_sources.json`, `data/contract/`, `data/splits/`,
+`data/synthetic/`, `data/synth-review.md` and `use_case.lock.json`. What the model then does with the
+windows (epochs, folds, the result) is in [`model.md`](model.md).
+
+---
+
+## 11. Which trials are used — and which ten are not
+
+The labels come from one decision, recorded in `data/profile.json` (`_taxonomy_decision_M4`, decided
+by sanjkcog on 2026-09-17). Every trial is either used with a label, or excluded with a reason:
+
+| Group | Trials | Count | What happens to it |
+|---|---|---|---|
+| **normal** | `IMP-BASE`, `IMP-01` … `IMP-12`, `TF-01` … `TF-03`, `IM-01R`, `IM-01F` | 18 | used, label `normal` |
+| **tool_wear** | `IM-01R-A01` … `IM-01R-A05` | 5 | used, label `tool_wear` |
+| commanded parameter change | `TF-01-A01`, `TF-02-A01`, `TF-03-A01`, `TF-03-A02`, `IM-01F-A01`, `IM-02F-A01` | 6 | **excluded** — leakage |
+| workpiece defect | `IMP-01-A01` … `IMP-01-A04` | 4 | **excluded** — a different use case |
+
+**Why the parameter-change trials are excluded, not labelled.** `DoE.csv` shows what makes them
+anomalous: `TF-01-A01` is "Feedrate + 20%", `TF-03-A02` is "Overload: f_z + 60%, v_c + 60%". The
+changed setting is also *in the input data*. The feedrate is visible in the `DES_POS` trajectory,
+and `CMD_SPEED` is a column. A model trained on them would learn to read the commanded setting,
+which means "this program was configured differently". A real line running its normal program
+never shows that, so the model would detect nothing there.
+
+**Why the workpiece defects are excluded.** Cavities, cracks and a chipped edge (`IMP-01-A01` …
+`A04`) are faults *in the part*, not wear of the machine. They belong to a part-inspection use case.
+
+**The caveat that stays with every number below.** Of the 5 tool-wear trials, `A01` and `A02` are
+"Roughing with Toolwear **and Blowholes**" (`DoE.csv`). Only `A03`, `A04` and `A05` are pure wear, and
+`config.yaml` records them as `pure_wear_units`. And there is exactly **one** normal run of the same
+program, `IM-01R` (§8).
+
+---
+
+## 12. From 500 Hz to 10 Hz — the contract dataset
+
+The controller writes 500 rows a second (§3). The edge device scores 10 readings a second
+(`use_case.lock.json`: `sample_rate_hz: 10`). So before anything is trained, every trial is
+reduced **once**, in `data/contract/<trial>.parquet`, and every later step reads only that. The
+recipe is `data/contract_sources.json`:
+
+| Contract channel | Source | How 50 ticks (100 ms) become one row | Unit |
+|---|---|---|---|
+| `spindle_load` | `TORQUE\|6` in `hfdata.csv` | mean | Nm (declared, see §17) |
+| `x_axis_error` | `CTRL_DIFF\|1` in `hfdata.csv` | mean, × 1000 (mm → µm) | µm |
+| `vibration_rms` | `vibration_rms` in `data/interim/<trial>_sensor.parquet` (§5) | exact pooled RMS, weighted by `n_samples` | g (assumed, see §17) |
+
+So one contract row is one 100 ms step: `block_start` (the first `CYCLE` of the 50), `split`,
+`label` and the three channels. A 100 ms block with a missing controller tick is **dropped, not
+filled**. `IM-01R`'s 610,343 raw rows become 11,865 contract rows. `data/profile.json` records a
+spot check: `IM-01R-A04` block 0, recomputed from the raw files, gives identical values.
+
+**Two things that differ from Part 1's numbers, on purpose.**
+
+- **The contract keeps the sign.** §8 averaged `|CTRL_DIFF|` over moving rows, to measure how
+  large the lag is. The contract takes the plain 100 ms mean, as the device will. Spindle torque is
+  signed too: its mean is −2.4 Nm, from the spindle's direction convention (`data/profile.json`). So
+  a real window's `spindle_load` is negative.
+- **The contract keeps idle time.** Nothing is masked to "the axis is moving", because the device
+  cannot know that in advance. Averages over whole trials therefore differ from §8's.
+
+**Measured on the contract rows, whole trials:**
+
+| Trial | label | mean \|`spindle_load`\| (Nm) | mean `vibration_rms` |
+|---|---|---|---|
+| `IM-01R` | normal | 2.155 | 5.681 |
+| `IM-01R-A03` | worn | 2.414 | 5.417 |
+| `IM-01R-A04` | worn | 2.434 | 5.509 |
+| `IM-01R-A05` | worn | 2.456 | 5.469 |
+
+Torque is 12–14% higher on every pure-wear trial, the same direction as §8. **`vibration_rms` goes
+the other way:** it is *lower* on all three worn trials than on the one normal run. This guide
+cannot tell whether that is wear (a blunt tool can cut more smoothly), the accelerometer mounting,
+or run-to-run variation, because there is only one normal run to compare against. So do not read a
+rise in vibration as a sign of wear in this dataset.
+
+---
+
+## 13. From rows to windows — what the model actually sees
+
+One 100 ms row tells you nothing. Tool wear shows up as a *pattern over several seconds*. So the
+contract rows are cut into short overlapping clips called **windows**. Three numbers from
+`use_case.lock.json` decide how:
+
+| Setting | Value | In plain terms |
+|---|---|---|
+| `sample_rate_hz` | 10 | ten rows per second |
+| `window_samples` | 64 | each clip is 64 rows = **6.4 seconds** |
+| `stride_samples` | 10 | a new clip starts every 10 rows = **every 1 second** |
+
+Picture a 6.4-second ruler laid on the recording. Note what is under it. Slide it forward one
+second. Note it again. Keep going to the end of the trial.
+
+```
+recording  ────────────────────────────────────────────────────►  time
+window 1   [══════ 6.4 s ══════]
+window 2      [══════ 6.4 s ══════]        ← starts 1 s later
+window 3         [══════ 6.4 s ══════]
+                 ↑ 5.4 s of window 2 is also in window 3
+```
+
+Because the ruler moves 1 second but is 6.4 seconds wide, **consecutive windows share 5.4 seconds
+of identical data**. The overlap is deliberate: it multiplies how many examples six hours of
+milling gives you. It is also a trap, and §14 is about the trap.
+
+### One real window, laid out
+
+Each window is a grid of 3 channels × 64 rows, plus one label. This one is real: `IM-01R-A04`, val
+split, starting at `block_start` 5410450.
+
+```
+               t=0.0s   t=0.1s   t=0.2s   ...   t=6.3s    window mean
+spindle_load [ -1.08    -1.08    -1.09    ...    -1.10 ]   -1.625   Nm
+x_axis_error [ -1.26    -1.35    -1.52    ...     0.48 ]   -0.228   um
+vibration_rms[  5.97     6.32     6.34    ...     5.84 ]    5.690   g
+                                                 label: tool_wear
+```
+
+A normal window from the same program looks almost the same. `IM-01R`, val, at `block_start`
+3623050, has window means of −2.247 Nm, −0.368 µm and 5.97 g. You cannot see wear by eye in one
+window, and that is why this is a model and not a threshold.
+
+That 3 × 64 grid is one training example: 192 numbers. The label is not measured from the signal.
+It comes from **which trial the window was cut out of** (§11). Every window from `IM-01R-A04` is
+`tool_wear`, because that whole trial was cut with a worn tool. Every window from `IMP-03` is
+`normal`.
+
+> The model is told "these 192 numbers mean worn". If the real difference between two trials were
+> something other than tool wear, such as a different feedrate or a blowhole, the model would learn
+> *that* instead, and nobody would know. `IM-01R` against `IM-01R-A03/A04/A05` is the comparison to
+> trust: same program, same parameters, only the tool differs (§10). `A01` and `A02` also carry
+> blowholes (§11).
+
+A window never straddles a gap. A window that would run past the end of a split segment is not cut.
+
+---
+
+## 14. The three splits — and why they are by trial, not by row
+
+You need data the model has never seen, to check it learned something real and did not just
+memorise. The obvious move is to shuffle all the windows and take 20% for testing. That is
+**catastrophically wrong here**.
+
+Consecutive windows share 5.4 of their 6.4 seconds. Shuffle randomly, and window 2 lands in train
+while window 3 lands in test. They are 84% the same numbers, so the model scores brilliantly on a
+test set it has effectively already read. You would ship a model that looks 99% accurate and
+detects nothing on a real machine. This mistake is called **leakage**.
+
+The fix is to split by **trial**, never by row. A whole trial goes into one split. The model learns
+from `IM-01R-A01`, and it never sees `IM-01R-A04` until it is scored on it.
+
+Read from `data/splits/*.json` (`split_hash` `47871db08ccc…`). The window counts are computed from
+`data/contract/` with the lock's window and stride:
+
+| Split | Units | Normal | Worn | Worn unit | Contract rows | Windows (normal / worn) | What it is for |
+|---|---|---|---|---|---|---|---|
+| **train** | 16 | 13 | 3 | A01, A02, A05 | 81,729 | 4,491 / 3,588 = **8,079** | the model learns from these |
+| **val** | 5 | 4 | 1 | A04 | 24,779 | 1,244 / 1,204 = **2,448** | picks the best epoch and sets the alarm threshold |
+| **test** | 4 | 3 | 1 | A03 | 19,919 | 775 / 1,193 = **1,968** | **sealed**, opened once at the very end |
+
+Three things to notice:
+
+**`IM-01R` appears in all three splits.** That is a documented deviation, not a bug. It is the only
+normal run of the worn-tool program, so it is cut by **time**: the first 714 s train, the next 231 s
+validate, and the last 241 s test. A **10-second gap** sits at each boundary, longer than one 6.4 s
+window, so no window can span two splits (`data/splits/*.json`, `segment.rule`). The gaps were
+widened from 5 s on 2026-09-18, when the window became 6.4 s. The cost: the test segment is the tail
+of a run whose head was trained on, which can make the false-alarm rate look better than it is. The
+portal's held-out result repeats that caveat.
+
+**val and test do different jobs.** The model is checked against val after every epoch, so val
+steers the training: which epoch is kept, and where the alarm threshold sits. That makes val *used*,
+and a number measured on it is flattering. It is labelled `eval_split: self_reported_val`. Test is
+opened once, after everything is decided, and its number is labelled `held_out_test`.
+
+**Four worn trials outside test, one per split role.** A01, A02 and A05 teach, A04 validates, and A03
+is sealed. Four is the number of worn trials that can ever be held out one at a time.
+[`model.md`](model.md) is about what that does to how much you can trust a result.
+
+---
+
+## 15. Synthetic data — what was added, and where it is never used
+
+With 3 worn trials to learn from, M6 generated more (`data/synthetic/`, recipe in
+`data/synthetic-recipe.md`, seed 20260918). There are 30 `SYN-normal-*` and 30 `SYN-tool_wear-*`
+units, all made by **block-bootstrapping real train rows** of the `IM-01R` program. Real stretches of
+15–40 s are resampled and stitched, then a wear signature is ramped in. It is not a physics
+simulation.
+
+| Class | Real train windows | Synthetic windows made | Synthetic windows used (cap: 50% of real) | Share synthetic |
+|---|---|---|---|---|
+| normal | 4,491 | 35,867 | 2,245 | 33% |
+| tool_wear | 3,588 | 35,719 | 1,794 | 33% |
+
+So training sees at most 4,039 synthetic windows (`data/synth-review.md`). The gate approved it on
+2026-09-19 with this reason: "train-only synthetic, capped 50% of real per class; kept only if it
+beats real-only on real val at M8".
+
+**Where synthetic data is never used:** val and test. The alarm threshold is set on real data
+only. Test measures the real result, including any gap between synthetic and real.
+
+**Its limits, from the review pack, as written:**
+
+- The wear signature comes largely from **one** pure-wear trial (`A05`).
+- The spread is slightly below real, at 81–84% of real std on `spindle_load` and 84–91% on
+  `vibration_rms`.
+- There is no cross-channel physics beyond a linear correlation nudge.
+- Blocks are stitched with no crossfade.
+- Every synthetic unit is the `IM-01R` program. Synthesis adds variety *within* one program, not
+  new programs.
+
+---
+
+## 16. What leaves this folder
+
+Nothing in `data/` is uploaded by hand from here. Each file that goes to the portal is staged in
+`../to-neuroedge/` (AgentForge ADR-0031), and `/agentforge-ml handoff` says where each goes.
+
+| File | Holds | Goes to |
+|---|---|---|
+| `data/portal_test.zip` → `to-neuroedge/02-M9-test-bundle.zip` | the **sealed test split** (A03, IMP-05, TF-02, IM-01R tail) | Step 3 · Train → Held-out evaluation, only |
+| `data/portal_upload.zip` | train + val only (never test) | used only on the fine-tune route, which this project is not on |
+| `sim/` → `to-neuroedge/05-M12-simulator-data.zip` | the val split as 10 Hz CSVs, `debug_and_parity` | Step 5 · Virtual Run |
+| `sim-demo/` → `to-neuroedge/06-M12-demo-simulator-data.zip` | 5 min composed from val: 70% `tool_wear` windows, first at 30 s | Step 5 · Virtual Run, **for a demo only** |
+
+`data/portal_test.zip` **is** the test data, so it stays out of git (the project's `.gitignore`).
+So do the staged copies (`to-neuroedge/.gitignore`), `data/raw/`, and the parquet files in
+`data/interim/`, `data/contract/` and `data/synthetic/`, all of which rebuild from the raw files and
+the lock. Their manifests stay tracked.
+
+> The demo in `sim-demo/` is deliberately weighted toward `tool_wear`. **Every rate measured on it
+> (false alarms, precision, recall) is meaningless as a measurement of the model.** Use `sim/` for
+> anything you would call evidence.
+
+---
+
+## 17. Still unconfirmed
+
+These are the claims this guide could **not** check against a file. Each is stated where it is
+used, and they are collected here so none is lost:
+
+| Claim | Why it is unconfirmed | What settles it |
+|---|---|---|
+| Axis `1` = X, `6` = spindle (§1) | the dataset never says; it is the convention for this machine class | compare an NC program's X path against `DES_POS\|1` (§6) |
+| `vibration_rms` is in *g* (§5, §12) | KIT's README names the sensor (PCB 356A33) but no unit; the values are plausible in g | the sensor's data sheet or KIT |
+| `spindle_load` is in Nm (§12) | the lock declares Nm; KIT's README lists "torque" with no unit | SINUMERIK documentation for `TORQUE\|n` in the Analyze MyWorkpiece export |
+| The edge device has an accelerometer (§5) | this one was bolted on for the experiment; a typical plant has only controller signals | the target device's sensor list. Without one, `vibration_rms` cannot be an input |
+| How much of the 6–15% torque difference is wear (§8, §12) | there is one normal run of the program, so run-to-run variation cannot be measured | more normal runs of `IM-01R` |
+| Why vibration is *lower* on worn trials (§12) | same single-baseline problem | as above |
+
+The use case was also never written for this dataset. The original objective named "vibration,
+temperature, dimensional accuracy, spindle load, etc." (recorded in `data/profile.json` at M2).
+KIT has no temperature channel, and `x_axis_error` stands in for dimensional accuracy. The three
+channels in `use_case.lock.json` are what this dataset can honour, not everything the objective
+asked for.
 
 ## Attribution
 

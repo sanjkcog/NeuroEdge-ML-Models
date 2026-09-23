@@ -1,0 +1,3 @@
+# The demo replay (ADR-0031 D-7): regenerated from the split by /data-simulator --profile demo.
+*.csv
+images/

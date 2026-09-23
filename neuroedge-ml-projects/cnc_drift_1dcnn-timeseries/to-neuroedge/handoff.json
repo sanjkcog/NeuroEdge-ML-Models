@@ -1,0 +1,53 @@
+{
+  "schema": "agentforge-ml-handoff/1",
+  "runner": "portal-package",
+  "updated_at": "2026-09-23T22:18:50.155197+00:00",
+  "artifacts": {
+    "01": {
+      "kind": "training-package",
+      "source": "1DCNN/training-package.zip",
+      "source_sha256": "c0c99d10dc1a13c168294b8e96edf72f53ebad809f087d6bb70548cfa1f53547",
+      "staged_name": "01-M8-training-package.zip",
+      "staged_sha256": "c0c99d10dc1a13c168294b8e96edf72f53ebad809f087d6bb70548cfa1f53547",
+      "staged_at": "2026-09-23T21:40:26.218896+00:00",
+      "portal_screen": "Step 3 \u00b7 Model Strategy \u2192 Custom development \u2192 Training package",
+      "sent_at": null,
+      "registration_id": null
+    },
+    "02": {
+      "kind": "test-bundle",
+      "source": "data/portal_test.zip",
+      "source_sha256": "36fcb80f0d58f5ee2f0bfa106cfc99af8d61ae3e3ff36d6b2c3833823292befc",
+      "staged_name": "02-M9-test-bundle.zip",
+      "staged_sha256": "36fcb80f0d58f5ee2f0bfa106cfc99af8d61ae3e3ff36d6b2c3833823292befc",
+      "staged_at": "2026-09-23T21:40:26.232680+00:00",
+      "portal_screen": "Step 3 \u00b7 Train \u2192 Held-out evaluation \u2192 Upload test bundle",
+      "sent_at": null,
+      "registration_id": null
+    },
+    "05": {
+      "kind": "simulator-data",
+      "source": "sim",
+      "source_sha256": "9fee0b2954447806ffab45074d442d2b1e56605b4556daba7bae9039b06aa045",
+      "staged_name": "05-M12-simulator-data.zip",
+      "staged_sha256": "f4e3fe70a54415c63be2e55beeafe4d573337f0d2416a2f8f238f11368da2995",
+      "staged_at": "2026-09-23T21:40:26.349540+00:00",
+      "portal_screen": "Step 5 \u00b7 Virtual Run \u2192 Upload test data",
+      "sent_at": null,
+      "registration_id": null
+    },
+    "06": {
+      "kind": "demo-simulator-data",
+      "milestone": "M12",
+      "source": "sim-demo",
+      "source_sha256": "551c7030a417c3b5f0313e3d9a05aa0aead6c51799d91b9ae31b62797fb8373d",
+      "staged_name": "06-M12-demo-simulator-data.zip",
+      "staged_sha256": "d0c505e075f0103c0e3071746a5e8feb7ad94190e77441a03fe400d828d99fe7",
+      "staged_at": "2026-09-23T22:18:50.155197+00:00",
+      "portal_screen": "Step 5 \u00b7 Virtual Run \u2192 Upload test data (replaces the export above while you demo)",
+      "sent_at": null,
+      "registration_id": null,
+      "superseded": []
+    }
+  }
+}
