@@ -45,8 +45,8 @@ Do not delegate this command to an agent (D1, same as `/agentforge`): it spawns 
 The model project never calls the portal API. The use case (required), and the capability manifest and the
 training scaffold (both optional), arrive as **files the human downloaded**, recorded with a hash by
 `python -m agentforge.src.ml_contract.intake record --dest <dest> --kind
-<use_case|capability_manifest|scaffold|model_recommendation> --file <downloaded file>`. The model package leaves the same way: M11 builds an upload zip, and the human uploads
-it in the portal. Never fetch a portal file, and never read one from a portal repo's working tree.
+<use_case|capability_manifest|scaffold|model_recommendation> --file <downloaded file>`. A model trained off the portal leaves the same way: M11 builds an upload zip, and the human uploads
+it in the portal. A portal-trained model is already there, and M11 uploads nothing (ADR-0033). Never fetch a portal file, and never read one from a portal repo's working tree.
 
 **Two folders name the boundary (ADR-0031 D-1).** At the top of every model folder:
 `<dest>/from-neuroedge/` is what the portal (or the device) gives this run, and `<dest>/to-neuroedge/` is what
@@ -98,7 +98,7 @@ the run does without it: relay that line and **carry on**. Two files of one kind
 | M8 | `model-build` | pick up a **scaffold** if one was dropped, `audit M8`, then `/model-build --dest <dest>` → `ml-modeler`, then `ml-eval-reviewer`. **Fine-tune path: no code is generated** | `inputs/scaffold/<file>` (when provided), `audit/M8.md`, `<arch>/train.py · eval.py · config.yaml · requirements · RUN_ON_GPU.md`, `<arch>/training-package.zip` | **automatic:** `audit/M8` · **hard:** `eval-methodology` |
 | M9 | `train` | **external**: the runner approved at M7 (`portal-finetune` · `portal-package` · `offline`) | `<arch>/runs/<run_id>/model-package/` | dependency-wait |
 | M10 | `eval` | this command runs `<arch>/eval.py` on `data/splits/test.json`, or accepts the portal's held-out result | `metrics.json` (`eval_split: held_out_test`), `<arch>/baseline_check.json` | **hard: KPIs on every path; `beats_baseline` only when a baseline is declared** (opened on a miss) |
-| M11 | `return` | `audit M11`, then build + validate the upload zip; **the human uploads it** | `audit/M11.md`, `<arch>/runs/<run_id>/return/upload.zip`, `return.json` | **automatic:** `audit/M11` · **human:** `return-upload` |
+| M11 | `return` | `audit M11`, then **`returns check`**: portal-trained → recorded, nothing uploaded; offline → build + validate the upload zip, **the human uploads it**; unclear → ask (ADR-0033) | `audit/M11.md`, `<arch>/runs/<run_id>/return.json` (+ `return/upload.zip` offline only) | **automatic:** `audit/M11` · `return-upload` (**automatic** on the portal route, **human** offline or when asked) |
 | M12 | `data-simulator` | `/data-simulator --dest <dest>` | `sim/<split>/…` + `sim/manifest.json` (stamped with the lock of the returned model) | none |
 | M13 | `model-card` | `ml-modeler` | `model-card.md` | none |
 
@@ -114,7 +114,7 @@ it is given and changes none of it.
 | M8 | code, eval-methodology gate, `training-package.zip` | **no code is generated.** The eval-methodology gate reviews the data and the split only. The handoff is the dataset zip, the weights and `base-model-card.json` | code or vendor specs, plus a driver the user runs |
 | M9 | wait; **the human uploads the package** to the portal, which runs it | wait; **the human uploads the dataset and the weights**; the portal's own trainer fine-tunes | wait; **the human runs the driver** on their own machine |
 | M10 | on the package the human downloads from the portal | the same; `baseline: not_applicable` | on the local package |
-| M11 | as written below | the same | the same; the return zip is what the portal takes as a trained model |
+| M11 | **no upload**: the portal trained it and already holds it; `returns portal` records the gate, the human promotes the run in Compare Runs | the same | build the return zip; it is how the model enters the portal at all |
 
 Who owns what: on `portal-package` and `offline`, this run owns the method (architecture, recipe, training code,
 evaluation). On `portal-finetune` it owns the inputs (the dataset, the split, the base-model choice and its
@@ -361,20 +361,34 @@ training package in this folder. Accepted → use its metrics for the KPI gate, 
 file the training package also carried; a test set evaluated on more than once) in the gate's text. Refused → run
 `eval.py` locally as above; never argue a refused result into the gate. Either way the KPI gate is opened here.
 
-### `return` (M11) — offline (ADR-0025 D-1)
+### `return` (M11) — only a model trained off the portal is uploaded (ADR-0025 D-1, ADR-0033)
 1. `audit --dest <dest> --checkpoint M11`: the package's `meta.json` against the lock and the simulator export
    (and the device, as WARNs, when a manifest was provided). A FAIL here is a defect in M8/M10 to fix, not a
    deviation to approve lightly.
-2. Build `<arch>/runs/<run_id>/return/upload.zip` holding `model.onnx`, `meta.json`, `model_artifact.json`,
-   `metrics.json` and `calibration/` when present. Run `neuroedge_return.validate_package` on it locally when the
-   package is installed (from a local path or wheel, never fetched). Record its report in `return.json`, or record
-   that it was not available.
-3. `handoff stage --dest <dest>` copies it to `to-neuroedge/04-M11-return-package.zip`. Tell the human exactly
-   what to upload and where (portal **Step 3 · Model Strategy → Finished training return package**). Open the
-   gate: `gate_state.py open return-upload --stage return`. Ask them to confirm the upload and paste the
-   registration id or the portal's refusal. Record it: `approved` with the id in the reason, or
-   `changes_requested` with the refusal, **and** `handoff sent --dest <dest> --artifact 04 --registration "<the
-   same words>"`. A portal refusal (422) is a defect in M8/M10 to fix, not a second opinion to argue with.
+2. **Where was it trained?** `python -m agentforge.src.ml_contract.returns check --dest <dest>` prints the route
+   and its evidence. A portal-trained model is already registered in the portal by the run that trained it, and
+   uploading it back creates a duplicate run that becomes the portal's "latest" model (NeuroEdge-Web
+   `return_package_service.py`, read at `9eed61b`). So:
+   - **exit 0, `portal`** (the package came in through `from-neuroedge/` and its `model_artifact.json` names a
+     portal runner, or none on a portal M7 runner) → `returns portal --dest <dest>`. It records `return-upload`
+     automatically, writes `return.json` (`route: portal`), builds no zip and withdraws any unsent staged `04`.
+     Tell the human, as information and not a gate: **promote that run** in portal *Step 3 · Prepare Model →
+     Compare Runs → Promote*, so every later step (Optimize, Prepare Device, Virtual Run, Deploy) uses it. Go
+     straight on to M12.
+   - **exit 2, `offline`** → `returns build --dest <dest>`: it zips `model.onnx`, `meta.json`,
+     `model_artifact.json`, `metrics.json` (+ `calibration/`) into `<arch>/runs/<run_id>/return/upload.zip`, runs
+     `neuroedge_return.validate_package` when it is installed (from a local path or wheel, never fetched),
+     records both in `return.json`, and opens the `return-upload` gate. Then step 3.
+   - **exit 3, `ask`** → show the evidence and ask with `AskUserQuestion`: *trained on the portal* or *trained
+     offline*. Record their answer as theirs: `returns portal --dest <dest> --identity <user> --reason "<their
+     words>"`, or `returns build … --identity <user> --reason "…"` and then step 3. Never guess.
+3. Offline only: `handoff stage --dest <dest>` copies the zip to `to-neuroedge/04-M11-return-package.zip`. Tell the
+   human what to upload and where (portal **Step 3 · Prepare Model → Bring a trained model → Finished training
+   return package**). Ask them to confirm the upload and paste the registration id or the portal's refusal. Record
+   it: `approved` with the id in the reason, or `changes_requested` with the refusal, **and** `handoff sent --dest
+   <dest> --artifact 04 --registration "<the same words>"`. A portal refusal (422) is a defect in M8/M10 to fix,
+   not a second opinion to argue with. "Not uploaded yet" leaves the gate open and stops the session.
+4. `complete return --artifact audit/M11.md --artifact <arch>/runs/<run_id>/return.json`.
 
 ### `data-simulator` (M12)
 `/data-simulator --dest <dest>` exports simulator data from the **same split data** the model was trained and

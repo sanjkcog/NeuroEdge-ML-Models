@@ -56,8 +56,10 @@ OUTBOUND: tuple[tuple[str, str, str, str, str, tuple[str, ...]], ...] = (
     ("03", "M9", "dataset-upload", "data/portal_upload.zip",
      "Step 3 · Model Strategy → Fine-tune a base model → Dataset",
      ("portal-finetune",)),
+    # Only a model trained OUTSIDE the portal is uploaded: `returns` decides the route at M11, and on
+    # the portal route no zip is built and plan() marks this row not needed (ADR-0033).
     ("04", "M11", "return-package", "{arch}/runs/{run_id}/return/upload.zip",
-     "Step 3 · Model Strategy → Finished training return package",
+     "Step 3 · Prepare Model → Bring a trained model → Finished training return package",
      ("portal-package", "portal-finetune", "offline")),
     ("05", "M12", "simulator-data", "sim/",
      "Step 5 · Virtual Run → Upload test data",
@@ -302,12 +304,17 @@ def plan(dest: str) -> list[dict[str, Any]]:
     runner = runner_of(dest)
     arch = architecture_of(dest)
     run_id = _latest_run(dest, arch) if arch else None
+    # M11 recorded that the portal trained this model: it already holds it, so nothing is returned.
+    portal_trained = bool(arch and run_id) and _read_json(
+        os.path.join(dest, arch, "runs", run_id, "return.json")).get("route") == "portal"
     rows: list[dict[str, Any]] = []
     for ordinal, milestone, kind, template, screen, runners in OUTBOUND:
         source = _resolve(dest, template, arch, run_id)
         is_dir = template.endswith("/")
         exists = bool(source) and (os.path.isdir(source) if is_dir else os.path.isfile(source))
+        not_needed = kind == "return-package" and portal_trained
         rows.append({
+            "not_needed": not_needed,
             "ordinal": ordinal,
             "milestone": milestone,
             "kind": kind,
@@ -315,7 +322,7 @@ def plan(dest: str) -> list[dict[str, Any]]:
             "is_dir": is_dir,
             "exists": exists,
             "portal_screen": screen,
-            "applies": runner is None or runner in runners,
+            "applies": (runner is None or runner in runners) and not not_needed,
             "runners": list(runners),
             "staged_name": f"{ordinal}-{milestone}-{kind}.zip",
         })
@@ -526,7 +533,10 @@ def show(dest: str) -> list[str]:
                     out.append(f"    ·  upload   {row['staged_name']}{optional}")
                     continue
                 entry = artifacts.get(row["ordinal"]) or {}
-                if entry.get("sent_at"):
+                if row["not_needed"]:
+                    state = ("not needed — the portal trained this model and already holds it; "
+                             "promote its run in Step 3 · Prepare Model → Compare Runs")
+                elif entry.get("sent_at"):
                     state = f"sent · {entry.get('registration_id')}"
                 elif os.path.exists(os.path.join(dest, TO_DIR, row["staged_name"])):
                     state = "STAGED — upload it"
@@ -576,6 +586,20 @@ GUIDES = (("dataset.md", "M4", "what the data is, where each number comes from, 
           ("demo.md", "M12", "how to run the demo, what to watch, what should happen and when"))
 
 
+#: The four groups a newcomer thinks in (owner, 2026-09-23). Every milestone belongs to exactly one;
+#: the folders listed are where that group's output lives today. The page groups; the tree does not
+#: move (ADR-0031 D-5) -- a physical regroup is ADR-0032's question, not this page's.
+#: (title, what it covers, milestones, folders, guide)
+CATEGORIES: tuple[tuple[str, str, tuple[str, ...], str, str | None], ...] = (
+    ("1. Dataset", "lock the use case, then find, price, download, verify, label and extend the data",
+     ("M0", "M1", "M2", "M3", "M4", "M5", "M6"), "inputs/, use_case.lock.json, data/", "dataset.md"),
+    ("2. Model", "propose, build, train, evaluate and return the model, then its card",
+     ("M7", "M8", "M9", "M10", "M11", "M13"), "model_proposed.md, model/, {arch}/, common/", "model.md"),
+    ("3. Simulator", "replay the model's own split data on the device and in the portal's Virtual Run",
+     ("M12",), "sim/, sim-demo/", "demo.md"),
+)
+
+
 def _stage_status(run: dict[str, Any], gates: dict[str, Any], stage: str) -> str:
     stages = run.get("stages") if isinstance(run.get("stages"), dict) else {}
     value = stages.get(stage)
@@ -596,46 +620,83 @@ def _stage_status(run: dict[str, Any], gates: dict[str, Any], stage: str) -> str
     return "not started"
 
 
+def _span(ids: tuple[str, ...]) -> str:
+    """("M7","M8","M9","M10","M11","M13") -> "M7–M11, M13": a gap is shown, never bridged."""
+    nums = [int(i[1:]) for i in ids]
+    runs, start = [], nums[0]
+    for prev, cur in zip(nums, nums[1:] + [None]):
+        if cur != prev + 1 if cur is not None else True:
+            runs.append(f"M{start}" if start == prev else f"M{start}–M{prev}")
+            start = cur
+    return ", ".join(runs)
+
+
+def _guide_line(dest: str, name: str) -> str:
+    milestone, what = next((m, w) for n, m, w in GUIDES if n == name)
+    present = os.path.isfile(os.path.join(dest, "guides", name))
+    return (f"- **Guide:** [`guides/{name}`](guides/{name}) ({milestone}) — {what}"
+            + ("" if present else " · *not written yet*"))
+
+
 def start_here(dest: str) -> str:
     """The generated index: where am I, and what produced this -- without moving a path a tool reads."""
     run = _read_json(os.path.join(dest, "run.json"))
     gates = _read_json(os.path.join(dest, "gates.json")).get("gates") or {}
     arch = architecture_of(dest) or "<arch>"
     runner = runner_of(dest)
+    by_id = {m[0]: m for m in MILESTONES}
+    status = {m[0]: _stage_status(run, gates, m[1]) for m in MILESTONES}
     lines = [
         f"# {os.path.basename(os.path.abspath(dest))} — start here",
         "",
         "Generated by `/agentforge-ml` on every stage transition; do not edit it, it is rewritten. "
-        "The folders below are where code reads its inputs, so they keep their names; this page is the map.",
+        "The work falls into three groups, plus the project's own documents. The folders keep their names "
+        "because code reads them; this page is the map.",
         "",
         f"- **Objective:** {run.get('objective') or 'not recorded'}",
         f"- **Runner (M7):** {runner or 'not approved yet'}",
         f"- **Architecture:** {architecture_of(dest) or 'not decided yet'}",
         "",
-        "## Milestones",
-        "",
-        "| | Stage | What it does | Status | Output lands in |",
-        "|---|---|---|---|---|",
+        "| Group | Milestones | Done | Now |",
+        "|---|---|---|---|",
     ]
-    for milestone, stage_id, verb, where in MILESTONES:
-        status = _stage_status(run, gates, stage_id)
-        lines.append(f"| {milestone} | `{stage_id}` | {verb} | {status} | `{where.format(arch=arch)}` |")
+    for title, _what, ids, _folders, _guide in CATEGORIES:
+        done = sum(status[i] == "done" for i in ids)
+        now = next((f"{i} {status[i]}" for i in ids if status[i] != "done"), "complete")
+        span = _span(ids)
+        anchor = title.lower().replace(". ", "-").replace(" ", "-")   # "1. Dataset" -> "#1-dataset"
+        lines.append(f"| [{title}](#{anchor}) | {span} | {done} of {len(ids)} | {now} |")
+    for title, what, ids, folders, guide in CATEGORIES:
+        lines += [
+            "",
+            f"## {title}",
+            "",
+            f"{what[0].upper()}{what[1:]}.",
+            "",
+            f"- **Folders:** `{folders.format(arch=arch)}`",
+        ]
+        if guide:
+            lines.append(_guide_line(dest, guide))
+        lines += ["", "| | Stage | What it does | Status | Output lands in |", "|---|---|---|---|---|"]
+        for i in ids:
+            milestone, stage_id, verb, where = by_id[i]
+            lines.append(f"| {milestone} | `{stage_id}` | {verb} | {status[i]} | `{where.format(arch=arch)}` |")
     lines += [
         "",
-        "## The boundary with NeuroEdge",
+        "## 4. Project docs",
         "",
+        "What this project is, what each group produced, and what crosses to and from the portal.",
+        "",
+        "- **`README.md`** — the objective and the stage log: one row per command run.",
+        "- **`guides/`** — `dataset.md`, `model.md`, `demo.md`: written from the files on disk, never over a "
+        "person's edit.",
+        "- **`audit/`** — `/usecase-audit` at M0, M4, M8 and M11: is everything still aligned with the use case?",
         f"- **`{FROM_DIR}/`** — what the portal (or the device) gives this run. Drop downloads there as they are.",
         f"- **`{TO_DIR}/`** — what this run gives the portal, numbered in upload order. "
         "Run `/agentforge-ml handoff` to see what is next, and where each file goes.",
-        "",
-        "## Guides",
+        "- **`run.json`, `gates.json`** — the run's state and every gate decision; the run resumes from these.",
         "",
     ]
-    for name, milestone, what in GUIDES:
-        present = os.path.isfile(os.path.join(dest, "guides", name))
-        lines.append(f"- [`guides/{name}`](guides/{name}) ({milestone}) — {what}"
-                     + ("" if present else " · *not written yet*"))
-    lines.append("")
     return "\n".join(lines)
 
 

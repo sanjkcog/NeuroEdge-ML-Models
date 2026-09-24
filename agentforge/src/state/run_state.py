@@ -144,7 +144,7 @@ ML_STAGE_AGENTS: dict[str, str] = {
     "model-build": "ml-modeler",
     "train": "none (external — laptop GPU / AWS VM / portal; dependency-wait)",
     "eval": "none (orchestrator runs eval.py on the withheld test split)",
-    "return": "none (orchestrator builds + validates the upload zip; the human uploads it, ADR-0025 D-1)",
+    "return": "none (orchestrator runs `returns check`: a portal-trained model is recorded, an offline one is zipped for the human to upload, ADR-0033)",
     "data-simulator": "none (orchestrator exports simulator data from the split data, ADR-0008)",
     "model-card": "ml-modeler",
 }
