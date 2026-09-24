@@ -2,8 +2,8 @@
   "schema_version": "1.0",
   "objective": "cnc drift 1D CNN model with 3 sensors",
   "created": "2026-09-17T22:28:24.692128+00:00",
-  "updated": "2026-09-19T04:15:54.692464+00:00",
-  "current_stage": "train",
+  "updated": "2026-09-23T23:52:54.361018+00:00",
+  "current_stage": null,
   "completed_stages": [
     "destination",
     "scout",
@@ -13,7 +13,12 @@
     "label",
     "synth",
     "model-select",
-    "model-build"
+    "model-build",
+    "train",
+    "eval",
+    "return",
+    "data-simulator",
+    "model-card"
   ],
   "escalation": null,
   "sprint_id": null,
@@ -30,7 +35,7 @@
   },
   "stages": {
     "destination": {
-      "agent": "none (orchestrator \u2014 resolves the model folder, ADR-0021/0022)",
+      "agent": "none (orchestrator — resolves the model folder, ADR-0021/0022)",
       "status": "complete",
       "artifacts": [
         "README.md"
@@ -223,15 +228,17 @@
       "usage_history": []
     },
     "train": {
-      "agent": "none (external \u2014 laptop GPU / AWS VM / portal; dependency-wait)",
-      "status": "in_progress",
-      "artifacts": [],
+      "agent": "none (external — laptop GPU / AWS VM / portal; dependency-wait)",
+      "status": "complete",
+      "artifacts": [
+        "1DCNN/runs/bd19c981a17d/model-package"
+      ],
       "consecutive_failures": 0,
       "spawns": [
         {
           "spawned_by": "orchestrator",
           "at": "2026-09-19T04:15:46.611952+00:00",
-          "result": "in_progress",
+          "result": "complete",
           "identity": ""
         }
       ],
@@ -246,10 +253,20 @@
     },
     "eval": {
       "agent": "none (orchestrator runs eval.py on the withheld test split)",
-      "status": "pending",
-      "artifacts": [],
+      "status": "complete",
+      "artifacts": [
+        "1DCNN/portal_held_out.json",
+        "1DCNN/baseline_check.json"
+      ],
       "consecutive_failures": 0,
-      "spawns": [],
+      "spawns": [
+        {
+          "spawned_by": "orchestrator",
+          "at": "2026-09-23T23:31:31.002100+00:00",
+          "result": "complete",
+          "identity": ""
+        }
+      ],
       "usage": {
         "tokens_in": 0,
         "tokens_out": 0,
@@ -261,10 +278,20 @@
     },
     "return": {
       "agent": "none (POST upload-return-package to the portal)",
-      "status": "pending",
-      "artifacts": [],
+      "status": "complete",
+      "artifacts": [
+        "audit/M11.md",
+        "1DCNN/runs/bd19c981a17d/return.json"
+      ],
       "consecutive_failures": 0,
-      "spawns": [],
+      "spawns": [
+        {
+          "spawned_by": "orchestrator",
+          "at": "2026-09-23T23:32:14.785668+00:00",
+          "result": "complete",
+          "identity": ""
+        }
+      ],
       "usage": {
         "tokens_in": 0,
         "tokens_out": 0,
@@ -276,10 +303,19 @@
     },
     "model-card": {
       "agent": "ml-modeler",
-      "status": "pending",
-      "artifacts": [],
+      "status": "complete",
+      "artifacts": [
+        "model-card.md"
+      ],
       "consecutive_failures": 0,
-      "spawns": [],
+      "spawns": [
+        {
+          "spawned_by": "orchestrator",
+          "at": "2026-09-23T23:50:23.558620+00:00",
+          "result": "complete",
+          "identity": ""
+        }
+      ],
       "usage": {
         "tokens_in": 0,
         "tokens_out": 0,
@@ -340,10 +376,19 @@
     },
     "data-simulator": {
       "agent": "none (orchestrator exports simulator data from the split data, ADR-0008)",
-      "status": "pending",
-      "artifacts": [],
+      "status": "complete",
+      "artifacts": [
+        "sim/manifest.json"
+      ],
       "consecutive_failures": 0,
-      "spawns": [],
+      "spawns": [
+        {
+          "spawned_by": "orchestrator",
+          "at": "2026-09-23T23:50:13.561277+00:00",
+          "result": "complete",
+          "identity": ""
+        }
+      ],
       "usage": {
         "tokens_in": 0,
         "tokens_out": 0,

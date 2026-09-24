@@ -1,0 +1,8 @@
+{
+  "baseline": "beats_baseline_val_only",
+  "opens_gate": false,
+  "name": "minirocket_ridge",
+  "measured_on": "self_reported_val",
+  "caveat": "the comparison was measured on validation only, the split that also picked the best epoch, and the training script reported it about itself: it is not a held-out result. Repeat this in the KPI gate and in the model card",
+  "reason": "the model beats its declared baseline on self_reported_val only. No held-out comparison was found: eval.py did not score the baseline"
+}

@@ -1,0 +1,71 @@
+{
+  "feature_order": [
+    "spindle_load",
+    "x_axis_error",
+    "vibration_rms"
+  ],
+  "window": 64,
+  "stride": 10,
+  "sample_rate_hz": 10.0,
+  "units": {
+    "spindle_load": "Nm",
+    "x_axis_error": "um",
+    "vibration_rms": "g"
+  },
+  "definitions": {
+    "spindle_load": "100 ms mean of spindle torque (SINUMERIK TORQUE|6)",
+    "x_axis_error": "100 ms mean of X-axis following error (SINUMERIK CTRL_DIFF|1), in micrometres",
+    "vibration_rms": "exact 100 ms RMS of the mean-removed 3-axis spindle acceleration magnitude (unit g assumed, unconfirmed)"
+  },
+  "reduce": {
+    "spindle_load": "mean",
+    "x_axis_error": "mean",
+    "vibration_rms": "rms"
+  },
+  "lock_sha256": "b7a3765f48f6c07e73e553928f8ff40371d87286824e85d8dad48cb401d15f0d",
+  "normalization": {
+    "mean": [
+      -1.7397500276565552,
+      0.0034451319370418787,
+      13.731281280517578
+    ],
+    "std": [
+      2.9771788120269775,
+      29.807767868041992,
+      10.34912109375
+    ],
+    "applied": "in_graph"
+  },
+  "head": {
+    "shape": "scalar",
+    "classes": [
+      "normal",
+      "tool_wear"
+    ],
+    "range": [
+      0.0,
+      1.0
+    ],
+    "activation": "sigmoid"
+  },
+  "output_schema": "anomaly_score",
+  "decision_threshold": 0.7765876650810243,
+  "at_fpr": 0.01,
+  "class_names": [
+    "normal",
+    "tool_wear"
+  ],
+  "opset": 13,
+  "input_shape": [
+    1,
+    3,
+    64
+  ],
+  "input_layout": "channels_first",
+  "framework_versions": {
+    "torch": "2.6.0+cu124",
+    "onnx": "1.22.0",
+    "onnxruntime": "1.30.0",
+    "python": "3.11.15"
+  }
+}

@@ -138,6 +138,46 @@
           "detail": "the scaffold's data loading, split, model, loss, metric and export are NOT used; M8 generates them from the lock and model_proposed.md (ADR-0025 D-5)"
         }
       ]
+    },
+    "model_package": {
+      "kind": "model_package",
+      "path": "1DCNN/runs/bd19c981a17d/model-package",
+      "sha256": "9a880fc4bc6f177687e741eeb698d159d0f1b4c378354b6d6474e8e8c03338e6",
+      "source_name": "cnc-drift-on-powertrain-shop-for-car-prduction-model-package.zip",
+      "generated_at": "2026-09-23T06:47:11.836393+00:00",
+      "recorded_at": "2026-09-23T23:31:10.510616+00:00",
+      "gate": null,
+      "run_id": "bd19c981a17d",
+      "arch": "1DCNN",
+      "lock_sha256": "b7a3765f48f6c07e73e553928f8ff40371d87286824e85d8dad48cb401d15f0d",
+      "files": {
+        "model.onnx": "24d3a85af18ebfcab4bc709e44e0cf92cb40d1a10b01ac0322c86824295f9caa",
+        "meta.json": "6708ed1dd7b11937d74e25ba52747117d73e2a62b7ec93f7f68d3e628475961e",
+        "model_artifact.json": "68fed2877977fc45bf391c8a8bf6a8cabc267f7fc9cb32f2db7d2a2014beaea6",
+        "metrics.json": "2b0f9b47185afe1941be806d38ade7966d7e974a2e16c21e4d67b31b07d579e4"
+      },
+      "ignored": [
+        "LICENCE-NOTICE.txt",
+        "held_out_test.json",
+        "package.json"
+      ],
+      "findings": [
+        {
+          "level": "PASS",
+          "check": "lock_sha256",
+          "detail": "b7a3765f48f6 is this project's lock"
+        },
+        {
+          "level": "PASS",
+          "check": "run_id",
+          "detail": "'bd19c981a17d', read from the package's model_artifact.json"
+        },
+        {
+          "level": "PASS",
+          "check": "extra files",
+          "detail": "recorded and not read: ['LICENCE-NOTICE.txt', 'held_out_test.json', 'package.json']"
+        }
+      ]
     }
   }
 }

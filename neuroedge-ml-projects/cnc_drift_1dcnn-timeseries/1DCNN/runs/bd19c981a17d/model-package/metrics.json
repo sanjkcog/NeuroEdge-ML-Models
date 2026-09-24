@@ -1,0 +1,185 @@
+{
+  "epochs_completed": 20,
+  "best_epoch": 5,
+  "train_loss": 0.478365544218064,
+  "val_loss": 0.4105994792935116,
+  "training_duration_s": 268.68206969698076,
+  "recall_at_fpr": 0.3978405315614618,
+  "fpr": 0.01045016077170418,
+  "at_fpr": 0.01,
+  "pr_auc": 0.9268274417617267,
+  "auroc": 0.9372709937934645,
+  "decision_threshold": 0.7765876650810243,
+  "aggregation": "window_pooled",
+  "confusion_matrix": [
+    [
+      1231,
+      13
+    ],
+    [
+      725,
+      479
+    ]
+  ],
+  "meets_target": false,
+  "meets_recall": false,
+  "meets_fpr": false,
+  "fpr_tolerance": 0.0,
+  "effective_fpr_bound": 0.01,
+  "target_recall": 0.9,
+  "headline_positive_units": 1,
+  "headline_single_trial_caveat": "The headline recall_at_fpr rests on 1 worn unit(s) (IM-01R-A04): a single-trial pass/fail, NOT a population estimate. See cross_validation (leave-one-worn-unit-out) for the spread.",
+  "eval_split": "self_reported_val",
+  "split_hash": "e89654ee2568fea26e68382555b8e71146ed44d1442284111f1c5611000b4b83",
+  "per_unit_rate_table": [
+    {
+      "unit": "IM-01F",
+      "label": "normal",
+      "n_windows": 602,
+      "hours_of_new_data": 0.16722222222222222,
+      "false_alarm_rate": 0.0,
+      "false_alarms_per_hour": 0.0
+    },
+    {
+      "unit": "IM-01R",
+      "label": "normal",
+      "n_windows": 225,
+      "hours_of_new_data": 0.0625,
+      "false_alarm_rate": 0.057777777777777775,
+      "false_alarms_per_hour": 208.0
+    },
+    {
+      "unit": "IM-01R-A04",
+      "label": "tool_wear",
+      "n_windows": 1204,
+      "hours_of_new_data": 0.33444444444444443,
+      "window_recall": 0.3978405315614618
+    },
+    {
+      "unit": "IMP-09",
+      "label": "normal",
+      "n_windows": 234,
+      "hours_of_new_data": 0.065,
+      "false_alarm_rate": 0.0,
+      "false_alarms_per_hour": 0.0
+    },
+    {
+      "unit": "IMP-12",
+      "label": "normal",
+      "n_windows": 183,
+      "hours_of_new_data": 0.050833333333333335,
+      "false_alarm_rate": 0.0,
+      "false_alarms_per_hour": 0.0
+    }
+  ],
+  "per_unit_event_diagnostics": [
+    {
+      "unit": "IM-01F",
+      "label": "normal",
+      "persistence_windows": 1,
+      "n_events": 0,
+      "false_alarm_events_per_hour": 0.0
+    },
+    {
+      "unit": "IM-01R",
+      "label": "normal",
+      "persistence_windows": 1,
+      "n_events": 5,
+      "false_alarm_events_per_hour": 80.0
+    },
+    {
+      "unit": "IM-01R-A04",
+      "label": "tool_wear",
+      "persistence_windows": 1,
+      "n_events": 30,
+      "event_recall": true,
+      "time_to_first_alarm_s": 5.0
+    },
+    {
+      "unit": "IMP-09",
+      "label": "normal",
+      "persistence_windows": 1,
+      "n_events": 0,
+      "false_alarm_events_per_hour": 0.0
+    },
+    {
+      "unit": "IMP-12",
+      "label": "normal",
+      "persistence_windows": 1,
+      "n_events": 0,
+      "false_alarm_events_per_hour": 0.0
+    }
+  ],
+  "segments": {
+    "blowhole_units_A01_A02": [],
+    "pure_tool_wear_units_A03_A04_A05": [
+      {
+        "unit": "IM-01R-A04",
+        "label": "tool_wear",
+        "n_windows": 1204,
+        "hours_of_new_data": 0.33444444444444443,
+        "window_recall": 0.3978405315614618
+      }
+    ],
+    "im01r_program_normal": [
+      {
+        "unit": "IM-01R",
+        "label": "normal",
+        "n_windows": 225,
+        "hours_of_new_data": 0.0625,
+        "false_alarm_rate": 0.057777777777777775,
+        "false_alarms_per_hour": 208.0
+      }
+    ],
+    "cross_program_normals": []
+  },
+  "used_synthetic": true,
+  "trained_on": "real_train+synthetic",
+  "cross_validation": {
+    "protocol": "leave_one_worn_unit_out",
+    "worn_units": [
+      "IM-01R-A01",
+      "IM-01R-A02",
+      "IM-01R-A05",
+      "IM-01R-A04"
+    ],
+    "folds": [
+      {
+        "held_out_unit": "IM-01R-A01",
+        "recall_at_fpr": 0.2393305439330544,
+        "fpr": 0.01045016077170418,
+        "pr_auc": 0.8942841659334196,
+        "decision_threshold": 0.8392879366874696,
+        "n_val_windows": 2439
+      },
+      {
+        "held_out_unit": "IM-01R-A02",
+        "recall_at_fpr": 0.31803005008347246,
+        "fpr": 0.01045016077170418,
+        "pr_auc": 0.8993938011431944,
+        "decision_threshold": 0.8388699293136598,
+        "n_val_windows": 2442
+      },
+      {
+        "held_out_unit": "IM-01R-A05",
+        "recall_at_fpr": 0.28368200836820084,
+        "fpr": 0.01045016077170418,
+        "pr_auc": 0.8791961305691477,
+        "decision_threshold": 0.8567149043083192,
+        "n_val_windows": 2439
+      },
+      {
+        "held_out_unit": "IM-01R-A04",
+        "recall_at_fpr": 0.3729235880398671,
+        "fpr": 0.01045016077170418,
+        "pr_auc": 0.9226298654910345,
+        "decision_threshold": 0.8685802221298219,
+        "n_val_windows": 2448
+      }
+    ],
+    "recall_at_fpr_min": 0.2393305439330544,
+    "recall_at_fpr_max": 0.3729235880398671,
+    "recall_at_fpr_mean": 0.3034915476061487,
+    "note": "Additive uncertainty band around the single-trial (A03) test number. Real data only, never touches A03/test. Each fold's threshold is calibrated on that fold's held-in normal windows only, never on the held-out worn unit."
+  }
+}

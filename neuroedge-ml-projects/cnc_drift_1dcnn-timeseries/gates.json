@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "updated": "2026-09-19T04:15:31.572488+00:00",
+  "updated": "2026-09-23T23:49:07.684328+00:00",
   "gates": {
     "data/fetch-plan.json": {
       "stage": "plan",
@@ -184,6 +184,51 @@
           "timestamp": "2026-09-19T04:15:31.572488+00:00",
           "outcome": "approved",
           "reason": "Fix tolerance, then approve: ml-eval-reviewer round 3 PASS + code-reviewer APPROVE; fpr_tolerance set to 0 with effective_fpr_bound disclosed, val single-trial caveat and LOWO spread added to reports"
+        }
+      ],
+      "opened_by": ""
+    },
+    "kpi": {
+      "stage": "eval",
+      "type": "hard",
+      "status": "approved",
+      "opened_at": "2026-09-23T23:31:45.080245+00:00",
+      "decisions": [
+        {
+          "identity": "sanjkcog",
+          "timestamp": "2026-09-23T23:32:14.559823+00:00",
+          "outcome": "approved",
+          "reason": "Accept documented miss: held_out_test recall@FPR0.01 = 0.318 vs target 0.90 (miss); FPR 0.0090 <= 0.01 (met); PR-AUC 0.939. LOWO-CV recall 0.24-0.37 (mean 0.30). Baseline: beats_baseline_val_only (self_reported_val, not held-out). Caveats: single worn test unit IM-01R-A03; IM-01R spans train/test by time; test set evaluated 2-3 times. Model is below target, demo/internal use."
+        }
+      ],
+      "opened_by": ""
+    },
+    "audit/M11": {
+      "stage": "return",
+      "type": "hard",
+      "status": "approved",
+      "opened_at": "2026-09-23T23:32:14.938527+00:00",
+      "decisions": [
+        {
+          "identity": "usecase-audit (automatic)",
+          "timestamp": "2026-09-23T23:32:15.128252+00:00",
+          "outcome": "approved",
+          "reason": "audit/M11.md — no FAIL; WARN: device: ONNX Runtime providers; use case <-> device: task supported; use case <-> device: runtime_profile available; use case <-> device: device_profile_id; use case <-> device: capability_manifest_id; use case <-> device: platform; use case <-> device: sensors cover the channels; use case <-> scaffold: data.path; use case <-> scaffold: framework; use case <-> scaffold: training body; scaffold <-> device: device_profile_id"
+        }
+      ],
+      "opened_by": ""
+    },
+    "return-upload": {
+      "stage": "return",
+      "type": "hard",
+      "status": "approved",
+      "opened_at": "2026-09-23T23:49:07.415414+00:00",
+      "decisions": [
+        {
+          "identity": "agentforge-ml return route (automatic)",
+          "timestamp": "2026-09-23T23:49:07.684328+00:00",
+          "outcome": "approved",
+          "reason": "route portal (portal run bd19c981a17d): the portal trained this model and already holds it; a return upload would duplicate the run"
         }
       ],
       "opened_by": ""

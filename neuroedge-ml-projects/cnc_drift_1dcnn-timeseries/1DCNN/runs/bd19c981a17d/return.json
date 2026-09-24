@@ -1,0 +1,18 @@
+{
+  "schema": "agentforge-ml-return/1",
+  "route": "portal",
+  "decided_at": "2026-09-23T23:49:07.408443+00:00",
+  "decided_by": "agentforge-ml return route (automatic)",
+  "reason": "the portal trained this model and already holds it; a return upload would duplicate the run",
+  "evidence": [
+    "M7 runner: portal-package",
+    "package 1DCNN/runs/bd19c981a17d/model-package: recorded by intake from from-neuroedge/ (a portal download)",
+    "model_artifact.json extras.package_run.runner: portal-package"
+  ],
+  "arch": "1DCNN",
+  "run_id": "bd19c981a17d",
+  "portal_run_id": "bd19c981a17d",
+  "model_onnx_sha256": "24d3a85af18ebfcab4bc709e44e0cf92cb40d1a10b01ac0322c86824295f9caa",
+  "upload": null,
+  "next": "Step 3 \u00b7 Prepare Model \u2192 Compare Runs \u2192 Promote: promote run bd19c981a17d so every later step uses it"
+}

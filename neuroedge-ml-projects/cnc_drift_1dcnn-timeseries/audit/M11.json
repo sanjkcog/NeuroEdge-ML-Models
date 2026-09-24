@@ -1,0 +1,372 @@
+{
+  "checkpoint": "M11",
+  "failed": false,
+  "findings": [
+    {
+      "level": "PASS",
+      "area": "use case",
+      "check": "lock intact",
+      "detail": "b7a3765f48f6 (cnc-drift-on-powertrain-shop-for-car-prduction)"
+    },
+    {
+      "level": "PASS",
+      "area": "use case",
+      "check": "model contract",
+      "detail": "unchanged since the lock was built"
+    },
+    {
+      "level": "PASS",
+      "area": "use case",
+      "check": "lock",
+      "detail": "identical to the use case the lock was built from"
+    },
+    {
+      "level": "PASS",
+      "area": "use case",
+      "check": "ingress feature_order = lock channel order",
+      "detail": "['spindle_load', 'x_axis_error', 'vibration_rms']"
+    },
+    {
+      "level": "PASS",
+      "area": "device",
+      "check": "manifest status",
+      "detail": "'success'"
+    },
+    {
+      "level": "PASS",
+      "area": "device",
+      "check": "manifest age",
+      "detail": "7 days (generated 2026-09-16T07:07:49.019560+00:00)"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> device",
+      "check": "device accepts ONNX",
+      "detail": "supported_export_formats ['onnx', 'tensorrt']"
+    },
+    {
+      "level": "WARN",
+      "area": "device",
+      "check": "ONNX Runtime providers",
+      "detail": "no execution provider reported available (ort_version None); re-assess the device before deployment"
+    },
+    {
+      "level": "WARN",
+      "area": "use case <-> device",
+      "check": "task supported",
+      "detail": "task 'anomaly_detection'; device supports ['object_detection']"
+    },
+    {
+      "level": "WARN",
+      "area": "use case <-> device",
+      "check": "runtime_profile available",
+      "detail": "use case asks 'ep-tensorrt'; device offers ['ep-jetson-tensorrt', 'cuda', 'ort-cpu']"
+    },
+    {
+      "level": "WARN",
+      "area": "use case <-> device",
+      "check": "device_profile_id",
+      "detail": "'nvidia-jetson-orin-nano', expected None"
+    },
+    {
+      "level": "WARN",
+      "area": "use case <-> device",
+      "check": "capability_manifest_id",
+      "detail": "the use case links no manifest; recorded manifest is 'cap-gpu-20260916T070749Z'"
+    },
+    {
+      "level": "WARN",
+      "area": "use case <-> device",
+      "check": "platform",
+      "detail": "use case 'jetson', device family 'gpu'"
+    },
+    {
+      "level": "WARN",
+      "area": "use case <-> device",
+      "check": "sensors cover the channels",
+      "detail": "the device declares no sensors (source None); ['spindle_load', 'x_axis_error', 'vibration_rms'] cannot be confirmed on the device"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> dataset",
+      "check": "contract lock_sha256",
+      "detail": "'b7a3765f48f6'"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> dataset",
+      "check": "sample_rate_hz",
+      "detail": "10.0"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> dataset",
+      "check": "window_samples",
+      "detail": "64"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> dataset",
+      "check": "stride_samples",
+      "detail": "10"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> dataset",
+      "check": "channels (order, unit, reduce)",
+      "detail": "[('spindle_load', 'nm', 'mean'), ('x_axis_error', 'um', 'mean'), ('vibration_rms', 'g', 'rms')]"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> dataset",
+      "check": "split_hash agrees",
+      "detail": "contract 47871db08ccc, train 47871db08ccc, val 47871db08ccc"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> dataset",
+      "check": "synthetic set lock_sha256",
+      "detail": "'b7a3765f48f6'"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> dataset",
+      "check": "synthetic set split_hash",
+      "detail": "'47871db08ccc'"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "use_case_id",
+      "detail": "'cnc-drift-on-powertrain-shop-for-car-prduction'"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "class_names (order included)",
+      "detail": "['normal', 'tool_wear']"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "channel order",
+      "detail": "['spindle_load', 'x_axis_error', 'vibration_rms']"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "sample_rate_hz",
+      "detail": "10.0"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "window_samples",
+      "detail": "64"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "stride_samples",
+      "detail": "10"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "channels (name, unit, reduce)",
+      "detail": "[('spindle_load', 'nm', 'mean'), ('x_axis_error', 'um', 'mean'), ('vibration_rms', 'g', 'rms')]"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "target metric",
+      "detail": "'recall'"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "target min_value",
+      "detail": "0.9"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "at_fpr",
+      "detail": "0.01"
+    },
+    {
+      "level": "WARN",
+      "area": "use case <-> scaffold",
+      "check": "data.path",
+      "detail": "empty; the build reads data/contract/, never the scaffold's path"
+    },
+    {
+      "level": "WARN",
+      "area": "use case <-> scaffold",
+      "check": "framework",
+      "detail": "model_hint.framework is 'auto'; model_proposed.md decides"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "return writer",
+      "detail": "the scaffold writes the package through neuroedge_return"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "mlflow",
+      "detail": "the scaffold logs to MLflow; M8 reuses its run naming and tags (ADR-0026 D-3)"
+    },
+    {
+      "level": "WARN",
+      "area": "use case <-> scaffold",
+      "check": "training body",
+      "detail": "the scaffold's data loading, split, model, loss, metric and export are NOT used; M8 generates them from the lock and model_proposed.md (ADR-0025 D-5)"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> scaffold",
+      "check": "scaffold used",
+      "detail": "its context, return writer and MLflow naming are used"
+    },
+    {
+      "level": "WARN",
+      "area": "scaffold <-> device",
+      "check": "device_profile_id",
+      "detail": "'nvidia-jetson-orin-nano', expected None"
+    },
+    {
+      "level": "PASS",
+      "area": "training package 1DCNN\\training-package.zip",
+      "check": "lock_sha256",
+      "detail": "'b7a3765f48f6'"
+    },
+    {
+      "level": "PASS",
+      "area": "training package 1DCNN\\training-package.zip",
+      "check": "use_case_id",
+      "detail": "'cnc-drift-on-powertrain-shop-for-car-prduction'"
+    },
+    {
+      "level": "PASS",
+      "area": "training package 1DCNN\\training-package.zip",
+      "check": "runtime.kind",
+      "detail": "'pip'"
+    },
+    {
+      "level": "PASS",
+      "area": "training package 1DCNN\\training-package.zip",
+      "check": "baseline.declared",
+      "detail": "True"
+    },
+    {
+      "level": "PASS",
+      "area": "package 1DCNN\\runs\\bd19c981a17d\\model-package",
+      "check": "lock_sha256",
+      "detail": "'b7a3765f48f6'"
+    },
+    {
+      "level": "PASS",
+      "area": "package 1DCNN\\runs\\bd19c981a17d\\model-package",
+      "check": "class_names",
+      "detail": "['normal', 'tool_wear']"
+    },
+    {
+      "level": "PASS",
+      "area": "package 1DCNN\\runs\\bd19c981a17d\\model-package",
+      "check": "head shape",
+      "detail": "'scalar'"
+    },
+    {
+      "level": "PASS",
+      "area": "package 1DCNN\\runs\\bd19c981a17d\\model-package",
+      "check": "opset",
+      "detail": "13"
+    },
+    {
+      "level": "PASS",
+      "area": "package 1DCNN\\runs\\bd19c981a17d\\model-package",
+      "check": "feature_order",
+      "detail": "['spindle_load', 'x_axis_error', 'vibration_rms']"
+    },
+    {
+      "level": "PASS",
+      "area": "package 1DCNN\\runs\\bd19c981a17d\\model-package",
+      "check": "window",
+      "detail": "64"
+    },
+    {
+      "level": "PASS",
+      "area": "package 1DCNN\\runs\\bd19c981a17d\\model-package",
+      "check": "stride",
+      "detail": "10"
+    },
+    {
+      "level": "PASS",
+      "area": "package 1DCNN\\runs\\bd19c981a17d\\model-package",
+      "check": "sample_rate_hz",
+      "detail": "10.0"
+    },
+    {
+      "level": "PASS",
+      "area": "package 1DCNN\\runs\\bd19c981a17d\\model-package",
+      "check": "reduce",
+      "detail": "{'spindle_load': 'mean', 'x_axis_error': 'mean', 'vibration_rms': 'rms'}"
+    },
+    {
+      "level": "PASS",
+      "area": "package 1DCNN\\runs\\bd19c981a17d\\model-package",
+      "check": "at_fpr",
+      "detail": "0.01"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> simulator",
+      "check": "lock_sha256",
+      "detail": "'b7a3765f48f6'"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> simulator",
+      "check": "split_hash",
+      "detail": "'47871db08ccc'"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> simulator",
+      "check": "feature_order",
+      "detail": "['spindle_load', 'x_axis_error', 'vibration_rms']"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> simulator",
+      "check": "sample_rate_hz",
+      "detail": "10.0"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> simulator",
+      "check": "units",
+      "detail": "{'spindle_load': 'nm', 'x_axis_error': 'um', 'vibration_rms': 'g'}"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> simulator",
+      "check": "reduce",
+      "detail": "{'spindle_load': 'mean', 'x_axis_error': 'mean', 'vibration_rms': 'rms'}"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> simulator",
+      "check": "test exported only for acceptance",
+      "detail": "no test file without acceptance_only"
+    },
+    {
+      "level": "PASS",
+      "area": "use case <-> simulator",
+      "check": "unweighted export",
+      "detail": "no demo_only file in sim/ (a demo, if any, is in sim-demo/)"
+    }
+  ]
+}

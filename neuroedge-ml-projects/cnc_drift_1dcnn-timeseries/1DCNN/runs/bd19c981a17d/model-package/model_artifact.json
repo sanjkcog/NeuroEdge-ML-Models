@@ -1,0 +1,481 @@
+{
+  "use_case_id": "cnc-drift-on-powertrain-shop-for-car-prduction",
+  "model_name": "1d-cnn-real_synthetic",
+  "framework": "pytorch",
+  "format": "onnx",
+  "uri": "model.onnx",
+  "metrics": {
+    "epochs_completed": 20,
+    "best_epoch": 5,
+    "train_loss": 0.478365544218064,
+    "val_loss": 0.4105994792935116,
+    "training_duration_s": 268.68206969698076,
+    "recall_at_fpr": 0.3978405315614618,
+    "fpr": 0.01045016077170418,
+    "at_fpr": 0.01,
+    "pr_auc": 0.9268274417617267,
+    "auroc": 0.9372709937934645,
+    "decision_threshold": 0.7765876650810243,
+    "aggregation": "window_pooled",
+    "confusion_matrix": [
+      [
+        1231,
+        13
+      ],
+      [
+        725,
+        479
+      ]
+    ],
+    "meets_target": false,
+    "meets_recall": false,
+    "meets_fpr": false,
+    "fpr_tolerance": 0.0,
+    "effective_fpr_bound": 0.01,
+    "target_recall": 0.9,
+    "headline_positive_units": 1,
+    "headline_single_trial_caveat": "The headline recall_at_fpr rests on 1 worn unit(s) (IM-01R-A04): a single-trial pass/fail, NOT a population estimate. See cross_validation (leave-one-worn-unit-out) for the spread.",
+    "eval_split": "self_reported_val",
+    "split_hash": "e89654ee2568fea26e68382555b8e71146ed44d1442284111f1c5611000b4b83",
+    "per_unit_rate_table": [
+      {
+        "unit": "IM-01F",
+        "label": "normal",
+        "n_windows": 602,
+        "hours_of_new_data": 0.16722222222222222,
+        "false_alarm_rate": 0.0,
+        "false_alarms_per_hour": 0.0
+      },
+      {
+        "unit": "IM-01R",
+        "label": "normal",
+        "n_windows": 225,
+        "hours_of_new_data": 0.0625,
+        "false_alarm_rate": 0.057777777777777775,
+        "false_alarms_per_hour": 208.0
+      },
+      {
+        "unit": "IM-01R-A04",
+        "label": "tool_wear",
+        "n_windows": 1204,
+        "hours_of_new_data": 0.33444444444444443,
+        "window_recall": 0.3978405315614618
+      },
+      {
+        "unit": "IMP-09",
+        "label": "normal",
+        "n_windows": 234,
+        "hours_of_new_data": 0.065,
+        "false_alarm_rate": 0.0,
+        "false_alarms_per_hour": 0.0
+      },
+      {
+        "unit": "IMP-12",
+        "label": "normal",
+        "n_windows": 183,
+        "hours_of_new_data": 0.050833333333333335,
+        "false_alarm_rate": 0.0,
+        "false_alarms_per_hour": 0.0
+      }
+    ],
+    "per_unit_event_diagnostics": [
+      {
+        "unit": "IM-01F",
+        "label": "normal",
+        "persistence_windows": 1,
+        "n_events": 0,
+        "false_alarm_events_per_hour": 0.0
+      },
+      {
+        "unit": "IM-01R",
+        "label": "normal",
+        "persistence_windows": 1,
+        "n_events": 5,
+        "false_alarm_events_per_hour": 80.0
+      },
+      {
+        "unit": "IM-01R-A04",
+        "label": "tool_wear",
+        "persistence_windows": 1,
+        "n_events": 30,
+        "event_recall": true,
+        "time_to_first_alarm_s": 5.0
+      },
+      {
+        "unit": "IMP-09",
+        "label": "normal",
+        "persistence_windows": 1,
+        "n_events": 0,
+        "false_alarm_events_per_hour": 0.0
+      },
+      {
+        "unit": "IMP-12",
+        "label": "normal",
+        "persistence_windows": 1,
+        "n_events": 0,
+        "false_alarm_events_per_hour": 0.0
+      }
+    ],
+    "segments": {
+      "blowhole_units_A01_A02": [],
+      "pure_tool_wear_units_A03_A04_A05": [
+        {
+          "unit": "IM-01R-A04",
+          "label": "tool_wear",
+          "n_windows": 1204,
+          "hours_of_new_data": 0.33444444444444443,
+          "window_recall": 0.3978405315614618
+        }
+      ],
+      "im01r_program_normal": [
+        {
+          "unit": "IM-01R",
+          "label": "normal",
+          "n_windows": 225,
+          "hours_of_new_data": 0.0625,
+          "false_alarm_rate": 0.057777777777777775,
+          "false_alarms_per_hour": 208.0
+        }
+      ],
+      "cross_program_normals": []
+    },
+    "used_synthetic": true,
+    "trained_on": "real_train+synthetic",
+    "cross_validation": {
+      "protocol": "leave_one_worn_unit_out",
+      "worn_units": [
+        "IM-01R-A01",
+        "IM-01R-A02",
+        "IM-01R-A05",
+        "IM-01R-A04"
+      ],
+      "folds": [
+        {
+          "held_out_unit": "IM-01R-A01",
+          "recall_at_fpr": 0.2393305439330544,
+          "fpr": 0.01045016077170418,
+          "pr_auc": 0.8942841659334196,
+          "decision_threshold": 0.8392879366874696,
+          "n_val_windows": 2439
+        },
+        {
+          "held_out_unit": "IM-01R-A02",
+          "recall_at_fpr": 0.31803005008347246,
+          "fpr": 0.01045016077170418,
+          "pr_auc": 0.8993938011431944,
+          "decision_threshold": 0.8388699293136598,
+          "n_val_windows": 2442
+        },
+        {
+          "held_out_unit": "IM-01R-A05",
+          "recall_at_fpr": 0.28368200836820084,
+          "fpr": 0.01045016077170418,
+          "pr_auc": 0.8791961305691477,
+          "decision_threshold": 0.8567149043083192,
+          "n_val_windows": 2439
+        },
+        {
+          "held_out_unit": "IM-01R-A04",
+          "recall_at_fpr": 0.3729235880398671,
+          "fpr": 0.01045016077170418,
+          "pr_auc": 0.9226298654910345,
+          "decision_threshold": 0.8685802221298219,
+          "n_val_windows": 2448
+        }
+      ],
+      "recall_at_fpr_min": 0.2393305439330544,
+      "recall_at_fpr_max": 0.3729235880398671,
+      "recall_at_fpr_mean": 0.3034915476061487,
+      "note": "Additive uncertainty band around the single-trial (A03) test number. Real data only, never touches A03/test. Each fold's threshold is calibrated on that fold's held-in normal windows only, never on the held-out worn unit."
+    }
+  },
+  "metrics_type": "ts",
+  "class_names": [
+    "normal",
+    "tool_wear"
+  ],
+  "input_shape": [
+    1,
+    3,
+    64
+  ],
+  "created_at": "2026-09-23T06:47:11.836393+00:00",
+  "extras": {
+    "dataset_id": "kit-cnc-milling-multimodal",
+    "dataset_license": "CC BY 4.0",
+    "attribution": "Stroebel, R. et al. (2025). A Multimodal Dataset for Process Monitoring and Anomaly Detection in Industrial CNC Milling. Karlsruhe Institute of Technology. DOI: 10.35097/hvvwn1kfwf7qt48z.",
+    "split_hash": "e89654ee2568fea26e68382555b8e71146ed44d1442284111f1c5611000b4b83",
+    "seed": 20260918,
+    "code_commit": null,
+    "eval_split": "self_reported_val",
+    "lock_sha256": "b7a3765f48f6c07e73e553928f8ff40371d87286824e85d8dad48cb401d15f0d",
+    "sample_rate_hz": 10.0,
+    "stride": 10,
+    "units": {
+      "spindle_load": "Nm",
+      "x_axis_error": "um",
+      "vibration_rms": "g"
+    },
+    "definitions": {
+      "spindle_load": "100 ms mean of spindle torque (SINUMERIK TORQUE|6)",
+      "x_axis_error": "100 ms mean of X-axis following error (SINUMERIK CTRL_DIFF|1), in micrometres",
+      "vibration_rms": "exact 100 ms RMS of the mean-removed 3-axis spindle acceleration magnitude (unit g assumed, unconfirmed)"
+    },
+    "reduce": {
+      "spindle_load": "mean",
+      "x_axis_error": "mean",
+      "vibration_rms": "rms"
+    },
+    "baseline": {
+      "name": "minirocket_ridge",
+      "metrics": {
+        "estimator": "minirocket_ridge",
+        "library": "aeon",
+        "num_kernels": 10000,
+        "fit_seconds": 20.150823101983406,
+        "eval_split": "self_reported_val",
+        "split_hash": "e89654ee2568fea26e68382555b8e71146ed44d1442284111f1c5611000b4b83",
+        "trained_on": "real_train_only",
+        "recall_at_fpr": 0.026578073089700997,
+        "fpr": 0.00964630225080386,
+        "at_fpr": 0.01,
+        "pr_auc": 0.7056264933527504,
+        "auroc": 0.7609535738321351,
+        "decision_threshold": 0.8309931327288906,
+        "aggregation": "window_pooled",
+        "confusion_matrix": [
+          [
+            1232,
+            12
+          ],
+          [
+            1172,
+            32
+          ]
+        ],
+        "meets_recall": false,
+        "meets_fpr": true,
+        "meets_target": false,
+        "fpr_tolerance": 0.0,
+        "effective_fpr_bound": 0.01,
+        "target_recall": 0.9,
+        "headline_positive_units": 1,
+        "headline_single_trial_caveat": "The headline recall_at_fpr rests on 1 worn unit(s) (IM-01R-A04): a single-trial pass/fail, NOT a population estimate. See cross_validation (leave-one-worn-unit-out) for the spread.",
+        "per_unit_rate_table": [
+          {
+            "unit": "IM-01F",
+            "label": "normal",
+            "n_windows": 602,
+            "hours_of_new_data": 0.16722222222222222,
+            "false_alarm_rate": 0.016611295681063124,
+            "false_alarms_per_hour": 59.800664451827245
+          },
+          {
+            "unit": "IM-01R",
+            "label": "normal",
+            "n_windows": 225,
+            "hours_of_new_data": 0.0625,
+            "false_alarm_rate": 0.008888888888888889,
+            "false_alarms_per_hour": 32.0
+          },
+          {
+            "unit": "IM-01R-A04",
+            "label": "tool_wear",
+            "n_windows": 1204,
+            "hours_of_new_data": 0.33444444444444443,
+            "window_recall": 0.026578073089700997
+          },
+          {
+            "unit": "IMP-09",
+            "label": "normal",
+            "n_windows": 234,
+            "hours_of_new_data": 0.065,
+            "false_alarm_rate": 0.0,
+            "false_alarms_per_hour": 0.0
+          },
+          {
+            "unit": "IMP-12",
+            "label": "normal",
+            "n_windows": 183,
+            "hours_of_new_data": 0.050833333333333335,
+            "false_alarm_rate": 0.0,
+            "false_alarms_per_hour": 0.0
+          }
+        ],
+        "per_unit_event_diagnostics": [
+          {
+            "unit": "IM-01F",
+            "label": "normal",
+            "persistence_windows": 1,
+            "n_events": 6,
+            "false_alarm_events_per_hour": 35.880398671096344
+          },
+          {
+            "unit": "IM-01R",
+            "label": "normal",
+            "persistence_windows": 1,
+            "n_events": 2,
+            "false_alarm_events_per_hour": 32.0
+          },
+          {
+            "unit": "IM-01R-A04",
+            "label": "tool_wear",
+            "persistence_windows": 1,
+            "n_events": 16,
+            "event_recall": true,
+            "time_to_first_alarm_s": 14.0
+          },
+          {
+            "unit": "IMP-09",
+            "label": "normal",
+            "persistence_windows": 1,
+            "n_events": 0,
+            "false_alarm_events_per_hour": 0.0
+          },
+          {
+            "unit": "IMP-12",
+            "label": "normal",
+            "persistence_windows": 1,
+            "n_events": 0,
+            "false_alarm_events_per_hour": 0.0
+          }
+        ]
+      },
+      "compared_on": "recall_at_fpr",
+      "beats_baseline": true,
+      "baseline_trained_on": "real_train_only",
+      "winner_trained_on": "real_train+synthetic"
+    },
+    "source": "custom_return",
+    "ablation": {
+      "real_only": {
+        "recall_at_fpr": 0.3596345514950166,
+        "fpr": 0.01045016077170418,
+        "pr_auc": 0.9235191528832207,
+        "decision_threshold": 0.8926126956939698,
+        "meets_target": false,
+        "meets_recall": false,
+        "meets_fpr": false,
+        "fpr_tolerance": 0.0,
+        "effective_fpr_bound": 0.01,
+        "trained_on": "real_train",
+        "n_train_windows": 8079,
+        "best_epoch": 6
+      },
+      "real_synthetic": {
+        "recall_at_fpr": 0.3978405315614618,
+        "fpr": 0.01045016077170418,
+        "pr_auc": 0.9268274417617267,
+        "decision_threshold": 0.7765876650810243,
+        "meets_target": false,
+        "meets_recall": false,
+        "meets_fpr": false,
+        "fpr_tolerance": 0.0,
+        "effective_fpr_bound": 0.01,
+        "trained_on": "real_train+synthetic",
+        "n_train_windows": 12118,
+        "best_epoch": 5
+      },
+      "winner": "real_synthetic",
+      "monitor": "recall_at_fpr",
+      "tie_break": "pr_auc",
+      "headline_positive_units": 1,
+      "headline_single_trial_caveat": "The headline recall_at_fpr rests on 1 worn unit(s) (IM-01R-A04): a single-trial pass/fail, NOT a population estimate. See cross_validation (leave-one-worn-unit-out) for the spread."
+    },
+    "contract_version": "web-v2-11",
+    "target": {
+      "accelerator": "cuda",
+      "arch": "arm64",
+      "device_name": "NVIDIA Jetson Orin Nano",
+      "device_profile_id": "nvidia-jetson-orin-nano",
+      "platform": "jetson",
+      "runtime_profile": "ep-tensorrt"
+    },
+    "business_requirement": {
+      "business_kpi": "detection_latency",
+      "objective": "Detect CNC machine drift on the powertrain shop floor using time-series sensor data, enabling faster response than manual operator detection.\n",
+      "success_criteria": [],
+      "target_improvement_percent": null
+    },
+    "package_run": {
+      "runner": "portal-package",
+      "run_id": "bd19c981a17d",
+      "package_zip_sha256": "c0c99d10dc1a13c168294b8e96edf72f53ebad809f087d6bb70548cfa1f53547",
+      "lock_sha256": "b7a3765f48f6c07e73e553928f8ff40371d87286824e85d8dad48cb401d15f0d",
+      "arch": "1DCNN",
+      "image": "python:3.11-slim",
+      "approved_by": "sanjeev",
+      "approved_at": "2026-09-23T04:26:55.887222+00:00",
+      "gpu_used": true,
+      "split_hash": "e89654ee2568fea26e68382555b8e71146ed44d1442284111f1c5611000b4b83",
+      "data_manifest_sha256": null,
+      "pip_freeze_sha256": "1a111adc36fdf555041085cc116d005747ccb5f4cb71b6af65844d01818746e6"
+    },
+    "verification": {
+      "metrics": "self_reported_val",
+      "baseline": "self_reported",
+      "held_out_test": "portal_evaluated",
+      "metrics_caveat": "measured on the validation split, which a training run also uses to choose the model and its threshold: it is an optimistic number, and the held-out test result is expected to be lower"
+    },
+    "return_package_uploaded_at": "2026-09-23T06:47:13.339392+00:00",
+    "return_package_source": "portal-upload",
+    "upload_checksums": {
+      "metrics": "e5ffb16884c9a7c5d18d29e53ef5baadccd6095a449c4c5e799cc64d662d740f",
+      "onnx_model": "24d3a85af18ebfcab4bc709e44e0cf92cb40d1a10b01ac0322c86824295f9caa",
+      "meta": "6708ed1dd7b11937d74e25ba52747117d73e2a62b7ec93f7f68d3e628475961e",
+      "pip_freeze": "1a111adc36fdf555041085cc116d005747ccb5f4cb71b6af65844d01818746e6"
+    },
+    "evidence": {
+      "held_out_test": {
+        "eval_split": "held_out_test",
+        "route": "portal_evaluated",
+        "evaluation_run_id": "3d4f0fbc33a4",
+        "lock_sha256": "b7a3765f48f6c07e73e553928f8ff40371d87286824e85d8dad48cb401d15f0d",
+        "evaluated_at": "2026-09-23T07:00:21.031368+00:00",
+        "test_bundle_zip_sha256": "36fcb80f0d58f5ee2f0bfa106cfc99af8d61ae3e3ff36d6b2c3833823292befc",
+        "package_zip_sha256": "c0c99d10dc1a13c168294b8e96edf72f53ebad809f087d6bb70548cfa1f53547",
+        "model_onnx_sha256": "24d3a85af18ebfcab4bc709e44e0cf92cb40d1a10b01ac0322c86824295f9caa",
+        "split_hash": "e89654ee2568fea26e68382555b8e71146ed44d1442284111f1c5611000b4b83",
+        "metrics_sha256": "c7c719df0a6c1de4bf5a3d1bcb00adebe9fe36b5730b13cdb6fab2a3faf56f7e",
+        "image": "python:3.11-slim",
+        "headline": {
+          "eval_split": "held_out_test",
+          "split_hash": "e89654ee2568fea26e68382555b8e71146ed44d1442284111f1c5611000b4b83",
+          "recall_at_fpr": 0.3176865046102263,
+          "fpr": 0.00903225806451613,
+          "at_fpr": 0.01,
+          "pr_auc": 0.9391306544817768,
+          "auroc": 0.9175621231376578,
+          "decision_threshold": 0.7765876650810243,
+          "aggregation": "window_pooled",
+          "meets_recall": false,
+          "meets_fpr": true,
+          "meets_target": false,
+          "fpr_tolerance": 0.0,
+          "effective_fpr_bound": 0.01,
+          "target_recall": 0.9,
+          "headline_positive_units": 1,
+          "headline_single_trial_caveat": "The headline recall_at_fpr rests on 1 worn unit(s) (IM-01R-A03): a single-trial pass/fail, NOT a population estimate. See cross_validation (leave-one-worn-unit-out) for the spread.",
+          "im01r_deviation_note": "IM-01R is the only normal run of the worn-tool program and spans train/val/test by time (documented deviation in data/label-manifest.md); its test segment is the tail of a run whose head was trained on, which can flatter specificity."
+        },
+        "threshold": "from the model's meta.json, fixed before the test data was seen",
+        "test_files_sha256": {
+          "data/contract/IM-01R-A03.parquet": "a5d9df4d370bce04d3c2de66af729aa5bd9c131c0bbb25781a3caa0186410938",
+          "data/contract/IMP-05.parquet": "2dbef898137fda38a3bb04067abc4fd4be17dd1bb13a43c6f58027a7c9f1ad30",
+          "data/contract/TF-02.parquet": "ca5361947159479becfdd1e751bd13efde931182562653154f33c7e65bba907f",
+          "data/splits/test.json": "2c2cb5a1bed782a268634744e78b0c52c101541f7f49d80d376b36e5bad2084d"
+        },
+        "units_spanning_test": [
+          "IM-01R"
+        ],
+        "times_this_test_set_was_used": 3,
+        "caveats": [
+          "units IM-01R have rows in the test split AND in a file the training package carried: the package's code is trusted to have read only their train and val rows",
+          "this test set has now been evaluated on 3 times: a number chosen after looking at earlier ones is no longer a clean held-out result"
+        ],
+        "measured_by": "the package's own eval.py, run by the portal; the portal placed the data and the model, it did not compute the metric"
+      }
+    },
+    "onnx_uri": "model.onnx"
+  }
+}
